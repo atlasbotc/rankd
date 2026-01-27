@@ -17,8 +17,8 @@ DerivedData/
 # CocoaPods
 Pods/
 
-# Secrets
-Config.swift
+# Secrets (uncomment when using real API key)
+# Config.swift
 
 # macOS
 .DS_Store
