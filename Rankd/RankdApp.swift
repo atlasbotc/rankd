@@ -6,6 +6,7 @@ struct RankdApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             RankedItem.self,
+            WatchlistItem.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

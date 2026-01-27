@@ -3,10 +3,11 @@ import SwiftData
 
 struct SearchView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var existingItems: [RankedItem]
+    @Query private var rankedItems: [RankedItem]
+    @Query private var watchlistItems: [WatchlistItem]
     @State private var viewModel = RankingViewModel()
     @State private var selectedResult: TMDBSearchResult?
-    @State private var showTierPicker = false
+    @State private var showAddSheet = false
     
     var body: some View {
         NavigationStack {
@@ -70,31 +71,34 @@ struct SearchView: View {
                             .foregroundStyle(.secondary)
                         Text("Search for movies or TV shows")
                             .foregroundStyle(.secondary)
-                        Text("Add them to your rankings")
+                        Text("Add to rankings or watchlist")
                             .font(.caption)
                             .foregroundStyle(.tertiary)
                     }
                     Spacer()
                 } else {
                     List(viewModel.searchResults) { result in
-                        SearchResultRow(result: result, isAdded: isAlreadyAdded(result))
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                if !isAlreadyAdded(result) {
-                                    selectedResult = result
-                                    showTierPicker = true
-                                }
+                        SearchResultRow(
+                            result: result,
+                            status: itemStatus(result)
+                        )
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            if itemStatus(result) == .notAdded {
+                                selectedResult = result
+                                showAddSheet = true
                             }
+                        }
                     }
                     .listStyle(.plain)
                 }
             }
             .navigationTitle("Add")
-            .sheet(isPresented: $showTierPicker) {
+            .sheet(isPresented: $showAddSheet) {
                 if let result = selectedResult {
-                    TierPickerSheet(result: result) { tier in
-                        addItem(result: result, tier: tier)
-                        showTierPicker = false
+                    AddItemSheet(result: result) { action in
+                        handleAddAction(result: result, action: action)
+                        showAddSheet = false
                         selectedResult = nil
                     }
                     .presentationDetents([.medium])
@@ -103,11 +107,27 @@ struct SearchView: View {
         }
     }
     
-    private func isAlreadyAdded(_ result: TMDBSearchResult) -> Bool {
-        existingItems.contains { $0.tmdbId == result.id }
+    private func itemStatus(_ result: TMDBSearchResult) -> ItemStatus {
+        if rankedItems.contains(where: { $0.tmdbId == result.id }) {
+            return .ranked
+        }
+        if watchlistItems.contains(where: { $0.tmdbId == result.id }) {
+            return .watchlist
+        }
+        return .notAdded
     }
     
-    private func addItem(result: TMDBSearchResult, tier: Tier) {
+    private func handleAddAction(result: TMDBSearchResult, action: AddAction) {
+        switch action {
+        case .rank(let tier):
+            addToRankings(result: result, tier: tier)
+        case .watchlist:
+            addToWatchlist(result: result)
+        }
+        viewModel.clearSearch()
+    }
+    
+    private func addToRankings(result: TMDBSearchResult, tier: Tier) {
         let item = RankedItem(
             tmdbId: result.id,
             title: result.displayTitle,
@@ -119,20 +139,45 @@ struct SearchView: View {
         )
         
         // Set initial rank to be last in tier
-        let tierCount = existingItems.filter { $0.tier == tier }.count
+        let tierCount = rankedItems.filter { $0.tier == tier }.count
         item.rank = tierCount + 1
         
         modelContext.insert(item)
         try? modelContext.save()
-        
-        viewModel.clearSearch()
     }
+    
+    private func addToWatchlist(result: TMDBSearchResult) {
+        let item = WatchlistItem(
+            tmdbId: result.id,
+            title: result.displayTitle,
+            overview: result.overview ?? "",
+            posterPath: result.posterPath,
+            releaseDate: result.displayDate,
+            mediaType: result.resolvedMediaType
+        )
+        
+        modelContext.insert(item)
+        try? modelContext.save()
+    }
+}
+
+// MARK: - Item Status
+enum ItemStatus {
+    case notAdded
+    case ranked
+    case watchlist
+}
+
+// MARK: - Add Action
+enum AddAction {
+    case rank(Tier)
+    case watchlist
 }
 
 // MARK: - Search Result Row
 struct SearchResultRow: View {
     let result: TMDBSearchResult
-    let isAdded: Bool
+    let status: ItemStatus
     
     var body: some View {
         HStack(spacing: 12) {
@@ -186,22 +231,31 @@ struct SearchResultRow: View {
             
             Spacer()
             
-            if isAdded {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-            } else {
-                Image(systemName: "plus.circle")
-                    .foregroundStyle(.orange)
-            }
+            statusIcon
         }
-        .opacity(isAdded ? 0.5 : 1)
+        .opacity(status == .notAdded ? 1 : 0.5)
+    }
+    
+    @ViewBuilder
+    private var statusIcon: some View {
+        switch status {
+        case .notAdded:
+            Image(systemName: "plus.circle")
+                .foregroundStyle(.orange)
+        case .ranked:
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+        case .watchlist:
+            Image(systemName: "bookmark.fill")
+                .foregroundStyle(.blue)
+        }
     }
 }
 
-// MARK: - Tier Picker Sheet
-struct TierPickerSheet: View {
+// MARK: - Add Item Sheet
+struct AddItemSheet: View {
     let result: TMDBSearchResult
-    let onSelect: (Tier) -> Void
+    let onSelect: (AddAction) -> Void
     
     var body: some View {
         NavigationStack {
@@ -234,14 +288,39 @@ struct TierPickerSheet: View {
                 }
                 .padding(.horizontal)
                 
-                // Tier buttons
-                VStack(spacing: 12) {
-                    Text("How would you rate it?")
-                        .font(.headline)
+                // Options
+                VStack(spacing: 16) {
+                    // Watchlist option
+                    Button {
+                        onSelect(.watchlist)
+                    } label: {
+                        HStack {
+                            Image(systemName: "bookmark")
+                            Text("Add to Watchlist")
+                                .fontWeight(.semibold)
+                            Spacer()
+                            Text("Haven't seen it")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue.opacity(0.15))
+                        .foregroundStyle(.blue)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
                     
+                    Divider()
+                        .padding(.vertical, 4)
+                    
+                    Text("Or rank it:")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    
+                    // Tier buttons
                     ForEach(Tier.allCases, id: \.self) { tier in
                         Button {
-                            onSelect(tier)
+                            onSelect(.rank(tier))
                         } label: {
                             HStack {
                                 Text(tier.emoji)
@@ -250,7 +329,7 @@ struct TierPickerSheet: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(tierColor(tier).opacity(0.2))
+                            .background(tierColor(tier).opacity(0.15))
                             .foregroundStyle(tierColor(tier))
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
@@ -261,7 +340,7 @@ struct TierPickerSheet: View {
                 Spacer()
             }
             .padding(.top)
-            .navigationTitle("Add to Rankings")
+            .navigationTitle("Add")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
@@ -277,5 +356,5 @@ struct TierPickerSheet: View {
 
 #Preview {
     SearchView()
-        .modelContainer(for: RankedItem.self, inMemory: true)
+        .modelContainer(for: [RankedItem.self, WatchlistItem.self], inMemory: true)
 }

@@ -12,17 +12,23 @@ struct ContentView: View {
                 }
                 .tag(0)
             
+            WatchlistView()
+                .tabItem {
+                    Label("Watchlist", systemImage: "bookmark")
+                }
+                .tag(1)
+            
             SearchView()
                 .tabItem {
                     Label("Add", systemImage: "plus.circle")
                 }
-                .tag(1)
+                .tag(2)
             
             CompareView()
                 .tabItem {
                     Label("Compare", systemImage: "arrow.left.arrow.right")
                 }
-                .tag(2)
+                .tag(3)
         }
         .tint(.orange)
     }
@@ -30,5 +36,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: RankedItem.self, inMemory: true)
+        .modelContainer(for: [RankedItem.self, WatchlistItem.self], inMemory: true)
 }
