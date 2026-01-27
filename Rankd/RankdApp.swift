@@ -5,7 +5,7 @@ import SwiftData
 struct RankdApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            MediaItem.self,
+            RankedItem.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
