@@ -4,17 +4,28 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
-      xcode: 15.4
+      xcode: latest
+      vars:
+        TMDB_API_KEY: $TMDB_API_KEY
     scripts:
-      - name: Build iOS Simulator
+      - name: Setup Config
+        script: |
+          cat > Rankd/Config.swift << EOF
+          import Foundation
+
+          enum Config {
+              static let tmdbApiKey = "$TMDB_API_KEY"
+              static let tmdbBaseURL = "https://api.themoviedb.org/3"
+              static let tmdbImageBaseURL = "https://image.tmdb.org/t/p"
+          }
+          EOF
+      - name: Build iOS
         script: |
           xcodebuild build \
             -project Rankd.xcodeproj \
             -scheme Rankd \
             -sdk iphonesimulator \
-            -destination 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5' \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest'
     artifacts:
-      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+      - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log

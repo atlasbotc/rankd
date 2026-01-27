@@ -1,24 +1,28 @@
 # Xcode
-*.xcodeproj/*
-!*.xcodeproj/project.pbxproj
-!*.xcodeproj/xcshareddata/
-*.xcworkspace/*
-!*.xcworkspace/contents.xcworkspacedata
+build/
 DerivedData/
-*.hmap
-*.ipa
-*.dSYM.zip
-*.dSYM
+*.xcuserstate
+*.xcuserdatad
+xcuserdata/
 
 # Swift Package Manager
 .build/
-.swiftpm/
+Packages/
+Package.resolved
 
 # CocoaPods
 Pods/
+Podfile.lock
 
-# Secrets (uncomment when using real API key)
-# Config.swift
+# Config (contains API keys)
+Rankd/Config.swift
 
 # macOS
 .DS_Store
+*.swp
+*~
+
+# IDEs
+.idea/
+*.code-workspace
+.vscode/

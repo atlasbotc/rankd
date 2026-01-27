@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A60000000000000000000001"
+               BlueprintIdentifier = "A1000001234567890000060"
                BuildableName = "Rankd.app"
                BlueprintName = "Rankd"
                ReferencedContainer = "container:Rankd.xcodeproj">
@@ -43,7 +43,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "A60000000000000000000001"
+            BlueprintIdentifier = "A1000001234567890000060"
             BuildableName = "Rankd.app"
             BlueprintName = "Rankd"
             ReferencedContainer = "container:Rankd.xcodeproj">
@@ -60,7 +60,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "A60000000000000000000001"
+            BlueprintIdentifier = "A1000001234567890000060"
             BuildableName = "Rankd.app"
             BlueprintName = "Rankd"
             ReferencedContainer = "container:Rankd.xcodeproj">
