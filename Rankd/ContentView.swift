@@ -6,29 +6,35 @@ struct ContentView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
+            DiscoverView()
+                .tabItem {
+                    Label("Discover", systemImage: "sparkles")
+                }
+                .tag(0)
+            
             RankedListView()
                 .tabItem {
                     Label("Rankings", systemImage: "list.number")
                 }
-                .tag(0)
+                .tag(1)
             
             WatchlistView()
                 .tabItem {
                     Label("Watchlist", systemImage: "bookmark")
                 }
-                .tag(1)
+                .tag(2)
             
             SearchView()
                 .tabItem {
-                    Label("Add", systemImage: "plus.circle")
+                    Label("Search", systemImage: "magnifyingglass")
                 }
-                .tag(2)
+                .tag(3)
             
             CompareView()
                 .tabItem {
                     Label("Compare", systemImage: "arrow.left.arrow.right")
                 }
-                .tag(3)
+                .tag(4)
         }
         .tint(.orange)
     }

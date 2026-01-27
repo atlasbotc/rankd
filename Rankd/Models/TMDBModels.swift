@@ -35,6 +35,18 @@ struct TMDBSearchResult: Codable, Identifiable {
         case voteAverage = "vote_average"
     }
     
+    init(id: Int, title: String?, name: String?, overview: String?, posterPath: String?, releaseDate: String?, firstAirDate: String?, mediaType: String?, voteAverage: Double?) {
+        self.id = id
+        self.title = title
+        self.name = name
+        self.overview = overview
+        self.posterPath = posterPath
+        self.releaseDate = releaseDate
+        self.firstAirDate = firstAirDate
+        self.mediaType = mediaType
+        self.voteAverage = voteAverage
+    }
+    
     var displayTitle: String {
         title ?? name ?? "Unknown"
     }
@@ -59,4 +71,14 @@ struct TMDBSearchResult: Codable, Identifiable {
         }
         return .movie
     }
+}
+
+// MARK: - Genre
+struct TMDBGenre: Codable, Identifiable {
+    let id: Int
+    let name: String
+}
+
+struct TMDBGenreResponse: Codable {
+    let genres: [TMDBGenre]
 }
