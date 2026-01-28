@@ -314,7 +314,11 @@ struct MediaDetailView: View {
     private var actionButtons: some View {
         HStack(spacing: 12) {
             Button {
-                addToWatchlist()
+                if isInWatchlist {
+                    removeFromWatchlist()
+                } else {
+                    addToWatchlist()
+                }
             } label: {
                 Label(isInWatchlist ? "In Watchlist" : "Watchlist", systemImage: isInWatchlist ? "bookmark.fill" : "bookmark")
                     .frame(maxWidth: .infinity)
@@ -323,7 +327,6 @@ struct MediaDetailView: View {
                     .foregroundStyle(isInWatchlist ? .white : .blue)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
             }
-            .disabled(isInWatchlist)
             
             Button {
                 showComparisonFlow = true
@@ -428,6 +431,13 @@ struct MediaDetailView: View {
             self.error = error.localizedDescription
         }
         isLoading = false
+    }
+    
+    private func removeFromWatchlist() {
+        if let item = watchlistItems.first(where: { $0.tmdbId == tmdbId }) {
+            modelContext.delete(item)
+            try? modelContext.save()
+        }
     }
     
     private func addToWatchlist() {

@@ -2,13 +2,9 @@ import SwiftUI
 import SwiftData
 
 struct SearchView: View {
-    @Environment(\.modelContext) private var modelContext
     @Query private var rankedItems: [RankedItem]
     @Query private var watchlistItems: [WatchlistItem]
     @State private var viewModel = RankingViewModel()
-    @State private var selectedResult: TMDBSearchResult?
-    @State private var showAddSheet = false
-    @State private var showComparisonFlow = false
     
     var body: some View {
         NavigationStack {
@@ -79,52 +75,20 @@ struct SearchView: View {
                     Spacer()
                 } else {
                     List(viewModel.searchResults) { result in
-                        SearchResultRow(
-                            result: result,
-                            status: itemStatus(result)
-                        )
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            if itemStatus(result) == .notAdded {
-                                selectedResult = result
-                                showAddSheet = true
-                            }
+                        NavigationLink(destination: MediaDetailView(
+                            tmdbId: result.id,
+                            mediaType: result.resolvedMediaType
+                        )) {
+                            SearchResultRow(
+                                result: result,
+                                status: itemStatus(result)
+                            )
                         }
                     }
                     .listStyle(.plain)
                 }
             }
             .navigationTitle("Search")
-            .sheet(isPresented: $showAddSheet) {
-                if let result = selectedResult {
-                    QuickAddSheet(
-                        result: result,
-                        status: itemStatus(result),
-                        onWatchlist: {
-                            addToWatchlist(result: result)
-                            showAddSheet = false
-                            selectedResult = nil
-                            viewModel.clearSearch()
-                        },
-                        onRank: {
-                            showAddSheet = false
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                showComparisonFlow = true
-                            }
-                        }
-                    )
-                    .presentationDetents([.medium])
-                }
-            }
-            .fullScreenCover(isPresented: $showComparisonFlow) {
-                if let result = selectedResult {
-                    ComparisonFlowView(newItem: result)
-                        .onDisappear {
-                            viewModel.clearSearch()
-                            selectedResult = nil
-                        }
-                }
-            }
         }
     }
     
@@ -138,19 +102,6 @@ struct SearchView: View {
         return .notAdded
     }
     
-    private func addToWatchlist(result: TMDBSearchResult) {
-        let item = WatchlistItem(
-            tmdbId: result.id,
-            title: result.displayTitle,
-            overview: result.overview ?? "",
-            posterPath: result.posterPath,
-            releaseDate: result.displayDate,
-            mediaType: result.resolvedMediaType
-        )
-        
-        modelContext.insert(item)
-        try? modelContext.save()
-    }
 }
 
 // MARK: - Item Status

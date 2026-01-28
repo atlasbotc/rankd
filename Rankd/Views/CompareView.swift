@@ -7,17 +7,48 @@ struct CompareView: View {
     @State private var viewModel = RankingViewModel()
     @State private var currentPair: (RankedItem, RankedItem)?
     @State private var selectedTier: Tier?
+    @State private var selectedMediaType: MediaType = .movie
     @State private var chosenItem: RankedItem?
+    
+    private var filteredItems: [RankedItem] {
+        items.filter { $0.mediaType == selectedMediaType }
+    }
     
     var availableTiers: [Tier] {
         Tier.allCases.filter { tier in
-            items.filter { $0.tier == tier }.count >= 2
+            filteredItems.filter { $0.tier == tier }.count >= 2
         }
     }
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                // Media type picker
+                HStack(spacing: 0) {
+                    ForEach([MediaType.movie, MediaType.tv], id: \.self) { type in
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                selectedMediaType = type
+                                selectedTier = nil
+                                findNewPair()
+                            }
+                        } label: {
+                            Text(type == .movie ? "Movies" : "TV Shows")
+                                .font(.subheadline.weight(.semibold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                                .background(selectedMediaType == type ? Color.orange : Color.clear)
+                                .foregroundStyle(selectedMediaType == type ? .white : .secondary)
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+                .padding(4)
+                .background(Color(.secondarySystemBackground))
+                .clipShape(Capsule())
+                .padding(.horizontal)
+                .padding(.top, 8)
+                
                 // Tier selector
                 if !availableTiers.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -43,7 +74,7 @@ struct CompareView: View {
                     .background(.ultraThinMaterial)
                 }
                 
-                if items.count < 2 {
+                if filteredItems.count < 2 {
                     // Not enough items
                     Spacer()
                     VStack(spacing: 16) {
@@ -98,7 +129,7 @@ struct CompareView: View {
                                 .font(.caption)
                                 .foregroundStyle(.tertiary)
                             
-                            let totalComparisons = items.reduce(0) { $0 + $1.comparisonCount } / 2
+                            let totalComparisons = filteredItems.reduce(0) { $0 + $1.comparisonCount } / 2
                             Text("\(totalComparisons) comparisons made")
                                 .font(.caption2)
                                 .foregroundStyle(.quaternary)
@@ -138,9 +169,9 @@ struct CompareView: View {
     
     private func findNewPair() {
         if let tier = selectedTier {
-            currentPair = viewModel.findPairToCompare(items: items, tier: tier)
+            currentPair = viewModel.findPairToCompare(items: filteredItems, tier: tier)
         } else {
-            currentPair = viewModel.findAnyPairToCompare(items: items)
+            currentPair = viewModel.findAnyPairToCompare(items: filteredItems)
         }
         chosenItem = nil
     }

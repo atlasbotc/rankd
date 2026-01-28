@@ -191,7 +191,7 @@ struct RankedListView: View {
             .padding(.horizontal)
             .padding(.bottom, 8)
             
-            LazyVStack(spacing: 2) {
+            List {
                 ForEach(Array(remainingItems.enumerated()), id: \.element.id) { index, item in
                     RankedItemRow(item: item, displayRank: index + 4)
                         .contentShape(Rectangle())
@@ -199,7 +199,7 @@ struct RankedListView: View {
                             selectedItem = item
                             showDetailSheet = true
                         }
-                        .contextMenu {
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) {
                                 itemToDelete = item
                                 showDeleteConfirmation = true
@@ -207,15 +207,10 @@ struct RankedListView: View {
                                 Label("Remove", systemImage: "trash")
                             }
                         }
-                        .padding(.horizontal)
-                        .padding(.vertical, 8)
-                    
-                    if index < remainingItems.count - 1 {
-                        Divider()
-                            .padding(.leading, 72)
-                    }
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 }
             }
+            .listStyle(.plain)
             .background(
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color(.secondarySystemBackground))

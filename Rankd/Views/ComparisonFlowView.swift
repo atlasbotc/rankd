@@ -15,6 +15,7 @@ struct ComparisonFlowView: View {
     @State private var showReviewStep = false
     @State private var review: String = ""
     @State private var tier: Tier = .good
+    @State private var hasStarted = false
     
     /// Items filtered by the same media type, sorted by rank
     private var existingItems: [RankedItem] {
@@ -30,16 +31,18 @@ struct ComparisonFlowView: View {
                     reviewStep
                 } else if let comparison = currentComparison {
                     comparisonStep(comparison)
-                } else if existingItems.isEmpty {
+                } else if existingItems.isEmpty && hasStarted {
                     firstItemStep
                 } else if finalRank != nil {
-                    // Should transition to review
                     ProgressView()
                         .onAppear { showReviewStep = true }
                 } else {
-                    // Start comparison
                     ProgressView()
-                        .onAppear { startComparison() }
+                        .onAppear {
+                            guard !hasStarted else { return }
+                            hasStarted = true
+                            startComparison()
+                        }
                 }
             }
             .navigationTitle("Add to Rankings")
@@ -264,7 +267,8 @@ struct ComparisonFlowView: View {
     
     private func pickNextComparison() {
         guard searchRange.count > 0 else {
-            // Found position
+            // Found position — clear comparison so view transitions
+            currentComparison = nil
             finalRank = searchRange.lowerBound + 1
             return
         }
@@ -280,19 +284,13 @@ struct ComparisonFlowView: View {
         }
         
         if newIsBetter {
-            // New item is better, search in upper half (lower indices)
             searchRange = searchRange.lowerBound..<comparisonIndex
         } else {
-            // Existing item is better, search in lower half (higher indices)
             searchRange = (comparisonIndex + 1)..<searchRange.upperBound
         }
         
-        currentComparison = nil
-        
-        // Small delay for UI feedback
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            pickNextComparison()
-        }
+        // Directly pick next comparison (no nil intermediate state)
+        pickNextComparison()
     }
     
     private func saveItem() {
