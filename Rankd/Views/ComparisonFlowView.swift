@@ -14,7 +14,6 @@ struct ComparisonFlowView: View {
     @State private var finalRank: Int?
     @State private var showReviewStep = false
     @State private var review: String = ""
-    @State private var rating: Int?
     @State private var tier: Tier = .good
     
     /// Items filtered by the same media type, sorted by rank
@@ -182,30 +181,6 @@ struct ComparisonFlowView: View {
                 }
                 .padding(.horizontal)
                 
-                // Rating
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Rating (optional)")
-                        .font(.headline)
-                    
-                    HStack(spacing: 6) {
-                        ForEach(1...10, id: \.self) { r in
-                            Button {
-                                rating = rating == r ? nil : r
-                            } label: {
-                                Image(systemName: r <= (rating ?? 0) ? "star.fill" : "star")
-                                    .foregroundStyle(r <= (rating ?? 0) ? .yellow : .gray)
-                            }
-                        }
-                        
-                        if let r = rating {
-                            Text("\(r)/10")
-                                .foregroundStyle(.secondary)
-                                .padding(.leading, 8)
-                        }
-                    }
-                }
-                .padding(.horizontal)
-                
                 // Review
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Review (optional)")
@@ -337,8 +312,7 @@ struct ComparisonFlowView: View {
             releaseDate: newItem.displayDate,
             mediaType: newItem.resolvedMediaType,
             tier: tier,
-            review: review.isEmpty ? nil : review,
-            rating: rating
+            review: review.isEmpty ? nil : review
         )
         item.rank = rank
         item.comparisonCount = Int(log2(Double(max(existingItems.count, 1)))) + 1

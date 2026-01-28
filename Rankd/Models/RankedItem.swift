@@ -42,7 +42,6 @@ final class RankedItem {
     var dateAdded: Date
     var comparisonCount: Int
     var review: String?
-    var rating: Int? // 1-10 personal rating
     
     init(
         tmdbId: Int,
@@ -52,8 +51,7 @@ final class RankedItem {
         releaseDate: String? = nil,
         mediaType: MediaType,
         tier: Tier,
-        review: String? = nil,
-        rating: Int? = nil
+        review: String? = nil
     ) {
         self.id = UUID()
         self.tmdbId = tmdbId
@@ -67,7 +65,6 @@ final class RankedItem {
         self.dateAdded = Date()
         self.comparisonCount = 0
         self.review = review
-        self.rating = rating
     }
     
     var posterURL: URL? {

@@ -180,16 +180,6 @@ struct RankedItemRow: View {
                             .foregroundStyle(.secondary)
                     }
                     
-                    if let rating = item.rating {
-                        HStack(spacing: 2) {
-                            Image(systemName: "star.fill")
-                                .font(.caption2)
-                                .foregroundStyle(.yellow)
-                            Text("\(rating)/10")
-                                .font(.caption)
-                        }
-                    }
-                    
                     if item.review != nil {
                         Image(systemName: "text.quote")
                             .font(.caption2)
@@ -223,7 +213,6 @@ struct ItemDetailSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var item: RankedItem
     @State private var editedReview: String = ""
-    @State private var editedRating: Int?
     @State private var isEditing = false
     
     var body: some View {
@@ -261,34 +250,6 @@ struct ItemDetailSheet: View {
                             Text("Ranked #\(item.rank)")
                                 .font(.headline)
                                 .foregroundStyle(.orange)
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    Divider()
-                    
-                    // Rating
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Your Rating")
-                            .font(.headline)
-                        
-                        HStack(spacing: 8) {
-                            ForEach(1...10, id: \.self) { rating in
-                                Button {
-                                    editedRating = rating
-                                    item.rating = rating
-                                    try? modelContext.save()
-                                } label: {
-                                    Image(systemName: rating <= (editedRating ?? item.rating ?? 0) ? "star.fill" : "star")
-                                        .foregroundStyle(rating <= (editedRating ?? item.rating ?? 0) ? .yellow : .gray)
-                                }
-                            }
-                            
-                            if let rating = editedRating ?? item.rating {
-                                Text("\(rating)/10")
-                                    .foregroundStyle(.secondary)
-                                    .padding(.leading, 8)
-                            }
                         }
                     }
                     .padding(.horizontal)
@@ -350,7 +311,6 @@ struct ItemDetailSheet: View {
             }
             .onAppear {
                 editedReview = item.review ?? ""
-                editedRating = item.rating
             }
         }
     }
