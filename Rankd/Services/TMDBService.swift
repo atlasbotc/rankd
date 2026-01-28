@@ -168,6 +168,28 @@ actor TMDBService {
         return try await fetchResults(from: urlString, defaultMediaType: "tv")
     }
     
+    // MARK: - Recommendations & Similar
+    
+    func getMovieRecommendations(movieId: Int, page: Int = 1) async throws -> [TMDBSearchResult] {
+        let urlString = "\(Config.tmdbBaseURL)/movie/\(movieId)/recommendations?api_key=\(Config.tmdbApiKey)&page=\(page)"
+        return try await fetchResults(from: urlString, defaultMediaType: "movie")
+    }
+    
+    func getTVRecommendations(tvId: Int, page: Int = 1) async throws -> [TMDBSearchResult] {
+        let urlString = "\(Config.tmdbBaseURL)/tv/\(tvId)/recommendations?api_key=\(Config.tmdbApiKey)&page=\(page)"
+        return try await fetchResults(from: urlString, defaultMediaType: "tv")
+    }
+    
+    func getMovieSimilar(movieId: Int, page: Int = 1) async throws -> [TMDBSearchResult] {
+        let urlString = "\(Config.tmdbBaseURL)/movie/\(movieId)/similar?api_key=\(Config.tmdbApiKey)&page=\(page)"
+        return try await fetchResults(from: urlString, defaultMediaType: "movie")
+    }
+    
+    func getTVSimilar(tvId: Int, page: Int = 1) async throws -> [TMDBSearchResult] {
+        let urlString = "\(Config.tmdbBaseURL)/tv/\(tvId)/similar?api_key=\(Config.tmdbApiKey)&page=\(page)"
+        return try await fetchResults(from: urlString, defaultMediaType: "tv")
+    }
+    
     // MARK: - Detail Endpoints
     
     func getMovieDetails(id: Int) async throws -> TMDBMovieDetail {

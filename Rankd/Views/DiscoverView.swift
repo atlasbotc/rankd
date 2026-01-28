@@ -1,11 +1,26 @@
 import SwiftUI
 import SwiftData
 
+// MARK: - Personalized Recommendation Data
+
+struct RecommendationSection: Identifiable {
+    let id = UUID()
+    let title: String
+    let items: [TMDBSearchResult]
+}
+
+struct GenreRecommendation: Identifiable {
+    let id = UUID()
+    let genre: TMDBGenre
+    let items: [TMDBSearchResult]
+}
+
 struct DiscoverView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var rankedItems: [RankedItem]
     @Query private var watchlistItems: [WatchlistItem]
     
+    // Generic sections
     @State private var trending: [TMDBSearchResult] = []
     @State private var popularMovies: [TMDBSearchResult] = []
     @State private var popularTV: [TMDBSearchResult] = []
@@ -13,8 +28,31 @@ struct DiscoverView: View {
     @State private var topRatedTV: [TMDBSearchResult] = []
     @State private var genres: [TMDBGenre] = []
     
+    // Personalized sections
+    @State private var becauseYouLoved: [RecommendationSection] = []
+    @State private var genreRecommendations: [GenreRecommendation] = []
+    @State private var hiddenGems: [TMDBSearchResult] = []
+    
     @State private var isLoading = true
+    @State private var isPersonalizedLoading = true
     @State private var error: String?
+    
+    private var hasRankedItems: Bool {
+        !rankedItems.isEmpty
+    }
+    
+    private var greenTierItems: [RankedItem] {
+        rankedItems
+            .filter { $0.tier == .good }
+            .sorted { $0.rank < $1.rank }
+    }
+    
+    /// Set of TMDB IDs the user has already ranked or watchlisted
+    private var excludedIds: Set<Int> {
+        let ranked = Set(rankedItems.map { $0.tmdbId })
+        let watchlisted = Set(watchlistItems.map { $0.tmdbId })
+        return ranked.union(watchlisted)
+    }
     
     var body: some View {
         NavigationStack {
@@ -29,70 +67,207 @@ struct DiscoverView: View {
             }
             .navigationTitle("Discover")
             .refreshable {
-                await loadContent()
+                await loadAllContent()
             }
             .task {
-                await loadContent()
+                await loadAllContent()
             }
         }
     }
     
+    // MARK: - Scroll Content
+    
     private var scrollContent: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 24) {
-                // Trending
-                if !trending.isEmpty {
-                    DiscoverSection(
-                        title: "🔥 Trending This Week",
-                        items: trending,
-                        itemStatus: itemStatus
-                    )
+                
+                // MARK: New User Welcome
+                if !hasRankedItems {
+                    welcomeHeader
                 }
                 
-                // Popular Movies
-                if !popularMovies.isEmpty {
-                    DiscoverSection(
-                        title: "🎬 Popular Movies",
-                        items: popularMovies,
-                        itemStatus: itemStatus
-                    )
+                // MARK: Personalized Sections
+                if hasRankedItems {
+                    personalizedContent
                 }
                 
-                // Popular TV
-                if !popularTV.isEmpty {
-                    DiscoverSection(
-                        title: "📺 Popular TV Shows",
-                        items: popularTV,
-                        itemStatus: itemStatus
-                    )
-                }
-                
-                // Top Rated Movies
-                if !topRatedMovies.isEmpty {
-                    DiscoverSection(
-                        title: "⭐ Top Rated Movies",
-                        items: topRatedMovies,
-                        itemStatus: itemStatus
-                    )
-                }
-                
-                // Top Rated TV
-                if !topRatedTV.isEmpty {
-                    DiscoverSection(
-                        title: "🏆 Top Rated TV",
-                        items: topRatedTV,
-                        itemStatus: itemStatus
-                    )
-                }
-                
-                // Genres
-                if !genres.isEmpty {
-                    GenreGrid(genres: genres)
-                }
+                // MARK: Generic Sections
+                genericContent
             }
             .padding(.vertical)
         }
     }
+    
+    // MARK: - Welcome Header
+    
+    private var welcomeHeader: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 36))
+                .foregroundStyle(.orange)
+            
+            Text("Personalized For You")
+                .font(.title3.bold())
+            
+            Text("Start ranking movies and shows to unlock recommendations tailored to your taste.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 20)
+        .padding(.horizontal)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.orange.opacity(0.08))
+                .padding(.horizontal)
+        )
+    }
+    
+    // MARK: - Personalized Content
+    
+    private var personalizedContent: some View {
+        Group {
+            if isPersonalizedLoading {
+                // Shimmer placeholder while personalized content loads
+                personalizedLoadingPlaceholder
+            } else {
+                // "Because you loved [Title]" sections
+                ForEach(becauseYouLoved) { section in
+                    DiscoverSection(
+                        title: section.title,
+                        items: section.items,
+                        itemStatus: itemStatus
+                    )
+                }
+                
+                // "More [Genre] for you" sections
+                ForEach(genreRecommendations) { section in
+                    DiscoverSection(
+                        title: "More \(section.genre.name) for you",
+                        items: section.items,
+                        itemStatus: itemStatus
+                    )
+                }
+                
+                // "You Haven't Seen These Yet"
+                if !hiddenGems.isEmpty {
+                    DiscoverSection(
+                        title: "💎 You Haven't Seen These Yet",
+                        items: hiddenGems,
+                        itemStatus: itemStatus
+                    )
+                }
+                
+                // Divider between personalized and generic
+                if !becauseYouLoved.isEmpty || !genreRecommendations.isEmpty || !hiddenGems.isEmpty {
+                    sectionDivider
+                }
+            }
+        }
+    }
+    
+    // MARK: - Loading Placeholder
+    
+    private var personalizedLoadingPlaceholder: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            ForEach(0..<2, id: \.self) { _ in
+                VStack(alignment: .leading, spacing: 12) {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(.quaternary)
+                        .frame(width: 200, height: 20)
+                        .padding(.horizontal)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(0..<5, id: \.self) { _ in
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(.quaternary)
+                                    .frame(width: 120, height: 180)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+            }
+        }
+        .redacted(reason: .placeholder)
+    }
+    
+    // MARK: - Section Divider
+    
+    private var sectionDivider: some View {
+        HStack(spacing: 12) {
+            VStack { Divider() }
+            Text("Explore")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+            VStack { Divider() }
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 4)
+    }
+    
+    // MARK: - Generic Content
+    
+    private var genericContent: some View {
+        Group {
+            // Trending
+            if !trending.isEmpty {
+                DiscoverSection(
+                    title: "🔥 Trending This Week",
+                    items: trending,
+                    itemStatus: itemStatus
+                )
+            }
+            
+            // Popular Movies
+            if !popularMovies.isEmpty {
+                DiscoverSection(
+                    title: "🎬 Popular Movies",
+                    items: popularMovies,
+                    itemStatus: itemStatus
+                )
+            }
+            
+            // Popular TV
+            if !popularTV.isEmpty {
+                DiscoverSection(
+                    title: "📺 Popular TV Shows",
+                    items: popularTV,
+                    itemStatus: itemStatus
+                )
+            }
+            
+            // Top Rated Movies
+            if !topRatedMovies.isEmpty {
+                DiscoverSection(
+                    title: "⭐ Top Rated Movies",
+                    items: topRatedMovies,
+                    itemStatus: itemStatus
+                )
+            }
+            
+            // Top Rated TV
+            if !topRatedTV.isEmpty {
+                DiscoverSection(
+                    title: "🏆 Top Rated TV",
+                    items: topRatedTV,
+                    itemStatus: itemStatus
+                )
+            }
+            
+            // Genres
+            if !genres.isEmpty {
+                GenreGrid(genres: genres)
+            }
+        }
+    }
+    
+    // MARK: - Error View
     
     private func errorView(_ message: String) -> some View {
         VStack(spacing: 16) {
@@ -103,17 +278,27 @@ struct DiscoverView: View {
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
             Button("Try Again") {
-                Task { await loadContent() }
+                Task { await loadAllContent() }
             }
             .buttonStyle(.borderedProminent)
         }
         .padding()
     }
     
-    private func loadContent() async {
+    // MARK: - Data Loading
+    
+    private func loadAllContent() async {
         isLoading = error != nil
         error = nil
         
+        // Load generic content first (fast), then personalized in parallel
+        async let genericTask: () = loadGenericContent()
+        async let personalizedTask: () = loadPersonalizedContent()
+        
+        _ = await (genericTask, personalizedTask)
+    }
+    
+    private func loadGenericContent() async {
         do {
             async let trendingTask = TMDBService.shared.getTrending()
             async let popularMoviesTask = TMDBService.shared.getPopularMovies()
@@ -144,6 +329,214 @@ struct DiscoverView: View {
         
         isLoading = false
     }
+    
+    private func loadPersonalizedContent() async {
+        guard hasRankedItems else {
+            isPersonalizedLoading = false
+            return
+        }
+        
+        isPersonalizedLoading = true
+        
+        // Capture excluded IDs snapshot to filter results
+        let excluded = excludedIds
+        
+        // Run all personalized fetches in parallel
+        async let lovedTask = loadBecauseYouLoved(excluded: excluded)
+        async let genreTask = loadGenreRecommendations(excluded: excluded)
+        
+        let (lovedSections, genreSections) = await (lovedTask, genreTask)
+        
+        becauseYouLoved = lovedSections
+        genreRecommendations = genreSections
+        
+        // Build "Hidden Gems" from all recommendation results
+        buildHiddenGems(from: lovedSections, genres: genreSections, excluded: excluded)
+        
+        isPersonalizedLoading = false
+    }
+    
+    // MARK: - "Because you loved [Title]"
+    
+    private func loadBecauseYouLoved(excluded: Set<Int>) async -> [RecommendationSection] {
+        // Pick up to 3 top green-tier items
+        let topItems = Array(greenTierItems.prefix(3))
+        guard !topItems.isEmpty else { return [] }
+        
+        var sections: [RecommendationSection] = []
+        
+        await withTaskGroup(of: RecommendationSection?.self) { group in
+            for item in topItems {
+                group.addTask {
+                    do {
+                        let results: [TMDBSearchResult]
+                        if item.mediaType == .movie {
+                            results = try await TMDBService.shared.getMovieRecommendations(movieId: item.tmdbId)
+                        } else {
+                            results = try await TMDBService.shared.getTVRecommendations(tvId: item.tmdbId)
+                        }
+                        
+                        let filtered = results.filter { !excluded.contains($0.id) }
+                        guard !filtered.isEmpty else { return nil }
+                        
+                        return RecommendationSection(
+                            title: "Because you loved \(item.title)",
+                            items: Array(filtered.prefix(15))
+                        )
+                    } catch {
+                        print("Error loading recommendations for \(item.title): \(error)")
+                        return nil
+                    }
+                }
+            }
+            
+            for await section in group {
+                if let section = section {
+                    sections.append(section)
+                }
+            }
+        }
+        
+        return sections
+    }
+    
+    // MARK: - "More [Genre] for you"
+    
+    private func loadGenreRecommendations(excluded: Set<Int>) async -> [GenreRecommendation] {
+        // Fetch details for top 5 ranked items to discover genre IDs
+        let topRanked = Array(
+            rankedItems
+                .sorted { $0.rank < $1.rank }
+                .prefix(5)
+        )
+        
+        guard !topRanked.isEmpty else { return [] }
+        
+        // Aggregate genre IDs from TMDB detail endpoints
+        var genreCounts: [Int: (count: Int, genre: TMDBGenre)] = [:]
+        
+        await withTaskGroup(of: [TMDBGenre].self) { group in
+            for item in topRanked {
+                group.addTask {
+                    do {
+                        if item.mediaType == .movie {
+                            let detail = try await TMDBService.shared.getMovieDetails(id: item.tmdbId)
+                            return detail.genres
+                        } else {
+                            let detail = try await TMDBService.shared.getTVDetails(id: item.tmdbId)
+                            return detail.genres
+                        }
+                    } catch {
+                        return []
+                    }
+                }
+            }
+            
+            for await fetchedGenres in group {
+                for genre in fetchedGenres {
+                    if let existing = genreCounts[genre.id] {
+                        genreCounts[genre.id] = (existing.count + 1, genre)
+                    } else {
+                        genreCounts[genre.id] = (1, genre)
+                    }
+                }
+            }
+        }
+        
+        // Pick top 2 most frequent genres
+        let topGenres = genreCounts.values
+            .sorted { $0.count > $1.count }
+            .prefix(2)
+            .map { $0.genre }
+        
+        guard !topGenres.isEmpty else { return [] }
+        
+        // Fetch discover content for each top genre
+        var recommendations: [GenreRecommendation] = []
+        
+        await withTaskGroup(of: GenreRecommendation?.self) { group in
+            for genre in topGenres {
+                group.addTask {
+                    do {
+                        // Fetch both movies and TV for the genre, combine
+                        async let moviesTask = TMDBService.shared.discoverMovies(genreId: genre.id)
+                        async let tvTask = TMDBService.shared.discoverTV(genreId: genre.id)
+                        
+                        let (movies, tv) = try await (moviesTask, tvTask)
+                        
+                        // Interleave movies and TV, filter excluded
+                        var combined: [TMDBSearchResult] = []
+                        let maxCount = max(movies.count, tv.count)
+                        for i in 0..<maxCount {
+                            if i < movies.count && !excluded.contains(movies[i].id) {
+                                combined.append(movies[i])
+                            }
+                            if i < tv.count && !excluded.contains(tv[i].id) {
+                                combined.append(tv[i])
+                            }
+                        }
+                        
+                        guard !combined.isEmpty else { return nil }
+                        
+                        return GenreRecommendation(
+                            genre: genre,
+                            items: Array(combined.prefix(15))
+                        )
+                    } catch {
+                        print("Error loading genre recommendations for \(genre.name): \(error)")
+                        return nil
+                    }
+                }
+            }
+            
+            for await rec in group {
+                if let rec = rec {
+                    recommendations.append(rec)
+                }
+            }
+        }
+        
+        return recommendations
+    }
+    
+    // MARK: - "You Haven't Seen These Yet"
+    
+    private func buildHiddenGems(
+        from lovedSections: [RecommendationSection],
+        genres: [GenreRecommendation],
+        excluded: Set<Int>
+    ) {
+        // Collect all recommendation results
+        var allResults: [TMDBSearchResult] = []
+        var seenIds = Set<Int>()
+        
+        for section in lovedSections {
+            for item in section.items {
+                if !seenIds.contains(item.id) && !excluded.contains(item.id) {
+                    allResults.append(item)
+                    seenIds.insert(item.id)
+                }
+            }
+        }
+        
+        for section in genres {
+            for item in section.items {
+                if !seenIds.contains(item.id) && !excluded.contains(item.id) {
+                    allResults.append(item)
+                    seenIds.insert(item.id)
+                }
+            }
+        }
+        
+        // Filter to highly-rated items (>7.5)
+        let gems = allResults
+            .filter { ($0.voteAverage ?? 0) > 7.5 }
+            .sorted { ($0.voteAverage ?? 0) > ($1.voteAverage ?? 0) }
+        
+        hiddenGems = Array(gems.prefix(15))
+    }
+    
+    // MARK: - Item Status
     
     private func itemStatus(_ result: TMDBSearchResult) -> ItemStatus {
         if rankedItems.contains(where: { $0.tmdbId == result.id }) {
