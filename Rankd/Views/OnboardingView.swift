@@ -135,6 +135,7 @@ private struct HowItWorksPage: View {
 // MARK: - Get Started Page
 private struct GetStartedPage: View {
     let onComplete: () -> Void
+    @State private var showLetterboxdImport = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -166,6 +167,19 @@ private struct GetStartedPage: View {
             Spacer()
             
             VStack(spacing: 16) {
+                // Letterboxd import option
+                Button {
+                    showLetterboxdImport = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.subheadline)
+                        Text("Already track movies? Import from Letterboxd")
+                            .font(.subheadline)
+                    }
+                    .foregroundStyle(.orange)
+                }
+                
                 PageIndicator(current: 2, total: 3)
                 
                 OnboardingButton(title: "Let's Go", action: onComplete)
@@ -173,6 +187,9 @@ private struct GetStartedPage: View {
             .padding(.bottom, 48)
         }
         .padding(.horizontal, 32)
+        .sheet(isPresented: $showLetterboxdImport) {
+            LetterboxdImportView()
+        }
     }
 }
 

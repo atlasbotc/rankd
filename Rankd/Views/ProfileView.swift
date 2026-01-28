@@ -6,6 +6,7 @@ struct ProfileView: View {
     @Query private var watchlistItems: [WatchlistItem]
     
     @State private var showCompareView = false
+    @State private var showLetterboxdImport = false
     
     private var movieItems: [RankedItem] {
         rankedItems.filter { $0.mediaType == .movie }.sorted { $0.rank < $1.rank }
@@ -43,10 +44,16 @@ struct ProfileView: View {
                     if !rankedItems.isEmpty {
                         tierBreakdown
                     }
+                    
+                    // Settings / Import
+                    settingsSection
                 }
                 .padding(.vertical)
             }
             .navigationTitle("Profile")
+            .sheet(isPresented: $showLetterboxdImport) {
+                LetterboxdImportView()
+            }
             .fullScreenCover(isPresented: $showCompareView) {
                 NavigationStack {
                     CompareView()
@@ -247,6 +254,55 @@ struct ProfileView: View {
             )
         }
         .buttonStyle(.plain)
+        .padding(.horizontal)
+    }
+    
+    // MARK: - Settings Section
+    
+    private var settingsSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("Settings")
+                    .font(.headline)
+                Spacer()
+            }
+            
+            Button {
+                showLetterboxdImport = true
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "square.and.arrow.down.fill")
+                        .font(.title3)
+                        .foregroundStyle(.orange)
+                        .frame(width: 32)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Import from Letterboxd")
+                            .font(.subheadline.weight(.medium))
+                        Text("Bring in your ratings and watched films")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(Color(.secondarySystemBackground))
+                )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.secondarySystemBackground).opacity(0.5))
+        )
         .padding(.horizontal)
     }
     
