@@ -2,9 +2,18 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var selectedTab = 0
     
     var body: some View {
+        if hasCompletedOnboarding {
+            mainTabView
+        } else {
+            OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
+        }
+    }
+    
+    private var mainTabView: some View {
         TabView(selection: $selectedTab) {
             DiscoverView()
                 .tabItem {
@@ -18,21 +27,21 @@ struct ContentView: View {
                 }
                 .tag(1)
             
-            WatchlistView()
-                .tabItem {
-                    Label("Watchlist", systemImage: "bookmark")
-                }
-                .tag(2)
-            
             SearchView()
                 .tabItem {
                     Label("Search", systemImage: "magnifyingglass")
                 }
+                .tag(2)
+            
+            WatchlistView()
+                .tabItem {
+                    Label("Watchlist", systemImage: "bookmark")
+                }
                 .tag(3)
             
-            CompareView()
+            ProfileView()
                 .tabItem {
-                    Label("Compare", systemImage: "arrow.left.arrow.right")
+                    Label("Profile", systemImage: "person.crop.circle")
                 }
                 .tag(4)
         }
