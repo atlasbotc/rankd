@@ -145,11 +145,6 @@ struct DiscoverView: View {
         isLoading = false
     }
     
-    private func selectItem(_ result: TMDBSearchResult) {
-        selectedResult = result
-        showAddSheet = true
-    }
-    
     private func itemStatus(_ result: TMDBSearchResult) -> ItemStatus {
         if rankedItems.contains(where: { $0.tmdbId == result.id }) {
             return .ranked
