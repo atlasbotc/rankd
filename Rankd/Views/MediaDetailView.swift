@@ -200,13 +200,7 @@ struct MediaDetailView: View {
                 }
                 
                 // Additional info
-                AdditionalInfoSection(
-                    items: [
-                        ("Status", detail.status),
-                        ("Budget", detail.budget.map { $0 > 0 ? "$\($0.formatted())" : nil } ?? nil),
-                        ("Revenue", detail.revenue.map { $0 > 0 ? "$\($0.formatted())" : nil } ?? nil)
-                    ].compactMap { $0.1 != nil ? ($0.0, $0.1!) : nil }
-                )
+                AdditionalInfoSection(items: movieInfoItems(detail))
             }
             .padding(.bottom, 32)
         }
@@ -329,13 +323,7 @@ struct MediaDetailView: View {
                 }
                 
                 // Additional info
-                AdditionalInfoSection(
-                    items: [
-                        ("Status", detail.status),
-                        ("Episodes", detail.numberOfEpisodes.map { "\($0) episodes" }),
-                        ("Episode Length", detail.episodeRuntimeFormatted)
-                    ].compactMap { $0.1 != nil ? ($0.0, $0.1!) : nil }
-                )
+                AdditionalInfoSection(items: tvInfoItems(detail))
             }
             .padding(.bottom, 32)
         }
@@ -419,6 +407,34 @@ struct MediaDetailView: View {
         if isRanked { return .ranked }
         if isInWatchlist { return .watchlist }
         return .notAdded
+    }
+    
+    private func movieInfoItems(_ detail: TMDBMovieDetail) -> [(String, String)] {
+        var items: [(String, String)] = []
+        if let status = detail.status {
+            items.append(("Status", status))
+        }
+        if let budget = detail.budget, budget > 0 {
+            items.append(("Budget", "$\(budget.formatted())"))
+        }
+        if let revenue = detail.revenue, revenue > 0 {
+            items.append(("Revenue", "$\(revenue.formatted())"))
+        }
+        return items
+    }
+    
+    private func tvInfoItems(_ detail: TMDBTVDetail) -> [(String, String)] {
+        var items: [(String, String)] = []
+        if let status = detail.status {
+            items.append(("Status", status))
+        }
+        if let episodes = detail.numberOfEpisodes {
+            items.append(("Episodes", "\(episodes) episodes"))
+        }
+        if let runtime = detail.episodeRuntimeFormatted {
+            items.append(("Episode Length", runtime))
+        }
+        return items
     }
     
     private func loadDetails() async {
