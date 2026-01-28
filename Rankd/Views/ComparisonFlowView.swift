@@ -309,6 +309,27 @@ struct ComparisonFlowView: View {
         modelContext.insert(item)
         try? modelContext.save()
         
+        // Backfill genre and runtime data asynchronously (don't block UI)
+        let itemTmdbId = newItem.id
+        let itemMediaType = newItem.resolvedMediaType
+        Task {
+            if itemMediaType == .movie {
+                if let details = try? await TMDBService.shared.getMovieDetails(id: itemTmdbId) {
+                    item.genreIds = details.genres.map { $0.id }
+                    item.genreNames = details.genres.map { $0.name }
+                    item.runtimeMinutes = details.runtime ?? 0
+                    try? modelContext.save()
+                }
+            } else {
+                if let details = try? await TMDBService.shared.getTVDetails(id: itemTmdbId) {
+                    item.genreIds = details.genres.map { $0.id }
+                    item.genreNames = details.genres.map { $0.name }
+                    item.runtimeMinutes = details.episodeRunTime?.first ?? 0
+                    try? modelContext.save()
+                }
+            }
+        }
+        
         dismiss()
     }
     

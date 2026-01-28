@@ -42,6 +42,9 @@ final class RankedItem {
     var dateAdded: Date
     var comparisonCount: Int
     var review: String?
+    var genreIds: [Int] = []
+    var genreNames: [String] = []
+    var runtimeMinutes: Int = 0
     
     init(
         tmdbId: Int,

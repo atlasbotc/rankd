@@ -254,6 +254,40 @@ struct ProfileView: View {
         }
     }
     
+    // MARK: - Statistics Button
+    
+    private var statisticsButton: some View {
+        NavigationLink {
+            StatsView()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "chart.bar.xaxis")
+                    .font(.title2)
+                    .foregroundStyle(.orange)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Statistics")
+                        .font(.headline)
+                    Text("See your watching patterns, genres, and insights")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.secondarySystemBackground))
+            )
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal)
+    }
+    
     // MARK: - Journal Button
     
     private var journalButton: some View {
