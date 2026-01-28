@@ -6,9 +6,25 @@ struct WatchlistView: View {
     @Query(sort: \WatchlistItem.dateAdded, order: .reverse) private var items: [WatchlistItem]
     
     @State private var itemToRank: WatchlistItem?
-    @State private var showTierPicker = false
+    @State private var showComparisonFlow = false
     @State private var itemToDelete: WatchlistItem?
     @State private var showDeleteConfirmation = false
+    
+    // Convert WatchlistItem to TMDBSearchResult for comparison flow
+    private var itemAsSearchResult: TMDBSearchResult? {
+        guard let item = itemToRank else { return nil }
+        return TMDBSearchResult(
+            id: item.tmdbId,
+            title: item.mediaType == .movie ? item.title : nil,
+            name: item.mediaType == .tv ? item.title : nil,
+            overview: item.overview,
+            posterPath: item.posterPath,
+            releaseDate: item.mediaType == .movie ? item.releaseDate : nil,
+            firstAirDate: item.mediaType == .tv ? item.releaseDate : nil,
+            mediaType: item.mediaType.rawValue,
+            voteAverage: nil
+        )
+    }
     
     var body: some View {
         NavigationStack {
@@ -20,16 +36,6 @@ struct WatchlistView: View {
                 }
             }
             .navigationTitle("Watchlist")
-            .confirmationDialog("Choose Tier", isPresented: $showTierPicker, presenting: itemToRank) { item in
-                ForEach(Tier.allCases, id: \.self) { tier in
-                    Button("\(tier.emoji) \(tier.rawValue)") {
-                        markAsWatched(item: item, tier: tier)
-                    }
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: { item in
-                Text("How was \"\(item.title)\"?")
-            }
             .alert("Remove from Watchlist?", isPresented: $showDeleteConfirmation) {
                 Button("Cancel", role: .cancel) {}
                 Button("Remove", role: .destructive) {
@@ -40,6 +46,19 @@ struct WatchlistView: View {
             } message: {
                 if let item = itemToDelete {
                     Text("Remove \"\(item.title)\" from your watchlist?")
+                }
+            }
+            .fullScreenCover(isPresented: $showComparisonFlow) {
+                if let result = itemAsSearchResult {
+                    ComparisonFlowView(newItem: result)
+                        .onDisappear {
+                            // Remove from watchlist after ranking
+                            if let item = itemToRank {
+                                modelContext.delete(item)
+                                try? modelContext.save()
+                            }
+                            itemToRank = nil
+                        }
                 }
             }
         }
@@ -76,7 +95,7 @@ struct WatchlistView: View {
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
                         Button {
                             itemToRank = item
-                            showTierPicker = true
+                            showComparisonFlow = true
                         } label: {
                             Label("Watched", systemImage: "checkmark.circle")
                         }
@@ -85,17 +104,6 @@ struct WatchlistView: View {
             }
         }
         .listStyle(.plain)
-    }
-    
-    private func markAsWatched(item: WatchlistItem, tier: Tier) {
-        // Create ranked item
-        let rankedItem = item.toRankedItem(tier: tier)
-        modelContext.insert(rankedItem)
-        
-        // Remove from watchlist
-        modelContext.delete(item)
-        
-        try? modelContext.save()
     }
     
     private func deleteItem(_ item: WatchlistItem) {
@@ -155,9 +163,14 @@ struct WatchlistRow: View {
             Spacer()
             
             // Swipe hint
-            Image(systemName: "chevron.left")
-                .font(.caption)
-                .foregroundStyle(.quaternary)
+            VStack(spacing: 4) {
+                Image(systemName: "hand.point.left.fill")
+                    .font(.caption)
+                    .foregroundStyle(.green.opacity(0.5))
+                Text("Swipe")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
         }
         .padding(.vertical, 4)
     }

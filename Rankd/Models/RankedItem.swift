@@ -38,9 +38,11 @@ final class RankedItem {
     var releaseDate: String?
     var mediaType: MediaType
     var tier: Tier
-    var rank: Int // Lower = better within tier
+    var rank: Int // Lower = better (1 = best)
     var dateAdded: Date
     var comparisonCount: Int
+    var review: String?
+    var rating: Int? // 1-10 personal rating
     
     init(
         tmdbId: Int,
@@ -49,7 +51,9 @@ final class RankedItem {
         posterPath: String? = nil,
         releaseDate: String? = nil,
         mediaType: MediaType,
-        tier: Tier
+        tier: Tier,
+        review: String? = nil,
+        rating: Int? = nil
     ) {
         self.id = UUID()
         self.tmdbId = tmdbId
@@ -59,9 +63,11 @@ final class RankedItem {
         self.releaseDate = releaseDate
         self.mediaType = mediaType
         self.tier = tier
-        self.rank = Int.max // New items start at bottom
+        self.rank = Int.max // New items start at bottom until compared
         self.dateAdded = Date()
         self.comparisonCount = 0
+        self.review = review
+        self.rating = rating
     }
     
     var posterURL: URL? {

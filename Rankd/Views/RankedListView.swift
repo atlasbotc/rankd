@@ -3,106 +3,43 @@ import SwiftData
 
 struct RankedListView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \RankedItem.rank) private var items: [RankedItem]
-    @State private var selectedTier: Tier?
+    @Query(sort: \RankedItem.rank) private var allItems: [RankedItem]
+    @State private var selectedMediaType: MediaType = .movie
     @State private var showDeleteConfirmation = false
     @State private var itemToDelete: RankedItem?
+    @State private var selectedItem: RankedItem?
+    @State private var showDetailSheet = false
     
     var filteredItems: [RankedItem] {
-        guard let tier = selectedTier else {
-            return items.sorted { item1, item2 in
-                // Sort by tier priority, then by rank
-                let tierOrder: [Tier] = [.good, .medium, .bad]
-                let tier1Index = tierOrder.firstIndex(of: item1.tier) ?? 0
-                let tier2Index = tierOrder.firstIndex(of: item2.tier) ?? 0
-                
-                if tier1Index != tier2Index {
-                    return tier1Index < tier2Index
-                }
-                return item1.rank < item2.rank
-            }
-        }
-        return items.filter { $0.tier == tier }.sorted { $0.rank < $1.rank }
+        allItems
+            .filter { $0.mediaType == selectedMediaType }
+            .sorted { $0.rank < $1.rank }
     }
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Tier filter
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        FilterChip(title: "All", isSelected: selectedTier == nil) {
-                            selectedTier = nil
-                        }
-                        
-                        ForEach(Tier.allCases, id: \.self) { tier in
-                            let count = items.filter { $0.tier == tier }.count
-                            FilterChip(
-                                title: "\(tier.emoji) \(tier.rawValue) (\(count))",
-                                isSelected: selectedTier == tier
-                            ) {
-                                selectedTier = tier
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
+                // Media type picker
+                Picker("Media Type", selection: $selectedMediaType) {
+                    HStack {
+                        Image(systemName: "film")
+                        Text("Movies")
+                    }.tag(MediaType.movie)
+                    
+                    HStack {
+                        Image(systemName: "tv")
+                        Text("TV Shows")
+                    }.tag(MediaType.tv)
                 }
-                .background(.ultraThinMaterial)
+                .pickerStyle(.segmented)
+                .padding()
                 
-                if items.isEmpty {
+                if filteredItems.isEmpty {
                     Spacer()
-                    VStack(spacing: 12) {
-                        Image(systemName: "list.number")
-                            .font(.system(size: 50))
-                            .foregroundStyle(.secondary)
-                        Text("No rankings yet")
-                            .font(.title3)
-                            .foregroundStyle(.secondary)
-                        Text("Add movies and TV shows to get started")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                    }
-                    Spacer()
-                } else if filteredItems.isEmpty {
-                    Spacer()
-                    VStack(spacing: 12) {
-                        Image(systemName: "tray")
-                            .font(.system(size: 50))
-                            .foregroundStyle(.secondary)
-                        Text("No items in this tier")
-                            .foregroundStyle(.secondary)
-                    }
+                    emptyState
                     Spacer()
                 } else {
-                    List {
-                        ForEach(Array(filteredItems.enumerated()), id: \.element.id) { index, item in
-                            RankedItemRow(item: item, displayRank: index + 1)
-                                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                    Button(role: .destructive) {
-                                        itemToDelete = item
-                                        showDeleteConfirmation = true
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
-                                }
-                                .swipeActions(edge: .leading) {
-                                    Menu {
-                                        ForEach(Tier.allCases, id: \.self) { tier in
-                                            Button {
-                                                changeTier(item: item, to: tier)
-                                            } label: {
-                                                Label(tier.rawValue, systemImage: tier == item.tier ? "checkmark" : "")
-                                            }
-                                        }
-                                    } label: {
-                                        Label("Tier", systemImage: "arrow.up.arrow.down")
-                                    }
-                                    .tint(.orange)
-                                }
-                        }
-                    }
-                    .listStyle(.plain)
+                    rankingsList
                 }
             }
             .navigationTitle("Rankings")
@@ -118,42 +55,75 @@ struct RankedListView: View {
                     Text("Remove \"\(item.title)\" from your rankings?")
                 }
             }
+            .sheet(isPresented: $showDetailSheet) {
+                if let item = selectedItem {
+                    ItemDetailSheet(item: item)
+                }
+            }
         }
+    }
+    
+    private var emptyState: some View {
+        VStack(spacing: 12) {
+            Image(systemName: selectedMediaType == .movie ? "film" : "tv")
+                .font(.system(size: 50))
+                .foregroundStyle(.secondary)
+            Text("No \(selectedMediaType == .movie ? "movies" : "TV shows") ranked yet")
+                .font(.title3)
+                .foregroundStyle(.secondary)
+            Text("Add some from the Discover tab")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+    }
+    
+    private var rankingsList: some View {
+        List {
+            ForEach(Array(filteredItems.enumerated()), id: \.element.id) { index, item in
+                RankedItemRow(item: item, displayRank: index + 1)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectedItem = item
+                        showDetailSheet = true
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button(role: .destructive) {
+                            itemToDelete = item
+                            showDeleteConfirmation = true
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+            }
+            .onMove(perform: moveItems)
+        }
+        .listStyle(.plain)
     }
     
     private func deleteItem(_ item: RankedItem) {
+        let deletedRank = item.rank
+        let mediaType = item.mediaType
         modelContext.delete(item)
-        try? modelContext.save()
-    }
-    
-    private func changeTier(item: RankedItem, to newTier: Tier) {
-        guard item.tier != newTier else { return }
         
-        item.tier = newTier
-        item.rank = items.filter { $0.tier == newTier }.count + 1
-        item.comparisonCount = 0 // Reset comparisons for new tier
-        
-        try? modelContext.save()
-    }
-}
-
-// MARK: - Filter Chip
-struct FilterChip: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(isSelected ? .semibold : .regular)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(isSelected ? Color.orange : Color.secondary.opacity(0.2))
-                .foregroundStyle(isSelected ? .white : .primary)
-                .clipShape(Capsule())
+        // Reorder remaining items
+        let remainingItems = allItems.filter { $0.mediaType == mediaType && $0.rank > deletedRank }
+        for item in remainingItems {
+            item.rank -= 1
         }
+        
+        try? modelContext.save()
+    }
+    
+    private func moveItems(from source: IndexSet, to destination: Int) {
+        var items = filteredItems
+        items.move(fromOffsets: source, toOffset: destination)
+        
+        // Update ranks
+        for (index, item) in items.enumerated() {
+            item.rank = index + 1
+        }
+        
+        try? modelContext.save()
     }
 }
 
@@ -164,11 +134,22 @@ struct RankedItemRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // Rank number
-            Text("#\(displayRank)")
-                .font(.headline)
-                .foregroundStyle(.secondary)
-                .frame(width: 40)
+            // Rank number with medal for top 3
+            ZStack {
+                if displayRank <= 3 {
+                    Circle()
+                        .fill(medalColor)
+                        .frame(width: 36, height: 36)
+                    Text("\(displayRank)")
+                        .font(.headline.bold())
+                        .foregroundStyle(.white)
+                } else {
+                    Text("#\(displayRank)")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                        .frame(width: 40)
+                }
+            }
             
             // Poster
             AsyncImage(url: item.posterURL) { image in
@@ -199,12 +180,21 @@ struct RankedItemRow: View {
                             .foregroundStyle(.secondary)
                     }
                     
-                    Text(item.mediaType == .movie ? "Movie" : "TV")
-                        .font(.caption2)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .background(.quaternary)
-                        .clipShape(Capsule())
+                    if let rating = item.rating {
+                        HStack(spacing: 2) {
+                            Image(systemName: "star.fill")
+                                .font(.caption2)
+                                .foregroundStyle(.yellow)
+                            Text("\(rating)/10")
+                                .font(.caption)
+                        }
+                    }
+                    
+                    if item.review != nil {
+                        Image(systemName: "text.quote")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             
@@ -215,6 +205,154 @@ struct RankedItemRow: View {
                 .font(.title2)
         }
         .padding(.vertical, 4)
+    }
+    
+    private var medalColor: Color {
+        switch displayRank {
+        case 1: return .yellow
+        case 2: return .gray
+        case 3: return .orange
+        default: return .clear
+        }
+    }
+}
+
+// MARK: - Item Detail Sheet
+struct ItemDetailSheet: View {
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+    @Bindable var item: RankedItem
+    @State private var editedReview: String = ""
+    @State private var editedRating: Int?
+    @State private var isEditing = false
+    
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Header
+                    HStack(alignment: .top, spacing: 16) {
+                        AsyncImage(url: item.posterURL) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            Rectangle()
+                                .fill(.quaternary)
+                        }
+                        .frame(width: 100, height: 150)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(item.title)
+                                .font(.title2.bold())
+                            
+                            if let year = item.year {
+                                Text(year)
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            HStack {
+                                Text(item.tier.emoji)
+                                Text(item.tier.rawValue)
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            Text("Ranked #\(item.rank)")
+                                .font(.headline)
+                                .foregroundStyle(.orange)
+                        }
+                    }
+                    .padding(.horizontal)
+                    
+                    Divider()
+                    
+                    // Rating
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Your Rating")
+                            .font(.headline)
+                        
+                        HStack(spacing: 8) {
+                            ForEach(1...10, id: \.self) { rating in
+                                Button {
+                                    editedRating = rating
+                                    item.rating = rating
+                                    try? modelContext.save()
+                                } label: {
+                                    Image(systemName: rating <= (editedRating ?? item.rating ?? 0) ? "star.fill" : "star")
+                                        .foregroundStyle(rating <= (editedRating ?? item.rating ?? 0) ? .yellow : .gray)
+                                }
+                            }
+                            
+                            if let rating = editedRating ?? item.rating {
+                                Text("\(rating)/10")
+                                    .foregroundStyle(.secondary)
+                                    .padding(.leading, 8)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                    
+                    Divider()
+                    
+                    // Review
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Your Review")
+                                .font(.headline)
+                            Spacer()
+                            Button(isEditing ? "Done" : "Edit") {
+                                if isEditing {
+                                    item.review = editedReview.isEmpty ? nil : editedReview
+                                    try? modelContext.save()
+                                }
+                                isEditing.toggle()
+                            }
+                        }
+                        
+                        if isEditing {
+                            TextEditor(text: $editedReview)
+                                .frame(minHeight: 100)
+                                .padding(8)
+                                .background(Color(.systemGray6))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        } else if let review = item.review, !review.isEmpty {
+                            Text(review)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text("No review yet")
+                                .foregroundStyle(.tertiary)
+                                .italic()
+                        }
+                    }
+                    .padding(.horizontal)
+                    
+                    if !item.overview.isEmpty {
+                        Divider()
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Synopsis")
+                                .font(.headline)
+                            Text(item.overview)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+                .padding(.vertical)
+            }
+            .navigationTitle("Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .onAppear {
+                editedReview = item.review ?? ""
+                editedRating = item.rating
+            }
+        }
     }
 }
 

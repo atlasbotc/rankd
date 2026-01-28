@@ -8,6 +8,7 @@ struct SearchView: View {
     @State private var viewModel = RankingViewModel()
     @State private var selectedResult: TMDBSearchResult?
     @State private var showAddSheet = false
+    @State private var showComparisonFlow = false
     
     var body: some View {
         NavigationStack {
@@ -93,15 +94,35 @@ struct SearchView: View {
                     .listStyle(.plain)
                 }
             }
-            .navigationTitle("Add")
+            .navigationTitle("Search")
             .sheet(isPresented: $showAddSheet) {
                 if let result = selectedResult {
-                    AddItemSheet(result: result) { action in
-                        handleAddAction(result: result, action: action)
-                        showAddSheet = false
-                        selectedResult = nil
-                    }
+                    QuickAddSheet(
+                        result: result,
+                        status: itemStatus(result),
+                        onWatchlist: {
+                            addToWatchlist(result: result)
+                            showAddSheet = false
+                            selectedResult = nil
+                            viewModel.clearSearch()
+                        },
+                        onRank: {
+                            showAddSheet = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                showComparisonFlow = true
+                            }
+                        }
+                    )
                     .presentationDetents([.medium])
+                }
+            }
+            .fullScreenCover(isPresented: $showComparisonFlow) {
+                if let result = selectedResult {
+                    ComparisonFlowView(newItem: result)
+                        .onDisappear {
+                            viewModel.clearSearch()
+                            selectedResult = nil
+                        }
                 }
             }
         }
@@ -115,35 +136,6 @@ struct SearchView: View {
             return .watchlist
         }
         return .notAdded
-    }
-    
-    private func handleAddAction(result: TMDBSearchResult, action: AddAction) {
-        switch action {
-        case .rank(let tier):
-            addToRankings(result: result, tier: tier)
-        case .watchlist:
-            addToWatchlist(result: result)
-        }
-        viewModel.clearSearch()
-    }
-    
-    private func addToRankings(result: TMDBSearchResult, tier: Tier) {
-        let item = RankedItem(
-            tmdbId: result.id,
-            title: result.displayTitle,
-            overview: result.overview ?? "",
-            posterPath: result.posterPath,
-            releaseDate: result.displayDate,
-            mediaType: result.resolvedMediaType,
-            tier: tier
-        )
-        
-        // Set initial rank to be last in tier
-        let tierCount = rankedItems.filter { $0.tier == tier }.count
-        item.rank = tierCount + 1
-        
-        modelContext.insert(item)
-        try? modelContext.save()
     }
     
     private func addToWatchlist(result: TMDBSearchResult) {
@@ -165,12 +157,6 @@ struct SearchView: View {
 enum ItemStatus {
     case notAdded
     case ranked
-    case watchlist
-}
-
-// MARK: - Add Action
-enum AddAction {
-    case rank(Tier)
     case watchlist
 }
 
@@ -248,108 +234,6 @@ struct SearchResultRow: View {
         case .watchlist:
             Image(systemName: "bookmark.fill")
                 .foregroundStyle(.blue)
-        }
-    }
-}
-
-// MARK: - Add Item Sheet
-struct AddItemSheet: View {
-    let result: TMDBSearchResult
-    let onSelect: (AddAction) -> Void
-    
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
-                // Movie info
-                HStack(spacing: 16) {
-                    AsyncImage(url: result.posterURL) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        Rectangle()
-                            .fill(.quaternary)
-                    }
-                    .frame(width: 80, height: 120)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(result.displayTitle)
-                            .font(.title2.bold())
-                            .lineLimit(2)
-                        
-                        if let year = result.displayYear {
-                            Text(year)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    
-                    Spacer()
-                }
-                .padding(.horizontal)
-                
-                // Options
-                VStack(spacing: 16) {
-                    // Watchlist option
-                    Button {
-                        onSelect(.watchlist)
-                    } label: {
-                        HStack {
-                            Image(systemName: "bookmark")
-                            Text("Add to Watchlist")
-                                .fontWeight(.semibold)
-                            Spacer()
-                            Text("Haven't seen it")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue.opacity(0.15))
-                        .foregroundStyle(.blue)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    
-                    Divider()
-                        .padding(.vertical, 4)
-                    
-                    Text("Or rank it:")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    
-                    // Tier buttons
-                    ForEach(Tier.allCases, id: \.self) { tier in
-                        Button {
-                            onSelect(.rank(tier))
-                        } label: {
-                            HStack {
-                                Text(tier.emoji)
-                                Text(tier.rawValue)
-                                    .fontWeight(.semibold)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(tierColor(tier).opacity(0.15))
-                            .foregroundStyle(tierColor(tier))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
-                    }
-                }
-                .padding(.horizontal)
-                
-                Spacer()
-            }
-            .padding(.top)
-            .navigationTitle("Add")
-            .navigationBarTitleDisplayMode(.inline)
-        }
-    }
-    
-    private func tierColor(_ tier: Tier) -> Color {
-        switch tier {
-        case .good: return .green
-        case .medium: return .yellow
-        case .bad: return .red
         }
     }
 }

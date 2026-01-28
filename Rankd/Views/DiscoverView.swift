@@ -18,6 +18,7 @@ struct DiscoverView: View {
     
     @State private var selectedResult: TMDBSearchResult?
     @State private var showAddSheet = false
+    @State private var showComparisonFlow = false
     
     var body: some View {
         NavigationStack {
@@ -39,15 +40,27 @@ struct DiscoverView: View {
             }
             .sheet(isPresented: $showAddSheet) {
                 if let result = selectedResult {
-                    DiscoverAddSheet(
+                    QuickAddSheet(
                         result: result,
-                        status: itemStatus(result)
-                    ) { action in
-                        handleAddAction(result: result, action: action)
-                        showAddSheet = false
-                        selectedResult = nil
-                    }
+                        status: itemStatus(result),
+                        onWatchlist: {
+                            addToWatchlist(result: result)
+                            showAddSheet = false
+                            selectedResult = nil
+                        },
+                        onRank: {
+                            showAddSheet = false
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                showComparisonFlow = true
+                            }
+                        }
+                    )
                     .presentationDetents([.medium])
+                }
+            }
+            .fullScreenCover(isPresented: $showComparisonFlow) {
+                if let result = selectedResult {
+                    ComparisonFlowView(newItem: result)
                 }
             }
         }
@@ -132,7 +145,7 @@ struct DiscoverView: View {
     }
     
     private func loadContent() async {
-        isLoading = error != nil // Only show loading if we had an error
+        isLoading = error != nil
         error = nil
         
         do {
@@ -181,33 +194,6 @@ struct DiscoverView: View {
         return .notAdded
     }
     
-    private func handleAddAction(result: TMDBSearchResult, action: AddAction) {
-        switch action {
-        case .rank(let tier):
-            addToRankings(result: result, tier: tier)
-        case .watchlist:
-            addToWatchlist(result: result)
-        }
-    }
-    
-    private func addToRankings(result: TMDBSearchResult, tier: Tier) {
-        let item = RankedItem(
-            tmdbId: result.id,
-            title: result.displayTitle,
-            overview: result.overview ?? "",
-            posterPath: result.posterPath,
-            releaseDate: result.displayDate,
-            mediaType: result.resolvedMediaType,
-            tier: tier
-        )
-        
-        let tierCount = rankedItems.filter { $0.tier == tier }.count
-        item.rank = tierCount + 1
-        
-        modelContext.insert(item)
-        try? modelContext.save()
-    }
-    
     private func addToWatchlist(result: TMDBSearchResult) {
         let item = WatchlistItem(
             tmdbId: result.id,
@@ -220,6 +206,137 @@ struct DiscoverView: View {
         
         modelContext.insert(item)
         try? modelContext.save()
+    }
+}
+
+// MARK: - Quick Add Sheet
+struct QuickAddSheet: View {
+    let result: TMDBSearchResult
+    let status: ItemStatus
+    let onWatchlist: () -> Void
+    let onRank: () -> Void
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                // Movie info header
+                HStack(spacing: 16) {
+                    AsyncImage(url: result.posterURL) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Rectangle()
+                            .fill(.quaternary)
+                    }
+                    .frame(width: 80, height: 120)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(result.displayTitle)
+                            .font(.title2.bold())
+                            .lineLimit(2)
+                        
+                        HStack {
+                            if let year = result.displayYear {
+                                Text(year)
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            Text(result.resolvedMediaType == .movie ? "Movie" : "TV")
+                                .font(.caption)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(.quaternary)
+                                .clipShape(Capsule())
+                        }
+                        
+                        if let rating = result.voteAverage, rating > 0 {
+                            HStack(spacing: 4) {
+                                Image(systemName: "star.fill")
+                                    .foregroundStyle(.yellow)
+                                Text(String(format: "%.1f", rating))
+                            }
+                            .font(.subheadline)
+                        }
+                    }
+                    
+                    Spacer()
+                }
+                .padding(.horizontal)
+                
+                if status != .notAdded {
+                    // Already added message
+                    HStack {
+                        Image(systemName: status == .ranked ? "checkmark.circle.fill" : "bookmark.fill")
+                            .foregroundStyle(status == .ranked ? .green : .blue)
+                        Text(status == .ranked ? "Already in your rankings" : "Already in your watchlist")
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal)
+                } else {
+                    // Action buttons
+                    VStack(spacing: 16) {
+                        Text("Have you seen it?")
+                            .font(.headline)
+                        
+                        // Watchlist option
+                        Button(action: onWatchlist) {
+                            HStack {
+                                Image(systemName: "bookmark")
+                                VStack(alignment: .leading) {
+                                    Text("Not yet")
+                                        .fontWeight(.semibold)
+                                    Text("Add to Watchlist")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue.opacity(0.15))
+                            .foregroundStyle(.blue)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        
+                        // Rank option
+                        Button(action: onRank) {
+                            HStack {
+                                Image(systemName: "list.number")
+                                VStack(alignment: .leading) {
+                                    Text("Yes! Rank it")
+                                        .fontWeight(.semibold)
+                                    Text("Compare to find its place")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.orange.opacity(0.15))
+                            .foregroundStyle(.orange)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+                
+                Spacer()
+            }
+            .padding(.top)
+            .navigationTitle("Add")
+            .navigationBarTitleDisplayMode(.inline)
+        }
     }
 }
 
@@ -375,6 +492,7 @@ struct GenreDetailView: View {
     @State private var isLoading = true
     @State private var selectedResult: TMDBSearchResult?
     @State private var showAddSheet = false
+    @State private var showComparisonFlow = false
     
     var body: some View {
         ScrollView {
@@ -410,15 +528,27 @@ struct GenreDetailView: View {
         }
         .sheet(isPresented: $showAddSheet) {
             if let result = selectedResult {
-                DiscoverAddSheet(
+                QuickAddSheet(
                     result: result,
-                    status: itemStatus(result)
-                ) { action in
-                    handleAddAction(result: result, action: action)
-                    showAddSheet = false
-                    selectedResult = nil
-                }
+                    status: itemStatus(result),
+                    onWatchlist: {
+                        addToWatchlist(result: result)
+                        showAddSheet = false
+                        selectedResult = nil
+                    },
+                    onRank: {
+                        showAddSheet = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            showComparisonFlow = true
+                        }
+                    }
+                )
                 .presentationDetents([.medium])
+            }
+        }
+        .fullScreenCover(isPresented: $showComparisonFlow) {
+            if let result = selectedResult {
+                ComparisonFlowView(newItem: result)
             }
         }
     }
@@ -452,171 +582,17 @@ struct GenreDetailView: View {
         return .notAdded
     }
     
-    private func handleAddAction(result: TMDBSearchResult, action: AddAction) {
-        switch action {
-        case .rank(let tier):
-            let item = RankedItem(
-                tmdbId: result.id,
-                title: result.displayTitle,
-                overview: result.overview ?? "",
-                posterPath: result.posterPath,
-                releaseDate: result.displayDate,
-                mediaType: result.resolvedMediaType,
-                tier: tier
-            )
-            let tierCount = rankedItems.filter { $0.tier == tier }.count
-            item.rank = tierCount + 1
-            modelContext.insert(item)
-            
-        case .watchlist:
-            let item = WatchlistItem(
-                tmdbId: result.id,
-                title: result.displayTitle,
-                overview: result.overview ?? "",
-                posterPath: result.posterPath,
-                releaseDate: result.displayDate,
-                mediaType: result.resolvedMediaType
-            )
-            modelContext.insert(item)
-        }
+    private func addToWatchlist(result: TMDBSearchResult) {
+        let item = WatchlistItem(
+            tmdbId: result.id,
+            title: result.displayTitle,
+            overview: result.overview ?? "",
+            posterPath: result.posterPath,
+            releaseDate: result.displayDate,
+            mediaType: result.resolvedMediaType
+        )
+        modelContext.insert(item)
         try? modelContext.save()
-    }
-}
-
-// MARK: - Discover Add Sheet
-struct DiscoverAddSheet: View {
-    let result: TMDBSearchResult
-    let status: ItemStatus
-    let onSelect: (AddAction) -> Void
-    
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                // Movie info header
-                HStack(spacing: 16) {
-                    AsyncImage(url: result.posterURL) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        Rectangle()
-                            .fill(.quaternary)
-                    }
-                    .frame(width: 80, height: 120)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(result.displayTitle)
-                            .font(.title2.bold())
-                            .lineLimit(2)
-                        
-                        HStack {
-                            if let year = result.displayYear {
-                                Text(year)
-                                    .foregroundStyle(.secondary)
-                            }
-                            
-                            Text(result.resolvedMediaType == .movie ? "Movie" : "TV")
-                                .font(.caption)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(.quaternary)
-                                .clipShape(Capsule())
-                        }
-                        
-                        if let rating = result.voteAverage, rating > 0 {
-                            HStack(spacing: 4) {
-                                Image(systemName: "star.fill")
-                                    .foregroundStyle(.yellow)
-                                Text(String(format: "%.1f", rating))
-                            }
-                            .font(.subheadline)
-                        }
-                    }
-                    
-                    Spacer()
-                }
-                .padding(.horizontal)
-                
-                if status != .notAdded {
-                    // Already added message
-                    HStack {
-                        Image(systemName: status == .ranked ? "checkmark.circle.fill" : "bookmark.fill")
-                            .foregroundStyle(status == .ranked ? .green : .blue)
-                        Text(status == .ranked ? "Already in your rankings" : "Already in your watchlist")
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .padding(.horizontal)
-                } else {
-                    // Action buttons
-                    VStack(spacing: 12) {
-                        Text("Have you seen it?")
-                            .font(.headline)
-                        
-                        // Watchlist option
-                        Button {
-                            onSelect(.watchlist)
-                        } label: {
-                            HStack {
-                                Image(systemName: "bookmark")
-                                Text("Not yet — Add to Watchlist")
-                                    .fontWeight(.medium)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue.opacity(0.15))
-                            .foregroundStyle(.blue)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
-                        
-                        Text("Yes! Rate it:")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .padding(.top, 8)
-                        
-                        // Tier buttons
-                        HStack(spacing: 12) {
-                            ForEach(Tier.allCases, id: \.self) { tier in
-                                Button {
-                                    onSelect(.rank(tier))
-                                } label: {
-                                    VStack(spacing: 4) {
-                                        Text(tier.emoji)
-                                            .font(.title)
-                                        Text(tier.rawValue)
-                                            .font(.caption)
-                                            .fontWeight(.medium)
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 12)
-                                    .background(tierColor(tier).opacity(0.15))
-                                    .foregroundStyle(tierColor(tier))
-                                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                                }
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-                
-                Spacer()
-            }
-            .padding(.top)
-            .navigationTitle("Add")
-            .navigationBarTitleDisplayMode(.inline)
-        }
-    }
-    
-    private func tierColor(_ tier: Tier) -> Color {
-        switch tier {
-        case .good: return .green
-        case .medium: return .yellow
-        case .bad: return .red
-        }
     }
 }
 
