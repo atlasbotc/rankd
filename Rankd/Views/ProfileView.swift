@@ -48,6 +48,12 @@ struct ProfileView: View {
                         tasteSection
                     }
                     
+                    // Statistics
+                    statisticsButton
+                    
+                    // Watch Journal
+                    journalButton
+                    
                     // Compare Button
                     compareButton
                     
@@ -246,6 +252,40 @@ struct ProfileView: View {
         default:
             return "A healthy mix of movies and TV. You appreciate it all."
         }
+    }
+    
+    // MARK: - Journal Button
+    
+    private var journalButton: some View {
+        NavigationLink {
+            JournalView()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "book.closed.fill")
+                    .font(.title2)
+                    .foregroundStyle(.orange)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Watch Journal")
+                        .font(.headline)
+                    Text("Your ranking diary — \(rankedItems.count) \(rankedItems.count == 1 ? "entry" : "entries")")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.secondarySystemBackground))
+            )
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal)
     }
     
     // MARK: - Compare Button
