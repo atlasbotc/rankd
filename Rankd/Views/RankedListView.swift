@@ -37,23 +37,51 @@ struct RankedListView: View {
                     emptyState
                     Spacer()
                 } else {
-                    ScrollView {
-                        VStack(spacing: 20) {
-                            // Stats bar
+                    List {
+                        // Stats bar
+                        Section {
                             statsBar
-                            
-                            // Top 3 showcase
-                            if topThree.count >= 1 {
+                        }
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(EdgeInsets())
+                        
+                        // Top 3 showcase
+                        if topThree.count >= 1 {
+                            Section {
                                 topShowcase
                             }
-                            
-                            // Remaining rankings
-                            if !remainingItems.isEmpty {
-                                remainingList
+                            .listRowBackground(Color.clear)
+                            .listRowInsets(EdgeInsets())
+                        }
+                        
+                        // Remaining rankings (#4+)
+                        if remainingItems.count > 0 {
+                            Section {
+                                ForEach(Array(remainingItems.enumerated()), id: \.element.id) { index, item in
+                                    RankedItemRow(item: item, displayRank: index + 4)
+                                        .contentShape(Rectangle())
+                                        .onTapGesture {
+                                            selectedItem = item
+                                            showDetailSheet = true
+                                        }
+                                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                            Button(role: .destructive) {
+                                                itemToDelete = item
+                                                showDeleteConfirmation = true
+                                            } label: {
+                                                Label("Remove", systemImage: "trash")
+                                            }
+                                        }
+                                }
+                            } header: {
+                                Text("All Rankings")
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                    .textCase(nil)
                             }
                         }
-                        .padding(.bottom, 32)
                     }
+                    .listStyle(.plain)
                 }
             }
             .navigationTitle("Rankings")
@@ -180,44 +208,6 @@ struct RankedListView: View {
     }
     
     // MARK: - Remaining List
-    
-    private var remainingList: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Text("All Rankings")
-                    .font(.headline)
-                Spacer()
-            }
-            .padding(.horizontal)
-            .padding(.bottom, 8)
-            
-            List {
-                ForEach(Array(remainingItems.enumerated()), id: \.element.id) { index, item in
-                    RankedItemRow(item: item, displayRank: index + 4)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedItem = item
-                            showDetailSheet = true
-                        }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button(role: .destructive) {
-                                itemToDelete = item
-                                showDeleteConfirmation = true
-                            } label: {
-                                Label("Remove", systemImage: "trash")
-                            }
-                        }
-                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                }
-            }
-            .listStyle(.plain)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.secondarySystemBackground))
-            )
-            .padding(.horizontal)
-        }
-    }
     
     // MARK: - Empty State
     

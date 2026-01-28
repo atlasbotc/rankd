@@ -294,6 +294,12 @@ struct ComparisonFlowView: View {
     }
     
     private func saveItem() {
+        // Prevent duplicates
+        guard !allRankedItems.contains(where: { $0.tmdbId == newItem.id && $0.mediaType == newItem.resolvedMediaType }) else {
+            dismiss()
+            return
+        }
+        
         let rank = finalRank ?? (existingItems.count + 1)
         
         // Shift existing items down

@@ -12,7 +12,7 @@ struct WatchlistView: View {
     @State private var showDeleteConfirmation = false
     @State private var searchResultToRank: TMDBSearchResult?
     
-var body: some View {
+    var body: some View {
         NavigationStack {
             Group {
                 if items.isEmpty {
