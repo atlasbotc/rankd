@@ -334,7 +334,7 @@ struct MediaDetailView: View {
     private var actionButtons: some View {
         HStack(spacing: 12) {
             Button {
-                showAddSheet = true
+                addToWatchlist()
             } label: {
                 Label(isInWatchlist ? "In Watchlist" : "Watchlist", systemImage: isInWatchlist ? "bookmark.fill" : "bookmark")
                     .frame(maxWidth: .infinity)
@@ -346,7 +346,7 @@ struct MediaDetailView: View {
             .disabled(isInWatchlist)
             
             Button {
-                showAddSheet = true
+                showComparisonFlow = true
             } label: {
                 Label("Rank It", systemImage: "list.number")
                     .frame(maxWidth: .infinity)

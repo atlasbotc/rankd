@@ -4,29 +4,15 @@ import SwiftData
 struct WatchlistView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \WatchlistItem.dateAdded, order: .reverse) private var items: [WatchlistItem]
+    @Query private var rankedItems: [RankedItem]
     
     @State private var itemToRank: WatchlistItem?
     @State private var showComparisonFlow = false
     @State private var itemToDelete: WatchlistItem?
     @State private var showDeleteConfirmation = false
+    @State private var searchResultToRank: TMDBSearchResult?
     
-    // Convert WatchlistItem to TMDBSearchResult for comparison flow
-    private var itemAsSearchResult: TMDBSearchResult? {
-        guard let item = itemToRank else { return nil }
-        return TMDBSearchResult(
-            id: item.tmdbId,
-            title: item.mediaType == .movie ? item.title : nil,
-            name: item.mediaType == .tv ? item.title : nil,
-            overview: item.overview,
-            posterPath: item.posterPath,
-            releaseDate: item.mediaType == .movie ? item.releaseDate : nil,
-            firstAirDate: item.mediaType == .tv ? item.releaseDate : nil,
-            mediaType: item.mediaType.rawValue,
-            voteAverage: nil
-        )
-    }
-    
-    var body: some View {
+var body: some View {
         NavigationStack {
             Group {
                 if items.isEmpty {
@@ -49,16 +35,20 @@ struct WatchlistView: View {
                 }
             }
             .fullScreenCover(isPresented: $showComparisonFlow) {
-                if let result = itemAsSearchResult {
+                if let result = searchResultToRank {
                     ComparisonFlowView(newItem: result)
-                        .onDisappear {
-                            // Remove from watchlist after ranking
-                            if let item = itemToRank {
-                                modelContext.delete(item)
-                                try? modelContext.save()
-                            }
-                            itemToRank = nil
-                        }
+                }
+            }
+            .onChange(of: showComparisonFlow) { _, isShowing in
+                if !isShowing {
+                    // Check if item was actually ranked, then remove from watchlist
+                    if let item = itemToRank,
+                       rankedItems.contains(where: { $0.tmdbId == item.tmdbId }) {
+                        modelContext.delete(item)
+                        try? modelContext.save()
+                    }
+                    itemToRank = nil
+                    searchResultToRank = nil
                 }
             }
         }
@@ -95,6 +85,17 @@ struct WatchlistView: View {
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
                         Button {
                             itemToRank = item
+                            searchResultToRank = TMDBSearchResult(
+                                id: item.tmdbId,
+                                title: item.mediaType == .movie ? item.title : nil,
+                                name: item.mediaType == .tv ? item.title : nil,
+                                overview: item.overview,
+                                posterPath: item.posterPath,
+                                releaseDate: item.mediaType == .movie ? item.releaseDate : nil,
+                                firstAirDate: item.mediaType == .tv ? item.releaseDate : nil,
+                                mediaType: item.mediaType.rawValue,
+                                voteAverage: nil
+                            )
                             showComparisonFlow = true
                         } label: {
                             Label("Watched", systemImage: "checkmark.circle")

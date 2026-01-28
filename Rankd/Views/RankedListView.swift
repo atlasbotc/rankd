@@ -21,15 +21,8 @@ struct RankedListView: View {
             VStack(spacing: 0) {
                 // Media type picker
                 Picker("Media Type", selection: $selectedMediaType) {
-                    HStack {
-                        Image(systemName: "film")
-                        Text("Movies")
-                    }.tag(MediaType.movie)
-                    
-                    HStack {
-                        Image(systemName: "tv")
-                        Text("TV Shows")
-                    }.tag(MediaType.tv)
+                    Text("Movies").tag(MediaType.movie)
+                    Text("TV Shows").tag(MediaType.tv)
                 }
                 .pickerStyle(.segmented)
                 .padding()
