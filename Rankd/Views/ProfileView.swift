@@ -7,6 +7,7 @@ struct ProfileView: View {
     
     @State private var showCompareView = false
     @State private var showLetterboxdImport = false
+    @State private var showShareSheet = false
     
     private var movieItems: [RankedItem] {
         rankedItems.filter { $0.mediaType == .movie }.sorted { $0.rank < $1.rank }
@@ -20,6 +21,16 @@ struct ProfileView: View {
         Array(rankedItems.sorted { $0.dateAdded > $1.dateAdded }
             .sorted { $0.rank < $1.rank }
             .prefix(4))
+    }
+    
+    private func buildShareCardData() -> ShareCardData {
+        ShareCardData(
+            items: Array(rankedItems),
+            posterImages: [:], // Will be loaded by ShareCardGenerator
+            movieCount: movieItems.count,
+            tvCount: tvItems.count,
+            tastePersonality: tastePersonality
+        )
     }
     
     var body: some View {
@@ -51,6 +62,19 @@ struct ProfileView: View {
                 .padding(.vertical)
             }
             .navigationTitle("Profile")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showShareSheet = true
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .disabled(rankedItems.isEmpty)
+                }
+            }
+            .sheet(isPresented: $showShareSheet) {
+                ShareProfileSheet(cardData: buildShareCardData())
+            }
             .sheet(isPresented: $showLetterboxdImport) {
                 LetterboxdImportView()
             }
