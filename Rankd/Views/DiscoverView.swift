@@ -16,10 +16,6 @@ struct DiscoverView: View {
     @State private var isLoading = true
     @State private var error: String?
     
-    @State private var selectedResult: TMDBSearchResult?
-    @State private var showAddSheet = false
-    @State private var showComparisonFlow = false
-    
     var body: some View {
         NavigationStack {
             Group {
@@ -38,31 +34,6 @@ struct DiscoverView: View {
             .task {
                 await loadContent()
             }
-            .sheet(isPresented: $showAddSheet) {
-                if let result = selectedResult {
-                    QuickAddSheet(
-                        result: result,
-                        status: itemStatus(result),
-                        onWatchlist: {
-                            addToWatchlist(result: result)
-                            showAddSheet = false
-                            selectedResult = nil
-                        },
-                        onRank: {
-                            showAddSheet = false
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                showComparisonFlow = true
-                            }
-                        }
-                    )
-                    .presentationDetents([.medium])
-                }
-            }
-            .fullScreenCover(isPresented: $showComparisonFlow) {
-                if let result = selectedResult {
-                    ComparisonFlowView(newItem: result)
-                }
-            }
         }
     }
     
@@ -74,7 +45,6 @@ struct DiscoverView: View {
                     DiscoverSection(
                         title: "🔥 Trending This Week",
                         items: trending,
-                        onTap: { selectItem($0) },
                         itemStatus: itemStatus
                     )
                 }
@@ -84,7 +54,6 @@ struct DiscoverView: View {
                     DiscoverSection(
                         title: "🎬 Popular Movies",
                         items: popularMovies,
-                        onTap: { selectItem($0) },
                         itemStatus: itemStatus
                     )
                 }
@@ -94,7 +63,6 @@ struct DiscoverView: View {
                     DiscoverSection(
                         title: "📺 Popular TV Shows",
                         items: popularTV,
-                        onTap: { selectItem($0) },
                         itemStatus: itemStatus
                     )
                 }
@@ -104,7 +72,6 @@ struct DiscoverView: View {
                     DiscoverSection(
                         title: "⭐ Top Rated Movies",
                         items: topRatedMovies,
-                        onTap: { selectItem($0) },
                         itemStatus: itemStatus
                     )
                 }
@@ -114,7 +81,6 @@ struct DiscoverView: View {
                     DiscoverSection(
                         title: "🏆 Top Rated TV",
                         items: topRatedTV,
-                        onTap: { selectItem($0) },
                         itemStatus: itemStatus
                     )
                 }
@@ -192,20 +158,6 @@ struct DiscoverView: View {
             return .watchlist
         }
         return .notAdded
-    }
-    
-    private func addToWatchlist(result: TMDBSearchResult) {
-        let item = WatchlistItem(
-            tmdbId: result.id,
-            title: result.displayTitle,
-            overview: result.overview ?? "",
-            posterPath: result.posterPath,
-            releaseDate: result.displayDate,
-            mediaType: result.resolvedMediaType
-        )
-        
-        modelContext.insert(item)
-        try? modelContext.save()
     }
 }
 
@@ -344,7 +296,6 @@ struct QuickAddSheet: View {
 struct DiscoverSection: View {
     let title: String
     let items: [TMDBSearchResult]
-    let onTap: (TMDBSearchResult) -> Void
     let itemStatus: (TMDBSearchResult) -> ItemStatus
     
     var body: some View {
@@ -357,7 +308,6 @@ struct DiscoverSection: View {
                 LazyHStack(spacing: 12) {
                     ForEach(items) { item in
                         DiscoverCard(item: item, status: itemStatus(item))
-                            .onTapGesture { onTap(item) }
                     }
                 }
                 .padding(.horizontal)
@@ -372,57 +322,61 @@ struct DiscoverCard: View {
     let status: ItemStatus
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            ZStack(alignment: .topTrailing) {
-                AsyncImage(url: item.posterURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(.quaternary)
-                        .overlay {
-                            Image(systemName: item.resolvedMediaType == .movie ? "film" : "tv")
-                                .font(.title)
-                                .foregroundStyle(.tertiary)
-                        }
-                }
-                .frame(width: 120, height: 180)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                
-                // Status badge
-                if status != .notAdded {
-                    statusBadge
-                        .padding(6)
-                }
-            }
-            
-            Text(item.displayTitle)
-                .font(.caption)
-                .fontWeight(.medium)
-                .lineLimit(2)
-                .frame(width: 120, alignment: .leading)
-            
-            HStack(spacing: 4) {
-                if let year = item.displayYear {
-                    Text(year)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+        NavigationLink(destination: MediaDetailView(tmdbId: item.id, mediaType: item.resolvedMediaType)) {
+            VStack(alignment: .leading, spacing: 6) {
+                ZStack(alignment: .topTrailing) {
+                    AsyncImage(url: item.posterURL) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Rectangle()
+                            .fill(.quaternary)
+                            .overlay {
+                                Image(systemName: item.resolvedMediaType == .movie ? "film" : "tv")
+                                    .font(.title)
+                                    .foregroundStyle(.tertiary)
+                            }
+                    }
+                    .frame(width: 120, height: 180)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    
+                    // Status badge
+                    if status != .notAdded {
+                        statusBadge
+                            .padding(6)
+                    }
                 }
                 
-                if let rating = item.voteAverage, rating > 0 {
-                    HStack(spacing: 2) {
-                        Image(systemName: "star.fill")
-                            .font(.caption2)
-                            .foregroundStyle(.yellow)
-                        Text(String(format: "%.1f", rating))
+                Text(item.displayTitle)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .lineLimit(2)
+                    .frame(width: 120, alignment: .leading)
+                    .foregroundStyle(.primary)
+                
+                HStack(spacing: 4) {
+                    if let year = item.displayYear {
+                        Text(year)
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
+                    
+                    if let rating = item.voteAverage, rating > 0 {
+                        HStack(spacing: 2) {
+                            Image(systemName: "star.fill")
+                                .font(.caption2)
+                                .foregroundStyle(.yellow)
+                            Text(String(format: "%.1f", rating))
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
             }
+            .opacity(status == .notAdded ? 1 : 0.7)
         }
-        .opacity(status == .notAdded ? 1 : 0.7)
+        .buttonStyle(.plain)
     }
     
     @ViewBuilder
@@ -483,16 +437,12 @@ struct GenreGrid: View {
 struct GenreDetailView: View {
     let genre: TMDBGenre
     
-    @Environment(\.modelContext) private var modelContext
     @Query private var rankedItems: [RankedItem]
     @Query private var watchlistItems: [WatchlistItem]
     
     @State private var movies: [TMDBSearchResult] = []
     @State private var tvShows: [TMDBSearchResult] = []
     @State private var isLoading = true
-    @State private var selectedResult: TMDBSearchResult?
-    @State private var showAddSheet = false
-    @State private var showComparisonFlow = false
     
     var body: some View {
         ScrollView {
@@ -501,7 +451,6 @@ struct GenreDetailView: View {
                     DiscoverSection(
                         title: "Movies",
                         items: movies,
-                        onTap: { selectItem($0) },
                         itemStatus: itemStatus
                     )
                 }
@@ -510,7 +459,6 @@ struct GenreDetailView: View {
                     DiscoverSection(
                         title: "TV Shows",
                         items: tvShows,
-                        onTap: { selectItem($0) },
                         itemStatus: itemStatus
                     )
                 }
@@ -525,31 +473,6 @@ struct GenreDetailView: View {
         }
         .task {
             await loadContent()
-        }
-        .sheet(isPresented: $showAddSheet) {
-            if let result = selectedResult {
-                QuickAddSheet(
-                    result: result,
-                    status: itemStatus(result),
-                    onWatchlist: {
-                        addToWatchlist(result: result)
-                        showAddSheet = false
-                        selectedResult = nil
-                    },
-                    onRank: {
-                        showAddSheet = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            showComparisonFlow = true
-                        }
-                    }
-                )
-                .presentationDetents([.medium])
-            }
-        }
-        .fullScreenCover(isPresented: $showComparisonFlow) {
-            if let result = selectedResult {
-                ComparisonFlowView(newItem: result)
-            }
         }
     }
     
@@ -567,11 +490,6 @@ struct GenreDetailView: View {
         isLoading = false
     }
     
-    private func selectItem(_ result: TMDBSearchResult) {
-        selectedResult = result
-        showAddSheet = true
-    }
-    
     private func itemStatus(_ result: TMDBSearchResult) -> ItemStatus {
         if rankedItems.contains(where: { $0.tmdbId == result.id }) {
             return .ranked
@@ -580,19 +498,6 @@ struct GenreDetailView: View {
             return .watchlist
         }
         return .notAdded
-    }
-    
-    private func addToWatchlist(result: TMDBSearchResult) {
-        let item = WatchlistItem(
-            tmdbId: result.id,
-            title: result.displayTitle,
-            overview: result.overview ?? "",
-            posterPath: result.posterPath,
-            releaseDate: result.displayDate,
-            mediaType: result.resolvedMediaType
-        )
-        modelContext.insert(item)
-        try? modelContext.save()
     }
 }
 

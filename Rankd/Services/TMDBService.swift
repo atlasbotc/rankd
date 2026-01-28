@@ -168,6 +168,32 @@ actor TMDBService {
         return try await fetchResults(from: urlString, defaultMediaType: "tv")
     }
     
+    // MARK: - Detail Endpoints
+    
+    func getMovieDetails(id: Int) async throws -> TMDBMovieDetail {
+        let urlString = "\(Config.tmdbBaseURL)/movie/\(id)?api_key=\(Config.tmdbApiKey)&append_to_response=credits"
+        guard let url = URL(string: urlString) else { throw TMDBError.invalidURL }
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 401 {
+            throw TMDBError.invalidAPIKey
+        }
+        
+        return try JSONDecoder().decode(TMDBMovieDetail.self, from: data)
+    }
+    
+    func getTVDetails(id: Int) async throws -> TMDBTVDetail {
+        let urlString = "\(Config.tmdbBaseURL)/tv/\(id)?api_key=\(Config.tmdbApiKey)&append_to_response=credits"
+        guard let url = URL(string: urlString) else { throw TMDBError.invalidURL }
+        
+        let (data, response) = try await URLSession.shared.data(from: url)
+        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 401 {
+            throw TMDBError.invalidAPIKey
+        }
+        
+        return try JSONDecoder().decode(TMDBTVDetail.self, from: data)
+    }
+    
     // MARK: - Helper
     
     private func fetchResults(from urlString: String, defaultMediaType: String? = nil) async throws -> [TMDBSearchResult] {
