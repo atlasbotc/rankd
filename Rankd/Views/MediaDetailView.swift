@@ -15,7 +15,6 @@ struct MediaDetailView: View {
     @State private var isLoading = true
     @State private var error: String?
     
-    @State private var showAddSheet = false
     @State private var showComparisonFlow = false
     
     private var isRanked: Bool {
@@ -46,25 +45,6 @@ struct MediaDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await loadDetails()
-        }
-        .sheet(isPresented: $showAddSheet) {
-            if let result = searchResult {
-                QuickAddSheet(
-                    result: result,
-                    status: itemStatus,
-                    onWatchlist: {
-                        addToWatchlist()
-                        showAddSheet = false
-                    },
-                    onRank: {
-                        showAddSheet = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            showComparisonFlow = true
-                        }
-                    }
-                )
-                .presentationDetents([.medium])
-            }
         }
         .fullScreenCover(isPresented: $showComparisonFlow) {
             if let result = searchResult {

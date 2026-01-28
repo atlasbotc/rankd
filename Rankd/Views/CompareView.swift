@@ -7,7 +7,6 @@ struct CompareView: View {
     @State private var viewModel = RankingViewModel()
     @State private var currentPair: (RankedItem, RankedItem)?
     @State private var selectedTier: Tier?
-    @State private var animateChoice = false
     @State private var chosenItem: RankedItem?
     
     var availableTiers: [Tier] {
