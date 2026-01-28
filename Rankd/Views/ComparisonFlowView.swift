@@ -12,12 +12,13 @@ struct ComparisonFlowView: View {
     @State private var currentComparison: RankedItem?
     @State private var searchRange: Range<Int> = 0..<0
     @State private var finalRank: Int?
+    @State private var tierSelected = false
     @State private var showReviewStep = false
     @State private var review: String = ""
     @State private var tier: Tier = .good
     @State private var hasStarted = false
     
-    /// Items filtered by the same media type, sorted by rank
+    /// All items of the same media type, sorted by rank
     private var existingItems: [RankedItem] {
         allRankedItems
             .filter { $0.mediaType == newItem.resolvedMediaType }
@@ -27,12 +28,13 @@ struct ComparisonFlowView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                if showReviewStep {
+                if !tierSelected {
+                    // Step 1: Pick tier first (green/yellow/red)
+                    tierSelectionStep
+                } else if showReviewStep {
                     reviewStep
                 } else if let comparison = currentComparison {
                     comparisonStep(comparison)
-                } else if existingItems.isEmpty && hasStarted {
-                    firstItemStep
                 } else if finalRank != nil {
                     ProgressView()
                         .onAppear { showReviewStep = true }
@@ -55,23 +57,23 @@ struct ComparisonFlowView: View {
         }
     }
     
-    // MARK: - First Item Step
-    private var firstItemStep: some View {
+    // MARK: - Tier Selection Step (always shown first)
+    private var tierSelectionStep: some View {
         VStack(spacing: 24) {
             itemHeader
             
-            Text("This is your first \(newItem.resolvedMediaType == .movie ? "movie" : "TV show")!")
-                .font(.headline)
+            Text("How was it?")
+                .font(.title2.bold())
             
-            Text("Pick a tier to get started:")
+            Text("Pick a tier:")
                 .foregroundStyle(.secondary)
             
             VStack(spacing: 12) {
                 ForEach(Tier.allCases, id: \.self) { t in
                     Button {
                         tier = t
-                        finalRank = 1
-                        showReviewStep = true
+                        tierSelected = true
+                        // Comparisons will start via onAppear in the else branch
                     } label: {
                         HStack {
                             Text(t.emoji)
@@ -151,38 +153,21 @@ struct ComparisonFlowView: View {
             VStack(spacing: 24) {
                 itemHeader
                 
-                if let rank = finalRank {
-                    Text("Ranked #\(rank) in \(newItem.resolvedMediaType == .movie ? "Movies" : "TV Shows")!")
-                        .font(.headline)
-                        .foregroundStyle(.orange)
-                }
-                
-                // Tier selection
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Tier")
+                // Show selected tier + rank
+                HStack(spacing: 12) {
+                    Text(tier.emoji)
+                        .font(.title)
+                    Text(tier.rawValue)
                         .font(.headline)
                     
-                    HStack(spacing: 12) {
-                        ForEach(Tier.allCases, id: \.self) { t in
-                            Button {
-                                tier = t
-                            } label: {
-                                VStack(spacing: 4) {
-                                    Text(t.emoji)
-                                        .font(.title2)
-                                    Text(t.rawValue)
-                                        .font(.caption)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(tier == t ? tierColor(t).opacity(0.3) : Color(.systemGray6))
-                                .foregroundStyle(tier == t ? tierColor(t) : .secondary)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                            }
-                        }
+                    if let rank = finalRank {
+                        Text("•")
+                            .foregroundStyle(.secondary)
+                        Text("#\(rank) in \(newItem.resolvedMediaType == .movie ? "Movies" : "TV Shows")")
+                            .font(.headline)
+                            .foregroundStyle(.orange)
                     }
                 }
-                .padding(.horizontal)
                 
                 // Review
                 VStack(alignment: .leading, spacing: 12) {
