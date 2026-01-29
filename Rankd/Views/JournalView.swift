@@ -218,7 +218,7 @@ struct JournalView: View {
                 // Tier filters
                 ForEach(JournalTierFilter.allCases) { filter in
                     FilterChip(
-                        label: filter.rawValue,
+                        title: filter.rawValue,
                         isSelected: selectedTierFilters.contains(filter)
                     ) {
                         toggleTierFilter(filter)
@@ -228,7 +228,7 @@ struct JournalView: View {
                 // Media type filters
                 ForEach(JournalMediaFilter.allCases) { filter in
                     FilterChip(
-                        label: filter.rawValue,
+                        title: filter.rawValue,
                         isSelected: selectedMediaFilters.contains(filter)
                     ) {
                         toggleMediaFilter(filter)
@@ -237,7 +237,7 @@ struct JournalView: View {
                 
                 // Has Review filter
                 FilterChip(
-                    label: "Has Review",
+                    title: "Has Review",
                     isSelected: filterHasReview
                 ) {
                     filterHasReview.toggle()
@@ -468,27 +468,6 @@ private struct JournalEntryCard: View {
 }
 
 // MARK: - Filter Chip
-
-private struct FilterChip: View {
-    let label: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Text(label)
-                .font(.caption.weight(.medium))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(isSelected ? Color.orange : Color(.secondarySystemBackground))
-                )
-                .foregroundStyle(isSelected ? .white : .primary)
-        }
-        .buttonStyle(.plain)
-    }
-}
 
 #Preview {
     NavigationStack {
