@@ -8,8 +8,12 @@ struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
     
     @AppStorage("displayName") private var displayName: String = ""
+    @AppStorage("username") private var username: String = ""
     @AppStorage("memberSinceDate") private var memberSinceDateString: String = ""
     @AppStorage("streakDates") private var streakDatesString: String = ""
+    @AppStorage("notificationsEnabled") private var notificationsEnabled: Bool = false
+    
+    @StateObject private var notificationManager = NotificationManager.shared
     
     @State private var showCompareView = false
     @State private var showLetterboxdImport = false
@@ -161,6 +165,7 @@ struct ProfileView: View {
                     VStack(spacing: RankdSpacing.sm) {
                         statisticsCard
                         journalCard
+                        activityFeedCard
                         compareCard
                     }
                     .padding(.horizontal, RankdSpacing.md)
@@ -175,6 +180,12 @@ struct ProfileView: View {
             }
             .background(RankdColors.background)
             .navigationTitle("Profile")
+            .task {
+                if notificationsEnabled {
+                    await notificationManager.refreshAuthorizationStatus()
+                    await scheduleStreakReminderIfNeeded()
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -655,6 +666,19 @@ struct ProfileView: View {
         }
     }
     
+    private var activityFeedCard: some View {
+        NavigationLink {
+            ActivityFeedView()
+        } label: {
+            ProfileNavCard(
+                icon: "clock.arrow.circlepath",
+                title: "Activity",
+                subtitle: "Your recent ranking activity"
+            )
+        }
+        .buttonStyle(RankdPressStyle())
+    }
+    
     private var compareCard: some View {
         Button {
             showCompareView = true
@@ -688,6 +712,17 @@ struct ProfileView: View {
                     subtitle: displayName.isEmpty ? "Set your name" : displayName,
                     destination: AnyView(displayNameEditor)
                 )
+                
+                // Username
+                settingsRow(
+                    icon: "at",
+                    title: "Username",
+                    subtitle: username.isEmpty ? "Set a unique handle" : "@\(username)",
+                    destination: AnyView(usernameEditor)
+                )
+                
+                // Notifications toggle
+                notificationToggleRow
                 
                 // Import from Letterboxd
                 Button {
@@ -794,6 +829,66 @@ struct ProfileView: View {
         }
         .navigationTitle("Display Name")
         .navigationBarTitleDisplayMode(.inline)
+    }
+    
+    // MARK: - Notification Toggle
+    
+    private var notificationToggleRow: some View {
+        HStack(spacing: RankdSpacing.sm) {
+            Image(systemName: "bell.fill")
+                .font(RankdTypography.headingSmall)
+                .foregroundStyle(RankdColors.textSecondary)
+                .frame(width: 32)
+            
+            VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
+                Text("Notifications")
+                    .font(RankdTypography.headingSmall)
+                    .foregroundStyle(RankdColors.textPrimary)
+                Text(notificationsEnabled ? "Reminders & streaks" : "Off")
+                    .font(RankdTypography.bodySmall)
+                    .foregroundStyle(RankdColors.textTertiary)
+            }
+            
+            Spacer()
+            
+            Toggle("", isOn: $notificationsEnabled)
+                .labelsHidden()
+                .tint(RankdColors.brand)
+        }
+        .padding(RankdSpacing.md)
+        .background(RankdColors.surfacePrimary)
+        .onChange(of: notificationsEnabled) { _, enabled in
+            Task {
+                if enabled {
+                    let granted = await notificationManager.requestPermission()
+                    if !granted {
+                        notificationsEnabled = false
+                        if notificationManager.isDenied {
+                            // Open settings if previously denied
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                await UIApplication.shared.open(url)
+                            }
+                        }
+                    } else {
+                        // Schedule streak reminder now
+                        await scheduleStreakReminderIfNeeded()
+                    }
+                } else {
+                    notificationManager.cancelAllNotifications()
+                }
+            }
+        }
+    }
+    
+    private func scheduleStreakReminderIfNeeded() async {
+        let streak = currentStreak
+        guard streak > 0, notificationsEnabled else { return }
+        
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let rankedToday = rankedItems.contains { calendar.isDate($0.dateAdded, inSameDayAs: today) }
+        
+        await notificationManager.scheduleStreakReminder(streak: streak, rankedToday: rankedToday)
     }
     
     private func resetAllData() {

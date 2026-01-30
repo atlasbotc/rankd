@@ -35,6 +35,17 @@ struct WatchlistView: View {
     @State private var sortOption: WatchlistSortOption = .dateNewest
     @State private var filterOption: WatchlistFilter = .all
     
+    // Notification reminder states
+    @State private var itemToRemind: WatchlistItem?
+    @State private var showReminderOptions = false
+    @State private var showCustomDatePicker = false
+    @State private var customReminderDate = Date()
+    @State private var showReminderConfirmation = false
+    @State private var reminderConfirmationTitle = ""
+    @State private var showPermissionDeniedAlert = false
+    
+    @StateObject private var notificationManager = NotificationManager.shared
+    
     private var filteredAndSorted: [WatchlistItem] {
         let filtered: [WatchlistItem]
         switch filterOption {
@@ -121,6 +132,106 @@ struct WatchlistView: View {
                     searchResultToRank = nil
                 }
             }
+            .sheet(isPresented: $showCustomDatePicker) {
+                customDatePickerSheet
+            }
+            .alert("Reminder Set", isPresented: $showReminderConfirmation) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("We'll remind you about \"\(reminderConfirmationTitle)\"")
+            }
+            .alert("Notifications Disabled", isPresented: $showPermissionDeniedAlert) {
+                Button("Open Settings") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Enable notifications in Settings to receive watchlist reminders.")
+            }
+        }
+    }
+    
+    // MARK: - Custom Date Picker Sheet
+    
+    private var customDatePickerSheet: some View {
+        NavigationStack {
+            VStack(spacing: RankdSpacing.lg) {
+                if let item = itemToRemind {
+                    Text("Remind me about \"\(item.title)\"")
+                        .font(RankdTypography.headingMedium)
+                        .foregroundStyle(RankdColors.textPrimary)
+                        .multilineTextAlignment(.center)
+                        .padding(.top, RankdSpacing.lg)
+                }
+                
+                DatePicker(
+                    "Reminder Date",
+                    selection: $customReminderDate,
+                    in: Date()...,
+                    displayedComponents: [.date, .hourAndMinute]
+                )
+                .datePickerStyle(.graphical)
+                .padding(.horizontal, RankdSpacing.md)
+                
+                Spacer()
+            }
+            .background(RankdColors.background)
+            .navigationTitle("Pick a Date")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        showCustomDatePicker = false
+                        itemToRemind = nil
+                    }
+                    .foregroundStyle(RankdColors.textSecondary)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Set Reminder") {
+                        if let item = itemToRemind {
+                            scheduleReminder(for: item, date: customReminderDate)
+                        }
+                        showCustomDatePicker = false
+                        itemToRemind = nil
+                    }
+                    .font(RankdTypography.labelLarge)
+                    .foregroundStyle(RankdColors.brand)
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+    
+    // MARK: - Reminder Scheduling
+    
+    private func scheduleReminder(for item: WatchlistItem, option: ReminderOption) {
+        guard let date = option.triggerDate() else { return }
+        scheduleReminder(for: item, date: date)
+    }
+    
+    private func scheduleReminder(for item: WatchlistItem, date: Date) {
+        Task {
+            // Check permission
+            await notificationManager.refreshAuthorizationStatus()
+            
+            if notificationManager.isDenied {
+                showPermissionDeniedAlert = true
+                return
+            }
+            
+            await notificationManager.scheduleWatchlistReminder(
+                itemId: item.id.uuidString,
+                title: item.title,
+                mediaType: item.mediaType == .movie ? "movie" : "show",
+                posterPath: item.posterPath,
+                at: date
+            )
+            
+            reminderConfirmationTitle = item.title
+            showReminderConfirmation = true
+            HapticManager.notification(.success)
         }
     }
     
@@ -305,6 +416,24 @@ struct WatchlistView: View {
                                             Image(systemName: "checkmark")
                                         }
                                     }
+                                }
+                            }
+                            
+                            Section("Remind Me") {
+                                ForEach(ReminderOption.allCases.filter { $0 != .custom }) { option in
+                                    Button {
+                                        scheduleReminder(for: item, option: option)
+                                    } label: {
+                                        Label(option.rawValue, systemImage: option.icon)
+                                    }
+                                }
+                                
+                                Button {
+                                    itemToRemind = item
+                                    customReminderDate = Date().addingTimeInterval(86400)
+                                    showCustomDatePicker = true
+                                } label: {
+                                    Label(ReminderOption.custom.rawValue, systemImage: ReminderOption.custom.icon)
                                 }
                             }
                             
