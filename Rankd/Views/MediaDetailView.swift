@@ -326,6 +326,20 @@ struct MediaDetailView: View {
     
     // MARK: - Components
     
+    private var addToListOnlyButton: some View {
+        Button {
+            showAddToList = true
+        } label: {
+            Label("Add to List", systemImage: "list.bullet.rectangle.portrait")
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color.purple.opacity(0.15))
+                .foregroundStyle(.purple)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+        .padding(.horizontal)
+    }
+    
     private var actionButtons: some View {
         VStack(spacing: 8) {
             HStack(spacing: 12) {
