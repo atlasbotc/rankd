@@ -168,6 +168,16 @@ actor TMDBService {
         return try await fetchResults(from: urlString, defaultMediaType: "tv")
     }
     
+    func discoverTopRatedMovies(genreId: Int, page: Int = 1) async throws -> [TMDBSearchResult] {
+        let urlString = "\(Config.tmdbBaseURL)/discover/movie?api_key=\(Config.tmdbApiKey)&with_genres=\(genreId)&sort_by=vote_average.desc&vote_count.gte=200&page=\(page)"
+        return try await fetchResults(from: urlString, defaultMediaType: "movie")
+    }
+    
+    func discoverTopRatedTV(genreId: Int, page: Int = 1) async throws -> [TMDBSearchResult] {
+        let urlString = "\(Config.tmdbBaseURL)/discover/tv?api_key=\(Config.tmdbApiKey)&with_genres=\(genreId)&sort_by=vote_average.desc&vote_count.gte=200&page=\(page)"
+        return try await fetchResults(from: urlString, defaultMediaType: "tv")
+    }
+    
     // MARK: - Recommendations & Similar
     
     func getMovieRecommendations(movieId: Int, page: Int = 1) async throws -> [TMDBSearchResult] {
