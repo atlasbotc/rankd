@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import UIKit
 
 struct CompareView: View {
     @Environment(\.modelContext) private var modelContext

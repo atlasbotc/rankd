@@ -5,22 +5,6 @@ enum Tier: String, Codable, CaseIterable {
     case good = "Good"
     case medium = "Medium"
     case bad = "Bad"
-    
-    var color: String {
-        switch self {
-        case .good: return "green"
-        case .medium: return "yellow"
-        case .bad: return "red"
-        }
-    }
-    
-    var emoji: String {
-        switch self {
-        case .good: return "🟢"
-        case .medium: return "🟡"
-        case .bad: return "🔴"
-        }
-    }
 }
 
 enum MediaType: String, Codable {

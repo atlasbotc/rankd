@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import UIKit
 
 struct RankedListView: View {
     @Environment(\.modelContext) private var modelContext

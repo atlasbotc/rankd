@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import UIKit
 
 /// Handles the comparison-based ranking flow when adding a new item
 struct ComparisonFlowView: View {

@@ -542,7 +542,6 @@ struct DiscoverView: View {
                             items: Array(filtered.prefix(15))
                         )
                     } catch {
-                        print("Error loading recommendations for \(item.title): \(error)")
                         return nil
                     }
                 }
@@ -635,7 +634,6 @@ struct DiscoverView: View {
                             items: Array(combined.prefix(15))
                         )
                     } catch {
-                        print("Error loading genre recommendations for \(genre.name): \(error)")
                         return nil
                     }
                 }
@@ -1152,7 +1150,7 @@ struct GenreDetailView: View {
             popularTVPage = 2
             topRatedTVPage = 1
         } catch {
-            print("Error loading genre content: \(error)")
+            // Network errors handled gracefully — UI shows last state
         }
         isLoading = false
     }
@@ -1190,7 +1188,7 @@ struct GenreDetailView: View {
             popularTVPage = nextPopularTVPage
             topRatedTVPage = nextTopRatedTVPage
         } catch {
-            print("Error loading more genre content: \(error)")
+            // Network errors handled gracefully — UI shows last state
         }
         
         isLoadingMore = false
