@@ -24,13 +24,13 @@ struct AddToListView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Search bar
                 searchBar
                 
-                // Content
                 if isSearching {
                     Spacer()
                     ProgressView("Searching...")
+                        .tint(RankdColors.textTertiary)
+                        .foregroundStyle(RankdColors.textSecondary)
                     Spacer()
                 } else if !searchQuery.isEmpty {
                     searchResultsList
@@ -38,12 +38,14 @@ struct AddToListView: View {
                     fromRankingsSection
                 }
             }
+            .background(RankdColors.background)
             .navigationTitle("Add Items")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                         .fontWeight(.semibold)
+                        .foregroundStyle(RankdColors.accent)
                 }
             }
         }
@@ -52,13 +54,14 @@ struct AddToListView: View {
     // MARK: - Search Bar
     
     private var searchBar: some View {
-        HStack {
+        HStack(spacing: RankdSpacing.xs) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(RankdColors.textTertiary)
             
             TextField("Search movies & TV shows...", text: $searchQuery)
                 .textFieldStyle(.plain)
                 .autocorrectionDisabled()
+                .foregroundStyle(RankdColors.textPrimary)
                 .onChange(of: searchQuery) { _, _ in
                     performSearch()
                 }
@@ -69,12 +72,15 @@ struct AddToListView: View {
                     searchResults = []
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(RankdColors.textTertiary)
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial)
+        .padding(RankdSpacing.sm)
+        .background(RankdColors.surfaceSecondary)
+        .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
+        .padding(.horizontal, RankdSpacing.md)
+        .padding(.vertical, RankdSpacing.xs)
     }
     
     // MARK: - Search Results
@@ -83,10 +89,14 @@ struct AddToListView: View {
         List {
             if let error = searchError {
                 Text(error)
-                    .foregroundStyle(.secondary)
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(RankdColors.textSecondary)
+                    .listRowBackground(RankdColors.background)
             } else if searchResults.isEmpty && !isSearching {
                 Text("No results found")
-                    .foregroundStyle(.secondary)
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(RankdColors.textSecondary)
+                    .listRowBackground(RankdColors.background)
             } else {
                 ForEach(searchResults) { result in
                     Button {
@@ -96,60 +106,57 @@ struct AddToListView: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(isInList(tmdbId: result.id))
+                    .listRowBackground(RankdColors.background)
                 }
             }
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
     
     private func searchResultRow(_ result: TMDBSearchResult) -> some View {
         let inList = isInList(tmdbId: result.id)
         
-        return HStack(spacing: 12) {
-            // Poster
+        return HStack(spacing: RankdSpacing.sm) {
             AsyncImage(url: result.posterURL) { image in
                 image.resizable().aspectRatio(contentMode: .fill)
             } placeholder: {
-                Rectangle()
-                    .fill(.quaternary)
+                RoundedRectangle(cornerRadius: RankdRadius.sm)
+                    .fill(RankdColors.surfaceSecondary)
                     .overlay {
                         Image(systemName: result.resolvedMediaType == .movie ? "film" : "tv")
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(RankdColors.textQuaternary)
                     }
             }
-            .frame(width: 44, height: 66)
-            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .frame(width: RankdPoster.miniWidth, height: RankdPoster.miniHeight)
+            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
             
-            // Info
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
                 Text(result.displayTitle)
-                    .font(.subheadline.weight(.medium))
+                    .font(RankdTypography.headingSmall)
+                    .foregroundStyle(RankdColors.textPrimary)
                     .lineLimit(1)
                 
-                HStack(spacing: 6) {
+                HStack(spacing: RankdSpacing.xs) {
                     if let year = result.displayYear {
                         Text(year)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(RankdTypography.labelSmall)
+                            .foregroundStyle(RankdColors.textTertiary)
                     }
                     Text(result.resolvedMediaType == .movie ? "Movie" : "TV")
-                        .font(.caption2)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 1)
-                        .background(.quaternary)
-                        .clipShape(Capsule())
+                        .font(RankdTypography.labelSmall)
+                        .foregroundStyle(RankdColors.textTertiary)
                 }
             }
             
             Spacer()
             
-            // Status icon
             if inList {
                 Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
+                    .foregroundStyle(RankdColors.success)
             } else {
                 Image(systemName: "plus.circle.fill")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(RankdColors.accent)
             }
         }
         .opacity(inList ? 0.5 : 1.0)
@@ -160,31 +167,38 @@ struct AddToListView: View {
     private var fromRankingsSection: some View {
         Group {
             if rankedNotInList.isEmpty && list.items.isEmpty {
-                VStack(spacing: 16) {
+                VStack(spacing: RankdSpacing.md) {
                     Spacer()
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 40))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(RankdColors.textQuaternary)
                     Text("Search to add movies and shows")
-                        .foregroundStyle(.secondary)
+                        .font(RankdTypography.bodyMedium)
+                        .foregroundStyle(RankdColors.textSecondary)
                     Spacer()
                 }
             } else if rankedNotInList.isEmpty {
-                VStack(spacing: 16) {
+                VStack(spacing: RankdSpacing.md) {
                     Spacer()
                     Image(systemName: "checkmark.circle")
                         .font(.system(size: 40))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(RankdColors.success)
                     Text("All your ranked items are in this list")
-                        .foregroundStyle(.secondary)
+                        .font(RankdTypography.bodyMedium)
+                        .foregroundStyle(RankdColors.textSecondary)
                     Text("Search to add more")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(RankdTypography.bodySmall)
+                        .foregroundStyle(RankdColors.textTertiary)
                     Spacer()
                 }
             } else {
                 List {
-                    Section("From Your Rankings") {
+                    Section {
+                        Text("From Your Rankings")
+                            .font(RankdTypography.headingSmall)
+                            .foregroundStyle(RankdColors.textSecondary)
+                            .listRowBackground(RankdColors.background)
+                        
                         ForEach(rankedNotInList) { item in
                             Button {
                                 addRankedItem(item)
@@ -192,43 +206,48 @@ struct AddToListView: View {
                                 rankedItemRow(item)
                             }
                             .buttonStyle(.plain)
+                            .listRowBackground(RankdColors.background)
                         }
                     }
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
             }
         }
     }
     
     private func rankedItemRow(_ item: RankedItem) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: RankdSpacing.sm) {
             AsyncImage(url: item.posterURL) { image in
                 image.resizable().aspectRatio(contentMode: .fill)
             } placeholder: {
-                Rectangle()
-                    .fill(.quaternary)
+                RoundedRectangle(cornerRadius: RankdRadius.sm)
+                    .fill(RankdColors.surfaceSecondary)
                     .overlay {
                         Image(systemName: item.mediaType == .movie ? "film" : "tv")
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(RankdColors.textQuaternary)
                     }
             }
-            .frame(width: 44, height: 66)
-            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .frame(width: RankdPoster.miniWidth, height: RankdPoster.miniHeight)
+            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
                 Text(item.title)
-                    .font(.subheadline.weight(.medium))
+                    .font(RankdTypography.headingSmall)
+                    .foregroundStyle(RankdColors.textPrimary)
                     .lineLimit(1)
                 
-                HStack(spacing: 6) {
-                    Text(item.tier.emoji)
+                HStack(spacing: RankdSpacing.xs) {
+                    Circle()
+                        .fill(RankdColors.tierColor(item.tier))
+                        .frame(width: 8, height: 8)
                     Text("#\(item.rank)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(RankdTypography.labelSmall)
+                        .foregroundStyle(RankdColors.textSecondary)
                     if let year = item.year {
                         Text(year)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(RankdTypography.labelSmall)
+                            .foregroundStyle(RankdColors.textTertiary)
                     }
                 }
             }
@@ -236,7 +255,7 @@ struct AddToListView: View {
             Spacer()
             
             Image(systemName: "plus.circle.fill")
-                .foregroundStyle(.orange)
+                .foregroundStyle(RankdColors.accent)
         }
     }
     

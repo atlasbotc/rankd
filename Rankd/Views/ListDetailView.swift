@@ -22,6 +22,7 @@ struct ListDetailView: View {
                 itemsList
             }
         }
+        .background(RankdColors.background)
         .navigationTitle("\(list.emoji) \(list.name)")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -40,7 +41,7 @@ struct ListDetailView: View {
                     }
                     
                     Button {
-                        withAnimation {
+                        withAnimation(RankdMotion.normal) {
                             isEditing.toggle()
                         }
                     } label: {
@@ -56,6 +57,7 @@ struct ListDetailView: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
+                        .foregroundStyle(RankdColors.textSecondary)
                 }
             }
         }
@@ -70,25 +72,6 @@ struct ListDetailView: View {
         }
     }
     
-    // MARK: - Header
-    
-    private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if !list.listDescription.isEmpty {
-                Text(list.listDescription)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            
-            Text("\(list.items.count) item\(list.items.count == 1 ? "" : "s")")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-    }
-    
     // MARK: - Items List
     
     private var itemsList: some View {
@@ -96,15 +79,17 @@ struct ListDetailView: View {
             Section {
                 if !list.listDescription.isEmpty {
                     Text(list.listDescription)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(RankdTypography.bodyMedium)
+                        .foregroundStyle(RankdColors.textSecondary)
                         .listRowSeparator(.hidden)
+                        .listRowBackground(RankdColors.background)
                 }
                 
                 Text("\(list.items.count) item\(list.items.count == 1 ? "" : "s")")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .font(RankdTypography.caption)
+                    .foregroundStyle(RankdColors.textTertiary)
                     .listRowSeparator(.hidden)
+                    .listRowBackground(RankdColors.background)
             }
             
             Section {
@@ -112,42 +97,45 @@ struct ListDetailView: View {
                     NavigationLink(destination: MediaDetailView(tmdbId: item.tmdbId, mediaType: item.mediaType)) {
                         ListItemRow(item: item)
                     }
+                    .listRowBackground(RankdColors.background)
                 }
                 .onDelete(perform: deleteItems)
                 .onMove(perform: moveItems)
             }
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .environment(\.editMode, isEditing ? .constant(.active) : .constant(.inactive))
     }
     
     // MARK: - Empty State
     
     private var emptyState: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: RankdSpacing.lg) {
             Spacer()
             
             Image(systemName: "film.stack")
                 .font(.system(size: 50))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(RankdColors.textQuaternary)
             
-            VStack(spacing: 8) {
+            VStack(spacing: RankdSpacing.xs) {
                 Text("No Items Yet")
-                    .font(.title3.bold())
+                    .font(RankdTypography.headingMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
                 Text("Add movies and TV shows to your list")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(RankdColors.textSecondary)
             }
             
             Button {
                 showAddItems = true
             } label: {
                 Label("Add Items", systemImage: "plus")
-                    .fontWeight(.semibold)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(Color.orange)
-                    .foregroundStyle(.white)
+                    .font(RankdTypography.headingSmall)
+                    .padding(.horizontal, RankdSpacing.lg)
+                    .padding(.vertical, RankdSpacing.sm)
+                    .background(RankdColors.accent)
+                    .foregroundStyle(RankdColors.textPrimary)
                     .clipShape(Capsule())
             }
             
@@ -162,7 +150,6 @@ struct ListDetailView: View {
         for item in itemsToDelete {
             modelContext.delete(item)
         }
-        // Re-number positions
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             renumberPositions()
         }
@@ -195,58 +182,56 @@ struct ListItemRow: View {
     let item: CustomListItem
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: RankdSpacing.sm) {
             // Position
             Text("#\(item.position)")
-                .font(.subheadline.bold())
-                .foregroundStyle(.orange)
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(RankdColors.textSecondary)
                 .frame(width: 32, alignment: .center)
             
             // Poster
             AsyncImage(url: item.posterURL) { image in
                 image.resizable().aspectRatio(contentMode: .fill)
             } placeholder: {
-                Rectangle()
-                    .fill(.quaternary)
+                RoundedRectangle(cornerRadius: RankdRadius.sm)
+                    .fill(RankdColors.surfaceSecondary)
                     .overlay {
                         Image(systemName: item.mediaType == .movie ? "film" : "tv")
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(RankdColors.textQuaternary)
                     }
             }
-            .frame(width: 50, height: 75)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .frame(width: RankdPoster.thumbWidth, height: RankdPoster.thumbHeight)
+            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
             
             // Info
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
                 Text(item.title)
-                    .font(.headline)
+                    .font(RankdTypography.headingSmall)
+                    .foregroundStyle(RankdColors.textPrimary)
                     .lineLimit(2)
                 
-                HStack(spacing: 6) {
+                HStack(spacing: RankdSpacing.xs) {
                     if let year = item.year {
                         Text(year)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(RankdTypography.labelSmall)
+                            .foregroundStyle(RankdColors.textTertiary)
                     }
                     
                     Text(item.mediaType == .movie ? "Movie" : "TV")
-                        .font(.caption2)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(.quaternary)
-                        .clipShape(Capsule())
+                        .font(RankdTypography.labelSmall)
+                        .foregroundStyle(RankdColors.textTertiary)
                 }
                 
                 if let note = item.note, !note.isEmpty {
                     Text(note)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(RankdTypography.bodySmall)
+                        .foregroundStyle(RankdColors.textSecondary)
                         .lineLimit(1)
                         .italic()
                 }
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, RankdSpacing.xxs)
     }
 }
 

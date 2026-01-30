@@ -4,9 +4,9 @@ import SwiftData
 // MARK: - Filter Types
 
 enum JournalTierFilter: String, CaseIterable, Identifiable {
-    case good = "🟢 Good"
-    case medium = "🟡 Medium"
-    case bad = "🔴 Bad"
+    case good = "Good"
+    case medium = "Medium"
+    case bad = "Bad"
     
     var id: String { rawValue }
     
@@ -15,6 +15,14 @@ enum JournalTierFilter: String, CaseIterable, Identifiable {
         case .good: return .good
         case .medium: return .medium
         case .bad: return .bad
+        }
+    }
+    
+    var dotColor: Color {
+        switch self {
+        case .good: return RankdColors.tierGood
+        case .medium: return RankdColors.tierMedium
+        case .bad: return RankdColors.tierBad
         }
     }
 }
@@ -49,29 +57,21 @@ struct JournalView: View {
     
     private var filteredItems: [RankedItem] {
         allItems.filter { item in
-            // Search filter
             if !searchText.isEmpty {
                 let matches = item.title.localizedCaseInsensitiveContains(searchText)
                 if !matches { return false }
             }
-            
-            // Tier filter
             if !selectedTierFilters.isEmpty {
                 let tierMatch = selectedTierFilters.contains(where: { $0.tier == item.tier })
                 if !tierMatch { return false }
             }
-            
-            // Media type filter
             if !selectedMediaFilters.isEmpty {
                 let mediaMatch = selectedMediaFilters.contains(where: { $0.mediaType == item.mediaType })
                 if !mediaMatch { return false }
             }
-            
-            // Has review filter
             if filterHasReview {
                 guard let review = item.review, !review.isEmpty else { return false }
             }
-            
             return true
         }
     }
@@ -89,11 +89,8 @@ struct JournalView: View {
             return formatter.string(from: date)
         }
         
-        // Sort groups by the date of the first item (newest first)
         let sorted = grouped.sorted { lhs, rhs in
-            guard let lhsFirst = lhs.value.first, let rhsFirst = rhs.value.first else {
-                return false
-            }
+            guard let lhsFirst = lhs.value.first, let rhsFirst = rhs.value.first else { return false }
             return lhsFirst.dateAdded > rhsFirst.dateAdded
         }
         
@@ -105,7 +102,7 @@ struct JournalView: View {
     }
     
     private var firstRankedDate: Date? {
-        allItems.last?.dateAdded // allItems sorted newest first, so last is oldest
+        allItems.last?.dateAdded
     }
     
     // MARK: - Body
@@ -113,32 +110,29 @@ struct JournalView: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-                // Stats Header
                 journalStatsHeader
-                    .padding(.horizontal)
-                    .padding(.bottom, 8)
+                    .padding(.horizontal, RankdSpacing.md)
+                    .padding(.bottom, RankdSpacing.xs)
                 
-                // Search Bar
                 searchBar
-                    .padding(.horizontal)
-                    .padding(.bottom, 8)
+                    .padding(.horizontal, RankdSpacing.md)
+                    .padding(.bottom, RankdSpacing.xs)
                 
-                // Filter Chips
                 filterChips
-                    .padding(.bottom, 12)
+                    .padding(.bottom, RankdSpacing.sm)
                 
-                // Content
                 if allItems.isEmpty {
                     emptyStateNoItems
-                        .padding(.top, 40)
+                        .padding(.top, RankdSpacing.xxl)
                 } else if filteredItems.isEmpty {
                     emptyStateNoMatches
-                        .padding(.top, 40)
+                        .padding(.top, RankdSpacing.xxl)
                 } else {
                     journalFeed
                 }
             }
         }
+        .background(RankdColors.background)
         .navigationTitle("Watch Journal")
         .navigationBarTitleDisplayMode(.large)
         .sheet(isPresented: $showDetailSheet) {
@@ -151,62 +145,50 @@ struct JournalView: View {
     // MARK: - Stats Header
     
     private var journalStatsHeader: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "book.closed.fill")
-                .foregroundStyle(.orange)
-                .font(.title3)
+        VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
+            Text("\(allItems.count) \(allItems.count == 1 ? "entry" : "entries")")
+                .font(RankdTypography.headingMedium)
+                .foregroundStyle(RankdColors.textPrimary)
             
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Your Journal")
-                    .font(.headline)
-                
-                HStack(spacing: 4) {
-                    Text("\(allItems.count) \(allItems.count == 1 ? "entry" : "entries")")
-                        .foregroundStyle(.secondary)
-                    
-                    if let firstDate = firstRankedDate {
-                        Text("·")
-                            .foregroundStyle(.secondary)
-                        Text("First ranked: \(firstDate, format: .dateTime.month(.abbreviated).day().year())")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .font(.caption)
+            if let firstDate = firstRankedDate {
+                Text("First ranked: \(firstDate, format: .dateTime.month(.abbreviated).day().year())")
+                    .font(RankdTypography.bodySmall)
+                    .foregroundStyle(RankdColors.textTertiary)
             }
-            
-            Spacer()
         }
-        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(RankdSpacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color.orange.opacity(0.08))
+            RoundedRectangle(cornerRadius: RankdRadius.lg)
+                .fill(RankdColors.surfacePrimary)
         )
     }
     
     // MARK: - Search Bar
     
     private var searchBar: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: RankdSpacing.xs) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(RankdColors.textTertiary)
             
             TextField("Search titles...", text: $searchText)
                 .textFieldStyle(.plain)
                 .autocorrectionDisabled()
+                .foregroundStyle(RankdColors.textPrimary)
             
             if !searchText.isEmpty {
                 Button {
                     searchText = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(RankdColors.textTertiary)
                 }
             }
         }
-        .padding(10)
+        .padding(RankdSpacing.sm)
         .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color(.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: RankdRadius.md)
+                .fill(RankdColors.surfaceSecondary)
         )
     }
     
@@ -214,36 +196,41 @@ struct JournalView: View {
     
     private var filterChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                // Tier filters
+            HStack(spacing: RankdSpacing.xs) {
+                // Tier filters with colored dots
                 ForEach(JournalTierFilter.allCases) { filter in
-                    FilterChip(
-                        title: filter.rawValue,
-                        isSelected: selectedTierFilters.contains(filter)
+                    JournalFilterChip(
+                        isSelected: selectedTierFilters.contains(filter),
+                        action: { toggleTierFilter(filter) }
                     ) {
-                        toggleTierFilter(filter)
+                        HStack(spacing: RankdSpacing.xxs) {
+                            Circle()
+                                .fill(filter.dotColor)
+                                .frame(width: 8, height: 8)
+                            Text(filter.rawValue)
+                        }
                     }
                 }
                 
                 // Media type filters
                 ForEach(JournalMediaFilter.allCases) { filter in
-                    FilterChip(
-                        title: filter.rawValue,
-                        isSelected: selectedMediaFilters.contains(filter)
+                    JournalFilterChip(
+                        isSelected: selectedMediaFilters.contains(filter),
+                        action: { toggleMediaFilter(filter) }
                     ) {
-                        toggleMediaFilter(filter)
+                        Text(filter.rawValue)
                     }
                 }
                 
                 // Has Review filter
-                FilterChip(
-                    title: "Has Review",
-                    isSelected: filterHasReview
+                JournalFilterChip(
+                    isSelected: filterHasReview,
+                    action: { filterHasReview.toggle() }
                 ) {
-                    filterHasReview.toggle()
+                    Text("Has Review")
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, RankdSpacing.md)
         }
     }
     
@@ -259,8 +246,8 @@ struct JournalView: View {
                             selectedItem = item
                             showDetailSheet = true
                         }
-                        .padding(.horizontal)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, RankdSpacing.md)
+                        .padding(.vertical, RankdSpacing.xxs)
                 }
             } header: {
                 monthHeader(group.key)
@@ -273,58 +260,48 @@ struct JournalView: View {
     private func monthHeader(_ title: String) -> some View {
         HStack {
             Text(title)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
+                .font(RankdTypography.headingSmall)
+                .foregroundStyle(RankdColors.textSecondary)
             Spacer()
         }
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(.regularMaterial)
+        .padding(.horizontal, RankdSpacing.md)
+        .padding(.vertical, RankdSpacing.xs)
+        .background(RankdColors.background)
     }
     
     // MARK: - Empty States
     
     private var emptyStateNoItems: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(Color.orange.opacity(0.1))
-                    .frame(width: 100, height: 100)
-                
-                Image(systemName: "book.closed")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.orange)
-            }
+        VStack(spacing: RankdSpacing.md) {
+            Image(systemName: "book.closed")
+                .font(.system(size: 40))
+                .foregroundStyle(RankdColors.textQuaternary)
             
             Text("Your Journal is Empty")
-                .font(.title3.bold())
+                .font(RankdTypography.headingMedium)
+                .foregroundStyle(RankdColors.textPrimary)
             
             Text("Start ranking movies and shows\nto build your journal")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(RankdTypography.bodyMedium)
+                .foregroundStyle(RankdColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
         }
     }
     
     private var emptyStateNoMatches: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(Color.secondary.opacity(0.1))
-                    .frame(width: 80, height: 80)
-                
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 32))
-                    .foregroundStyle(.secondary)
-            }
+        VStack(spacing: RankdSpacing.md) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 32))
+                .foregroundStyle(RankdColors.textQuaternary)
             
             Text("No Items Match")
-                .font(.title3.bold())
+                .font(RankdTypography.headingMedium)
+                .foregroundStyle(RankdColors.textPrimary)
             
             Text("Try adjusting your filters\nor search terms")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(RankdTypography.bodyMedium)
+                .foregroundStyle(RankdColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
             
@@ -333,10 +310,10 @@ struct JournalView: View {
                     clearAllFilters()
                 } label: {
                     Text("Clear All Filters")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.orange)
+                        .font(RankdTypography.labelMedium)
+                        .foregroundStyle(RankdColors.accent)
                 }
-                .padding(.top, 4)
+                .padding(.top, RankdSpacing.xxs)
             }
         }
     }
@@ -367,6 +344,27 @@ struct JournalView: View {
     }
 }
 
+// MARK: - Journal Filter Chip
+
+private struct JournalFilterChip<Label: View>: View {
+    let isSelected: Bool
+    let action: () -> Void
+    @ViewBuilder let label: Label
+    
+    var body: some View {
+        Button(action: action) {
+            label
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(isSelected ? RankdColors.textPrimary : RankdColors.textSecondary)
+                .padding(.horizontal, RankdSpacing.sm)
+                .padding(.vertical, RankdSpacing.xs)
+                .background(isSelected ? RankdColors.accent : RankdColors.surfaceSecondary)
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 // MARK: - Journal Entry Card
 
 private struct JournalEntryCard: View {
@@ -382,92 +380,72 @@ private struct JournalEntryCard: View {
     
     private var reviewSnippet: String? {
         guard let review = item.review, !review.isEmpty else { return nil }
-        if review.count <= 100 {
-            return review
-        }
+        if review.count <= 100 { return review }
         let index = review.index(review.startIndex, offsetBy: 100)
         return String(review[..<index]) + "…"
     }
     
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: RankdSpacing.sm) {
             // Poster
             AsyncImage(url: item.posterURL) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)
             } placeholder: {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.secondary.opacity(0.15))
+                RoundedRectangle(cornerRadius: RankdRadius.sm)
+                    .fill(RankdColors.surfaceSecondary)
                     .overlay {
                         Image(systemName: item.mediaType == .movie ? "film" : "tv")
-                            .font(.title3)
-                            .foregroundStyle(.tertiary)
+                            .font(RankdTypography.headingSmall)
+                            .foregroundStyle(RankdColors.textQuaternary)
                     }
             }
-            .frame(width: 60, height: 90)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .frame(width: RankdPoster.miniWidth, height: RankdPoster.miniHeight)
+            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
             
             // Info
-            VStack(alignment: .leading, spacing: 4) {
-                // Title + Year
-                HStack(spacing: 4) {
-                    Text(item.title)
-                        .font(.subheadline.weight(.semibold))
-                        .lineLimit(2)
-                    
-                    if let year = item.year {
-                        Text("(\(year))")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
+            VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
+                Text(item.title)
+                    .font(RankdTypography.headingSmall)
+                    .foregroundStyle(RankdColors.textPrimary)
+                    .lineLimit(2)
                 
-                // Tier + Rank + Media Type
-                HStack(spacing: 4) {
-                    Text(item.tier.emoji)
+                // Tier + Rank metadata
+                HStack(spacing: RankdSpacing.xxs) {
+                    Circle()
+                        .fill(RankdColors.tierColor(item.tier))
+                        .frame(width: 8, height: 8)
                     Text(item.tier.rawValue)
-                        .foregroundStyle(.secondary)
-                    Text("·")
-                        .foregroundStyle(.secondary)
-                    Text("#\(item.rank) in \(mediaTypeLabel)")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(RankdColors.textSecondary)
+                    Text("· #\(item.rank) in \(mediaTypeLabel)")
+                        .foregroundStyle(RankdColors.textSecondary)
                 }
-                .font(.caption)
+                .font(RankdTypography.labelMedium)
                 
-                // Date
                 Text(dateFormatted)
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .font(RankdTypography.caption)
+                    .foregroundStyle(RankdColors.textTertiary)
                 
-                // Review snippet
                 if let snippet = reviewSnippet {
                     Text("\"\(snippet)\"")
-                        .font(.caption)
+                        .font(RankdTypography.bodySmall)
                         .italic()
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(RankdColors.textTertiary)
                         .lineLimit(2)
-                        .padding(.top, 2)
+                        .padding(.top, RankdSpacing.xxs)
                 }
             }
             
             Spacer(minLength: 0)
-            
-            // Chevron
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-                .padding(.top, 4)
         }
-        .padding(12)
+        .padding(RankdSpacing.sm)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: RankdRadius.md)
+                .fill(RankdColors.surfacePrimary)
         )
     }
 }
-
-// MARK: - Filter Chip
 
 #Preview {
     NavigationStack {

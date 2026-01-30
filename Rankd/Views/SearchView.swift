@@ -10,13 +10,14 @@ struct SearchView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Search bar
-                HStack {
+                HStack(spacing: RankdSpacing.xs) {
                     Image(systemName: "magnifyingglass")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(RankdColors.textTertiary)
                     
                     TextField("Search movies & TV shows...", text: $viewModel.searchQuery)
                         .textFieldStyle(.plain)
                         .autocorrectionDisabled()
+                        .foregroundStyle(RankdColors.textPrimary)
                         .onChange(of: viewModel.searchQuery) { _, _ in
                             viewModel.search()
                         }
@@ -26,51 +27,60 @@ struct SearchView: View {
                             viewModel.clearSearch()
                         } label: {
                             Image(systemName: "xmark.circle.fill")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(RankdColors.textTertiary)
                         }
                     }
                 }
-                .padding()
-                .background(.ultraThinMaterial)
+                .padding(RankdSpacing.sm)
+                .frame(minHeight: 44)
+                .background(RankdColors.surfaceSecondary)
+                .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
+                .padding(.horizontal, RankdSpacing.md)
+                .padding(.vertical, RankdSpacing.xs)
                 
                 // Results
                 if viewModel.isSearching {
                     Spacer()
                     ProgressView("Searching...")
+                        .tint(RankdColors.textTertiary)
+                        .foregroundStyle(RankdColors.textSecondary)
                     Spacer()
                 } else if let error = viewModel.searchError {
                     Spacer()
-                    VStack(spacing: 12) {
+                    VStack(spacing: RankdSpacing.sm) {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.largeTitle)
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(RankdColors.textTertiary)
                         Text(error)
-                            .foregroundStyle(.secondary)
+                            .font(RankdTypography.bodyMedium)
+                            .foregroundStyle(RankdColors.textSecondary)
                             .multilineTextAlignment(.center)
                     }
-                    .padding()
+                    .padding(RankdSpacing.md)
                     Spacer()
                 } else if viewModel.searchResults.isEmpty && !viewModel.searchQuery.isEmpty {
                     Spacer()
-                    VStack(spacing: 12) {
+                    VStack(spacing: RankdSpacing.sm) {
                         Image(systemName: "film")
                             .font(.largeTitle)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(RankdColors.textQuaternary)
                         Text("No results found")
-                            .foregroundStyle(.secondary)
+                            .font(RankdTypography.bodyMedium)
+                            .foregroundStyle(RankdColors.textSecondary)
                     }
                     Spacer()
                 } else if viewModel.searchQuery.isEmpty {
                     Spacer()
-                    VStack(spacing: 12) {
+                    VStack(spacing: RankdSpacing.sm) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 50))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(RankdColors.textQuaternary)
                         Text("Search for movies or TV shows")
-                            .foregroundStyle(.secondary)
+                            .font(RankdTypography.bodyMedium)
+                            .foregroundStyle(RankdColors.textSecondary)
                         Text("Add to rankings or watchlist")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
+                            .font(RankdTypography.caption)
+                            .foregroundStyle(RankdColors.textTertiary)
                     }
                     Spacer()
                 } else {
@@ -84,10 +94,13 @@ struct SearchView: View {
                                 status: itemStatus(result)
                             )
                         }
+                        .listRowBackground(RankdColors.background)
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                 }
             }
+            .background(RankdColors.background)
             .navigationTitle("Search")
         }
     }
@@ -101,7 +114,6 @@ struct SearchView: View {
         }
         return .notAdded
     }
-    
 }
 
 // MARK: - Item Status
@@ -117,74 +129,63 @@ struct SearchResultRow: View {
     let status: ItemStatus
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: RankdSpacing.sm) {
             // Poster
             AsyncImage(url: result.posterURL) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)
             } placeholder: {
-                Rectangle()
-                    .fill(.quaternary)
+                RoundedRectangle(cornerRadius: RankdRadius.sm)
+                    .fill(RankdColors.surfaceSecondary)
                     .overlay {
                         Image(systemName: result.resolvedMediaType == .movie ? "film" : "tv")
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(RankdColors.textQuaternary)
                     }
             }
-            .frame(width: 50, height: 75)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .frame(width: RankdPoster.thumbWidth, height: RankdPoster.thumbHeight)
+            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
             
             // Info
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
                 Text(result.displayTitle)
-                    .font(.headline)
+                    .font(RankdTypography.headingSmall)
+                    .foregroundStyle(RankdColors.textPrimary)
                     .lineLimit(2)
                 
-                HStack(spacing: 8) {
+                HStack(spacing: RankdSpacing.xs) {
                     if let year = result.displayYear {
                         Text(year)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(RankdTypography.labelSmall)
+                            .foregroundStyle(RankdColors.textTertiary)
                     }
                     
                     Text(result.resolvedMediaType == .movie ? "Movie" : "TV")
-                        .font(.caption)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(.quaternary)
-                        .clipShape(Capsule())
-                    
-                    if let rating = result.voteAverage, rating > 0 {
-                        HStack(spacing: 2) {
-                            Image(systemName: "star.fill")
-                                .font(.caption2)
-                                .foregroundStyle(.yellow)
-                            Text(String(format: "%.1f", rating))
-                                .font(.caption)
-                        }
-                    }
+                        .font(RankdTypography.labelSmall)
+                        .foregroundStyle(RankdColors.textTertiary)
                 }
             }
             
             Spacer()
             
-            statusIcon
+            // Status indicator
+            statusIndicator
         }
-        .opacity(status == .notAdded ? 1 : 0.5)
     }
     
     @ViewBuilder
-    private var statusIcon: some View {
+    private var statusIndicator: some View {
         switch status {
         case .notAdded:
-            Image(systemName: "plus.circle")
-                .foregroundStyle(.orange)
+            EmptyView()
         case .ranked:
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(.green)
+            Circle()
+                .fill(RankdColors.tierGood)
+                .frame(width: 8, height: 8)
         case .watchlist:
-            Image(systemName: "bookmark.fill")
-                .foregroundStyle(.blue)
+            Circle()
+                .fill(Color(red: 0.3, green: 0.5, blue: 0.9))
+                .frame(width: 8, height: 8)
         }
     }
 }

@@ -25,17 +25,20 @@ struct AddToListSheet: View {
                     listSelection
                 }
             }
+            .background(RankdColors.background)
             .navigationTitle("Add to List")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .foregroundStyle(RankdColors.textSecondary)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         showCreateList = true
                     } label: {
                         Image(systemName: "plus")
+                            .foregroundStyle(RankdColors.textSecondary)
                     }
                 }
             }
@@ -55,32 +58,34 @@ struct AddToListSheet: View {
                 Button {
                     addToList(list)
                 } label: {
-                    HStack(spacing: 12) {
+                    HStack(spacing: RankdSpacing.sm) {
                         Text(list.emoji)
-                            .font(.title2)
+                            .font(RankdTypography.headingLarge)
                         
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
                             Text(list.name)
-                                .font(.body.weight(.medium))
+                                .font(RankdTypography.headingSmall)
+                                .foregroundStyle(RankdColors.textPrimary)
                             Text("\(list.items.count) item\(list.items.count == 1 ? "" : "s")")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .font(RankdTypography.labelSmall)
+                                .foregroundStyle(RankdColors.textSecondary)
                         }
                         
                         Spacer()
                         
                         if alreadyIn {
                             Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
+                                .foregroundStyle(RankdColors.success)
                         } else {
                             Image(systemName: "plus.circle")
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(RankdColors.accent)
                         }
                     }
                 }
                 .buttonStyle(.plain)
                 .disabled(alreadyIn)
                 .opacity(alreadyIn ? 0.6 : 1.0)
+                .listRowBackground(RankdColors.background)
             }
             
             Section {
@@ -89,31 +94,36 @@ struct AddToListSheet: View {
                 } label: {
                     HStack {
                         Image(systemName: "plus.circle.fill")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(RankdColors.accent)
                         Text("Create New List")
-                            .foregroundStyle(.orange)
+                            .font(RankdTypography.headingSmall)
+                            .foregroundStyle(RankdColors.accent)
                     }
                 }
+                .listRowBackground(RankdColors.background)
             }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
     
     // MARK: - Empty State
     
     private var emptyState: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: RankdSpacing.lg) {
             Spacer()
             
             Image(systemName: "list.bullet.rectangle.portrait")
                 .font(.system(size: 50))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(RankdColors.textQuaternary)
             
-            VStack(spacing: 8) {
+            VStack(spacing: RankdSpacing.xs) {
                 Text("No Lists Yet")
-                    .font(.title3.bold())
+                    .font(RankdTypography.headingMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
                 Text("Create a list to add \"\(title)\" to it")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(RankdColors.textSecondary)
                     .multilineTextAlignment(.center)
             }
             
@@ -121,11 +131,11 @@ struct AddToListSheet: View {
                 showCreateList = true
             } label: {
                 Label("Create a List", systemImage: "plus")
-                    .fontWeight(.semibold)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(Color.orange)
-                    .foregroundStyle(.white)
+                    .font(RankdTypography.headingSmall)
+                    .padding(.horizontal, RankdSpacing.lg)
+                    .padding(.vertical, RankdSpacing.sm)
+                    .background(RankdColors.accent)
+                    .foregroundStyle(RankdColors.textPrimary)
                     .clipShape(Capsule())
             }
             

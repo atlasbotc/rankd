@@ -21,10 +21,9 @@ struct WatchlistView: View {
                     watchlist
                 }
             }
+            .background(RankdColors.background)
             .navigationTitle("Watchlist")
-            .refreshable {
-                // Trigger UI refresh by toggling a minor state (list re-renders)
-            }
+            .refreshable {}
             .alert("Remove from Watchlist?", isPresented: $showDeleteConfirmation) {
                 Button("Cancel", role: .cancel) {}
                 Button("Remove", role: .destructive) {
@@ -44,7 +43,6 @@ struct WatchlistView: View {
             }
             .onChange(of: showComparisonFlow) { _, isShowing in
                 if !isShowing {
-                    // Check if item was actually ranked, then remove from watchlist
                     if let item = itemToRank,
                        rankedItems.contains(where: { $0.tmdbId == item.tmdbId }) {
                         modelContext.delete(item)
@@ -58,17 +56,17 @@ struct WatchlistView: View {
     }
     
     private var emptyState: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: RankdSpacing.sm) {
             Spacer()
             Image(systemName: "rectangle.stack.badge.plus")
                 .font(.system(size: 50))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(RankdColors.textQuaternary)
             Text("Watchlist empty")
-                .font(.title3)
-                .foregroundStyle(.secondary)
+                .font(RankdTypography.headingMedium)
+                .foregroundStyle(RankdColors.textPrimary)
             Text("Search for movies & shows to add")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+                .font(RankdTypography.bodySmall)
+                .foregroundStyle(RankdColors.textTertiary)
             Spacer()
         }
     }
@@ -77,6 +75,7 @@ struct WatchlistView: View {
         List {
             ForEach(items) { item in
                 WatchlistRow(item: item)
+                    .listRowBackground(RankdColors.background)
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
                             itemToDelete = item
@@ -85,6 +84,7 @@ struct WatchlistView: View {
                         } label: {
                             Label("Remove", systemImage: "trash")
                         }
+                        .tint(RankdColors.error)
                     }
                     .swipeActions(edge: .leading, allowsFullSwipe: true) {
                         Button {
@@ -104,11 +104,12 @@ struct WatchlistView: View {
                         } label: {
                             Label("Watched", systemImage: "checkmark.circle")
                         }
-                        .tint(.green)
+                        .tint(RankdColors.success)
                     }
             }
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
     
     private func deleteItem(_ item: WatchlistItem) {
@@ -122,62 +123,50 @@ struct WatchlistRow: View {
     let item: WatchlistItem
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: RankdSpacing.sm) {
             // Poster
             AsyncImage(url: item.posterURL) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)
             } placeholder: {
-                Rectangle()
-                    .fill(.quaternary)
+                RoundedRectangle(cornerRadius: RankdRadius.sm)
+                    .fill(RankdColors.surfaceSecondary)
                     .overlay {
                         Image(systemName: item.mediaType == .movie ? "film" : "tv")
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(RankdColors.textQuaternary)
                     }
             }
-            .frame(width: 50, height: 75)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .frame(width: RankdPoster.thumbWidth, height: RankdPoster.thumbHeight)
+            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
             
             // Info
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
                 Text(item.title)
-                    .font(.headline)
+                    .font(RankdTypography.headingSmall)
+                    .foregroundStyle(RankdColors.textPrimary)
                     .lineLimit(2)
                 
-                HStack(spacing: 8) {
+                HStack(spacing: RankdSpacing.xs) {
                     if let year = item.year {
                         Text(year)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(RankdTypography.labelSmall)
+                            .foregroundStyle(RankdColors.textTertiary)
                     }
                     
                     Text(item.mediaType == .movie ? "Movie" : "TV")
-                        .font(.caption2)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .background(.quaternary)
-                        .clipShape(Capsule())
+                        .font(RankdTypography.labelSmall)
+                        .foregroundStyle(RankdColors.textTertiary)
                 }
                 
                 Text("Added \(item.dateAdded.formatted(.relative(presentation: .named)))")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                    .font(RankdTypography.caption)
+                    .foregroundStyle(RankdColors.textTertiary)
             }
             
             Spacer()
-            
-            // Swipe hint
-            VStack(spacing: 4) {
-                Image(systemName: "hand.point.left.fill")
-                    .font(.caption)
-                    .foregroundStyle(.green.opacity(0.5))
-                Text("Swipe")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, RankdSpacing.xxs)
     }
 }
 

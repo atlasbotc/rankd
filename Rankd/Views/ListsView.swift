@@ -16,6 +16,7 @@ struct ListsView: View {
                 listContent
             }
         }
+        .background(RankdColors.background)
         .navigationTitle("My Lists")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -24,6 +25,7 @@ struct ListsView: View {
                     showCreateSheet = true
                 } label: {
                     Image(systemName: "plus")
+                        .foregroundStyle(RankdColors.textSecondary)
                 }
             }
         }
@@ -40,63 +42,67 @@ struct ListsView: View {
                 NavigationLink(destination: ListDetailView(list: list)) {
                     ListRowView(list: list)
                 }
+                .listRowBackground(RankdColors.background)
             }
             .onDelete(perform: deleteLists)
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
     
     // MARK: - Empty State
     
     private var emptyState: some View {
         ScrollView {
-            VStack(spacing: 24) {
-                Spacer().frame(height: 40)
+            VStack(spacing: RankdSpacing.lg) {
+                Spacer().frame(height: RankdSpacing.xxl)
                 
                 Image(systemName: "list.bullet.rectangle.portrait")
                     .font(.system(size: 60))
-                    .foregroundStyle(.orange.opacity(0.6))
+                    .foregroundStyle(RankdColors.textQuaternary)
                 
-                VStack(spacing: 8) {
+                VStack(spacing: RankdSpacing.xs) {
                     Text("Create Your First List")
-                        .font(.title2.bold())
+                        .font(RankdTypography.headingLarge)
+                        .foregroundStyle(RankdColors.textPrimary)
                     Text("Curate themed collections of movies and TV shows")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(RankdTypography.bodyMedium)
+                        .foregroundStyle(RankdColors.textSecondary)
                         .multilineTextAlignment(.center)
                 }
                 
-                VStack(spacing: 12) {
+                VStack(spacing: RankdSpacing.sm) {
                     Text("Quick Start Ideas")
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
+                        .font(RankdTypography.headingSmall)
+                        .foregroundStyle(RankdColors.textSecondary)
                     
                     ForEach(SuggestedList.allSuggestions) { suggestion in
                         Button {
                             suggestedListToCreate = suggestion
                             showCreateSheet = true
                         } label: {
-                            HStack(spacing: 12) {
+                            HStack(spacing: RankdSpacing.sm) {
                                 Text(suggestion.emoji)
-                                    .font(.title2)
+                                    .font(RankdTypography.headingLarge)
                                 Text(suggestion.name)
-                                    .font(.body.weight(.medium))
+                                    .font(RankdTypography.bodyLarge)
+                                    .foregroundStyle(RankdColors.textPrimary)
                                 Spacer()
                                 Image(systemName: "plus.circle")
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(RankdColors.textTertiary)
                             }
-                            .padding()
+                            .padding(RankdSpacing.md)
                             .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(.secondarySystemBackground))
+                                RoundedRectangle(cornerRadius: RankdRadius.md)
+                                    .fill(RankdColors.surfacePrimary)
                             )
                         }
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, RankdSpacing.md)
             }
-            .padding()
+            .padding(RankdSpacing.md)
         }
     }
     
@@ -120,30 +126,30 @@ struct ListRowView: View {
     }
     
     var body: some View {
-        HStack(spacing: 14) {
-            // Mini poster collage
+        HStack(spacing: RankdSpacing.sm) {
             miniPosterCollage
             
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
+            VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
+                HStack(spacing: RankdSpacing.xs) {
                     Text(list.emoji)
                     Text(list.name)
-                        .font(.headline)
+                        .font(RankdTypography.headingSmall)
+                        .foregroundStyle(RankdColors.textPrimary)
                         .lineLimit(1)
                 }
                 
                 Text("\(list.items.count) item\(list.items.count == 1 ? "" : "s")")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(RankdTypography.labelMedium)
+                    .foregroundStyle(RankdColors.textSecondary)
                 
                 Text(list.dateModified, style: .relative)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                    .font(RankdTypography.caption)
+                    .foregroundStyle(RankdColors.textTertiary)
             }
             
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, RankdSpacing.xxs)
     }
     
     private var miniPosterCollage: some View {
@@ -151,13 +157,13 @@ struct ListRowView: View {
         let size: CGFloat = 60
         
         return ZStack {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(.tertiarySystemBackground))
+            RoundedRectangle(cornerRadius: RankdRadius.sm)
+                .fill(RankdColors.surfaceSecondary)
                 .frame(width: size, height: size)
             
             if items.isEmpty {
                 Image(systemName: "film.stack")
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(RankdColors.textQuaternary)
             } else {
                 let cellSize = (size - 2) / 2
                 VStack(spacing: 1) {
@@ -170,7 +176,7 @@ struct ListRowView: View {
                         miniPoster(for: items.count > 3 ? items[3] : nil, size: cellSize)
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
             }
         }
         .frame(width: size, height: size)
@@ -182,13 +188,13 @@ struct ListRowView: View {
             AsyncImage(url: url) { image in
                 image.resizable().aspectRatio(contentMode: .fill)
             } placeholder: {
-                Rectangle().fill(Color(.quaternarySystemFill))
+                Rectangle().fill(RankdColors.surfaceTertiary)
             }
             .frame(width: size, height: size)
             .clipped()
         } else {
             Rectangle()
-                .fill(Color(.quaternarySystemFill))
+                .fill(RankdColors.surfaceTertiary)
                 .frame(width: size, height: size)
         }
     }

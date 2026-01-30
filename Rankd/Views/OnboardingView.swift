@@ -16,23 +16,8 @@ struct OnboardingView: View {
                 .tag(2)
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
-        .animation(.easeInOut, value: currentPage)
-        .background(
-            LinearGradient(
-                colors: gradientColors,
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-        )
-    }
-    
-    private var gradientColors: [Color] {
-        switch currentPage {
-        case 0: return [Color.orange.opacity(0.15), Color(.systemBackground)]
-        case 1: return [Color.blue.opacity(0.1), Color(.systemBackground)]
-        default: return [Color.green.opacity(0.1), Color(.systemBackground)]
-        }
+        .animation(RankdMotion.normal, value: currentPage)
+        .background(RankdColors.background.ignoresSafeArea())
     }
 }
 
@@ -44,26 +29,25 @@ private struct WelcomePage: View {
         VStack(spacing: 0) {
             Spacer()
             
-            VStack(spacing: 24) {
-                // Icon
+            VStack(spacing: RankdSpacing.lg) {
                 ZStack {
                     Circle()
-                        .fill(Color.orange.opacity(0.15))
+                        .fill(RankdColors.surfacePrimary)
                         .frame(width: 120, height: 120)
                     
                     Image(systemName: "list.number")
                         .font(.system(size: 48))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(RankdColors.textSecondary)
                 }
                 
-                // Title
-                VStack(spacing: 12) {
+                VStack(spacing: RankdSpacing.sm) {
                     Text("Welcome to Rankd")
-                        .font(.largeTitle.bold())
+                        .font(RankdTypography.displayMedium)
+                        .foregroundStyle(RankdColors.textPrimary)
                     
                     Text("Rank the movies and shows you love.\nDiscover what to watch next.")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
+                        .font(RankdTypography.bodyMedium)
+                        .foregroundStyle(RankdColors.textSecondary)
                         .multilineTextAlignment(.center)
                         .lineSpacing(4)
                 }
@@ -71,14 +55,13 @@ private struct WelcomePage: View {
             
             Spacer()
             
-            VStack(spacing: 16) {
+            VStack(spacing: RankdSpacing.md) {
                 PageIndicator(current: 0, total: 3)
-                
                 OnboardingButton(title: "Get Started", action: onNext)
             }
-            .padding(.bottom, 48)
+            .padding(.bottom, RankdSpacing.xxl)
         }
-        .padding(.horizontal, 32)
+        .padding(.horizontal, RankdSpacing.xl)
     }
 }
 
@@ -90,45 +73,42 @@ private struct HowItWorksPage: View {
         VStack(spacing: 0) {
             Spacer()
             
-            VStack(spacing: 32) {
+            VStack(spacing: RankdSpacing.xl) {
                 Text("How It Works")
-                    .font(.largeTitle.bold())
+                    .font(RankdTypography.displayMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
                 
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: RankdSpacing.lg) {
                     OnboardingStep(
                         icon: "plus.circle.fill",
-                        color: .blue,
                         title: "Add a movie or show",
                         subtitle: "Search or browse trending titles"
                     )
                     
                     OnboardingStep(
                         icon: "arrow.left.arrow.right.circle.fill",
-                        color: .orange,
                         title: "Compare it",
                         subtitle: "Quick head-to-head picks find its rank"
                     )
                     
                     OnboardingStep(
                         icon: "trophy.circle.fill",
-                        color: .yellow,
                         title: "Build your rankings",
                         subtitle: "Your personal top list, always evolving"
                     )
                 }
-                .padding(.horizontal, 8)
+                .padding(.horizontal, RankdSpacing.xs)
             }
             
             Spacer()
             
-            VStack(spacing: 16) {
+            VStack(spacing: RankdSpacing.md) {
                 PageIndicator(current: 1, total: 3)
-                
                 OnboardingButton(title: "Next", action: onNext)
             }
-            .padding(.bottom, 48)
+            .padding(.bottom, RankdSpacing.xxl)
         }
-        .padding(.horizontal, 32)
+        .padding(.horizontal, RankdSpacing.xl)
     }
 }
 
@@ -141,24 +121,25 @@ private struct GetStartedPage: View {
         VStack(spacing: 0) {
             Spacer()
             
-            VStack(spacing: 24) {
+            VStack(spacing: RankdSpacing.lg) {
                 ZStack {
                     Circle()
-                        .fill(Color.green.opacity(0.15))
+                        .fill(RankdColors.surfacePrimary)
                         .frame(width: 120, height: 120)
                     
                     Image(systemName: "film.stack")
                         .font(.system(size: 48))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(RankdColors.textSecondary)
                 }
                 
-                VStack(spacing: 12) {
+                VStack(spacing: RankdSpacing.sm) {
                     Text("Ready to Rank?")
-                        .font(.largeTitle.bold())
+                        .font(RankdTypography.displayMedium)
+                        .foregroundStyle(RankdColors.textPrimary)
                     
                     Text("Start by searching for a movie or show\nyou've seen recently. The more you rank,\nthe smarter your list gets.")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
+                        .font(RankdTypography.bodyMedium)
+                        .foregroundStyle(RankdColors.textSecondary)
                         .multilineTextAlignment(.center)
                         .lineSpacing(4)
                 }
@@ -166,27 +147,25 @@ private struct GetStartedPage: View {
             
             Spacer()
             
-            VStack(spacing: 16) {
-                // Letterboxd import option
+            VStack(spacing: RankdSpacing.md) {
                 Button {
                     showLetterboxdImport = true
                 } label: {
-                    HStack(spacing: 8) {
+                    HStack(spacing: RankdSpacing.xs) {
                         Image(systemName: "square.and.arrow.down")
-                            .font(.subheadline)
+                            .font(RankdTypography.bodySmall)
                         Text("Already track movies? Import from Letterboxd")
-                            .font(.subheadline)
+                            .font(RankdTypography.bodySmall)
                     }
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(RankdColors.accent)
                 }
                 
                 PageIndicator(current: 2, total: 3)
-                
                 OnboardingButton(title: "Let's Go", action: onComplete)
             }
-            .padding(.bottom, 48)
+            .padding(.bottom, RankdSpacing.xxl)
         }
-        .padding(.horizontal, 32)
+        .padding(.horizontal, RankdSpacing.xl)
         .sheet(isPresented: $showLetterboxdImport) {
             LetterboxdImportView()
         }
@@ -197,24 +176,24 @@ private struct GetStartedPage: View {
 
 private struct OnboardingStep: View {
     let icon: String
-    let color: Color
     let title: String
     let subtitle: String
     
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: RankdSpacing.md) {
             Image(systemName: icon)
                 .font(.system(size: 36))
-                .foregroundStyle(color)
+                .foregroundStyle(RankdColors.textSecondary)
                 .frame(width: 48)
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
                 Text(title)
-                    .font(.headline)
+                    .font(RankdTypography.headingSmall)
+                    .foregroundStyle(RankdColors.textPrimary)
                 
                 Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(RankdTypography.bodySmall)
+                    .foregroundStyle(RankdColors.textSecondary)
             }
         }
     }
@@ -225,12 +204,12 @@ private struct PageIndicator: View {
     let total: Int
     
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: RankdSpacing.xs) {
             ForEach(0..<total, id: \.self) { index in
-                Capsule()
-                    .fill(index == current ? Color.orange : Color.secondary.opacity(0.3))
-                    .frame(width: index == current ? 24 : 8, height: 8)
-                    .animation(.easeInOut(duration: 0.2), value: current)
+                Circle()
+                    .fill(index == current ? RankdColors.accent : RankdColors.surfaceSecondary)
+                    .frame(width: 8, height: 8)
+                    .animation(RankdMotion.fast, value: current)
             }
         }
     }
@@ -243,12 +222,12 @@ private struct OnboardingButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.headline)
+                .font(RankdTypography.headingSmall)
+                .foregroundStyle(RankdColors.textPrimary)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(Color.orange)
-                .foregroundStyle(.white)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .frame(height: 52)
+                .background(RankdColors.accent)
+                .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
         }
     }
 }

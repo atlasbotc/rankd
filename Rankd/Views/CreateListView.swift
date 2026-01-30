@@ -21,25 +21,59 @@ struct CreateListView: View {
     
     var body: some View {
         NavigationStack {
-            Form {
-                Section("List Name") {
-                    TextField("e.g. Top Horror Movies", text: $name)
+            ScrollView {
+                VStack(spacing: RankdSpacing.lg) {
+                    // List Name
+                    VStack(alignment: .leading, spacing: RankdSpacing.xs) {
+                        Text("List Name")
+                            .font(RankdTypography.labelMedium)
+                            .foregroundStyle(RankdColors.textSecondary)
+                        
+                        TextField("e.g. Top Horror Movies", text: $name)
+                            .font(RankdTypography.bodyLarge)
+                            .foregroundStyle(RankdColors.textPrimary)
+                            .padding(RankdSpacing.sm)
+                            .background(
+                                RoundedRectangle(cornerRadius: RankdRadius.md)
+                                    .fill(RankdColors.surfacePrimary)
+                            )
+                    }
+                    
+                    // Description
+                    VStack(alignment: .leading, spacing: RankdSpacing.xs) {
+                        Text("Description (Optional)")
+                            .font(RankdTypography.labelMedium)
+                            .foregroundStyle(RankdColors.textSecondary)
+                        
+                        TextField("What's this list about?", text: $listDescription, axis: .vertical)
+                            .font(RankdTypography.bodyMedium)
+                            .foregroundStyle(RankdColors.textPrimary)
+                            .lineLimit(2...4)
+                            .padding(RankdSpacing.sm)
+                            .background(
+                                RoundedRectangle(cornerRadius: RankdRadius.md)
+                                    .fill(RankdColors.surfacePrimary)
+                            )
+                    }
+                    
+                    // Icon
+                    VStack(alignment: .leading, spacing: RankdSpacing.xs) {
+                        Text("Icon")
+                            .font(RankdTypography.labelMedium)
+                            .foregroundStyle(RankdColors.textSecondary)
+                        
+                        emojiPicker
+                    }
                 }
-                
-                Section("Description (Optional)") {
-                    TextField("What's this list about?", text: $listDescription, axis: .vertical)
-                        .lineLimit(2...4)
-                }
-                
-                Section("Icon") {
-                    emojiPicker
-                }
+                .padding(RankdSpacing.md)
             }
+            .background(RankdColors.background)
             .navigationTitle(isEditing ? "Edit List" : "New List")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
+                        .foregroundStyle(RankdColors.textSecondary)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(isEditing ? "Save" : "Create") {
@@ -47,6 +81,7 @@ struct CreateListView: View {
                     }
                     .disabled(!canSave)
                     .fontWeight(.semibold)
+                    .foregroundStyle(canSave ? RankdColors.accent : RankdColors.textTertiary)
                 }
             }
             .onAppear {
@@ -65,43 +100,55 @@ struct CreateListView: View {
     // MARK: - Emoji Picker
     
     private var emojiPicker: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 8), spacing: 10) {
+        VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 8), spacing: RankdSpacing.xs) {
                 ForEach(commonEmojis, id: \.self) { emoji in
                     Button {
                         selectedEmoji = emoji
                     } label: {
                         Text(emoji)
-                            .font(.title2)
+                            .font(RankdTypography.headingLarge)
                             .frame(width: 36, height: 36)
                             .background(
                                 Circle()
-                                    .fill(selectedEmoji == emoji ? Color.orange.opacity(0.3) : Color.clear)
+                                    .fill(selectedEmoji == emoji ? RankdColors.accent.opacity(0.3) : Color.clear)
                             )
                     }
                     .buttonStyle(.plain)
                 }
             }
+            .padding(RankdSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: RankdRadius.md)
+                    .fill(RankdColors.surfacePrimary)
+            )
             
             HStack {
                 Text("Selected:")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(RankdTypography.bodySmall)
+                    .foregroundStyle(RankdColors.textSecondary)
                 Text(selectedEmoji)
-                    .font(.title2)
+                    .font(RankdTypography.headingLarge)
                 
                 Spacer()
                 
                 Button("Custom") {
                     showCustomEmoji.toggle()
                 }
-                .font(.subheadline)
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(RankdColors.accent)
             }
             
             if showCustomEmoji {
                 HStack {
                     TextField("Type an emoji", text: $customEmojiText)
-                        .textFieldStyle(.roundedBorder)
+                        .font(RankdTypography.bodyMedium)
+                        .foregroundStyle(RankdColors.textPrimary)
+                        .padding(RankdSpacing.sm)
+                        .background(
+                            RoundedRectangle(cornerRadius: RankdRadius.md)
+                                .fill(RankdColors.surfacePrimary)
+                        )
                         .onChange(of: customEmojiText) { _, newValue in
                             if let first = newValue.first, newValue.unicodeScalars.first?.properties.isEmoji == true {
                                 selectedEmoji = String(first)
