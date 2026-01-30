@@ -88,7 +88,7 @@ struct ShareProfileSheet: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: RankdRadius.sm)
-                        .strokeBorder(isSelected ? RankdColors.brand : RankdColors.border, lineWidth: isSelected ? 2 : 1)
+                        .strokeBorder(isSelected ? RankdColors.brand : RankdColors.divider, lineWidth: isSelected ? 2 : 1)
                 )
         }
         .buttonStyle(.plain)
