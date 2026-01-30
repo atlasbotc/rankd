@@ -5,7 +5,6 @@ struct MediaDetailView: View {
     let tmdbId: Int
     let mediaType: MediaType
     
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @Environment(\.modelContext) private var modelContext
     @Query private var rankedItems: [RankedItem]

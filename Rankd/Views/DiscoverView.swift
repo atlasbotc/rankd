@@ -16,7 +16,6 @@ struct GenreRecommendation: Identifiable {
 }
 
 struct DiscoverView: View {
-    @Environment(\.modelContext) private var modelContext
     @Query private var rankedItems: [RankedItem]
     @Query private var watchlistItems: [WatchlistItem]
     @Query(sort: \CustomList.dateModified, order: .reverse) private var customLists: [CustomList]
@@ -144,92 +143,6 @@ struct DiscoverView: View {
                 .padding(.horizontal, RankdSpacing.md)
             }
         }
-    }
-    
-    // MARK: - Hero Section
-    
-    private func heroSection(_ item: TMDBSearchResult) -> some View {
-        NavigationLink(destination: MediaDetailView(tmdbId: item.id, mediaType: item.resolvedMediaType)) {
-            GeometryReader { geo in
-                ZStack(alignment: .bottomLeading) {
-                    // Backdrop image
-                    if let backdropURL = item.backdropURL {
-                        AsyncImage(url: backdropURL) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: geo.size.width, height: geo.size.height)
-                                .clipped()
-                        } placeholder: {
-                            Rectangle()
-                                .fill(RankdColors.surfacePrimary)
-                                .shimmer()
-                        }
-                    } else if let posterURL = item.posterURL {
-                        AsyncImage(url: posterURL) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: geo.size.width, height: geo.size.height)
-                                .clipped()
-                                .blur(radius: 20)
-                        } placeholder: {
-                            Rectangle()
-                                .fill(RankdColors.surfacePrimary)
-                                .shimmer()
-                        }
-                    } else {
-                        Rectangle()
-                            .fill(RankdColors.surfacePrimary)
-                    }
-                    
-                    // Gradient overlay
-                    LinearGradient(
-                        colors: [
-                            .clear,
-                            RankdColors.background.opacity(0.3),
-                            RankdColors.background.opacity(0.8),
-                            RankdColors.background
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    
-                    // Content over gradient
-                    VStack(alignment: .leading, spacing: RankdSpacing.sm) {
-                        Text(item.displayTitle)
-                            .font(RankdTypography.displayLarge)
-                            .foregroundStyle(RankdColors.textPrimary)
-                            .lineLimit(2)
-                        
-                        HStack(spacing: RankdSpacing.xs) {
-                            if let year = item.displayYear {
-                                Text(year)
-                            }
-                            if item.resolvedMediaType == .tv {
-                                Text("TV Series")
-                            }
-                        }
-                        .font(RankdTypography.bodySmall)
-                        .foregroundStyle(RankdColors.textSecondary)
-                        
-                        // Rank It button
-                        Text("Rank It")
-                            .font(RankdTypography.labelLarge)
-                            .foregroundStyle(RankdColors.textPrimary)
-                            .padding(.horizontal, RankdSpacing.lg)
-                            .padding(.vertical, RankdSpacing.sm)
-                            .background(RankdColors.brand)
-                            .clipShape(Capsule())
-                            .padding(.top, RankdSpacing.xs)
-                    }
-                    .padding(.horizontal, RankdSpacing.md)
-                    .padding(.bottom, RankdSpacing.lg)
-                }
-            }
-            .frame(height: UIScreen.main.bounds.height * 0.55)
-        }
-        .buttonStyle(RankdPressStyle())
     }
     
     // MARK: - Welcome Header
@@ -684,17 +597,6 @@ struct DiscoverView: View {
         hiddenGems = Array(gems.prefix(15))
     }
     
-    // MARK: - Item Status
-    
-    private func itemStatus(_ result: TMDBSearchResult) -> ItemStatus {
-        if rankedItems.contains(where: { $0.tmdbId == result.id }) {
-            return .ranked
-        }
-        if watchlistItems.contains(where: { $0.tmdbId == result.id }) {
-            return .watchlist
-        }
-        return .notAdded
-    }
 }
 
 // MARK: - Discover Section
