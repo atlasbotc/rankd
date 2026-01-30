@@ -323,9 +323,9 @@ struct ListCardView: View {
     
     private func medalColor(for rank: Int) -> Color {
         switch rank {
-        case 1: return Color(red: 1.0, green: 0.84, blue: 0.0)
-        case 2: return Color(red: 0.75, green: 0.75, blue: 0.78)
-        case 3: return Color(red: 0.80, green: 0.50, blue: 0.20)
+        case 1: return RankdColors.medalGold
+        case 2: return RankdColors.medalSilver
+        case 3: return RankdColors.medalBronze
         default: return Colors.secondaryText
         }
     }

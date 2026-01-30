@@ -346,7 +346,7 @@ struct RankdLargeView: View {
                     
                     if index < top10.count - 1 {
                         Divider()
-                            .foregroundStyle(Color(red: 0.13, green: 0.13, blue: 0.15).opacity(0.08))
+                            .foregroundStyle(WidgetColors.textPrimary.opacity(0.08))
                     }
                 }
             }

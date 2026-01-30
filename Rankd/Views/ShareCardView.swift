@@ -352,9 +352,9 @@ struct Top4CardView: View {
     
     private func medalColor(for rank: Int) -> Color {
         switch rank {
-        case 1: return Color(red: 1.0, green: 0.84, blue: 0.0)
-        case 2: return Color(red: 0.75, green: 0.75, blue: 0.78)
-        case 3: return Color(red: 0.80, green: 0.50, blue: 0.20)
+        case 1: return RankdColors.medalGold
+        case 2: return RankdColors.medalSilver
+        case 3: return RankdColors.medalBronze
         default: return Color(red: 0.5, green: 0.5, blue: 0.55)
         }
     }
@@ -521,9 +521,9 @@ struct Top10CardView: View {
     
     private func medalColorForRank(_ rank: Int) -> Color {
         switch rank {
-        case 1: return Color(red: 1.0, green: 0.84, blue: 0.0)
-        case 2: return Color(red: 0.75, green: 0.75, blue: 0.78)
-        case 3: return Color(red: 0.80, green: 0.50, blue: 0.20)
+        case 1: return RankdColors.medalGold
+        case 2: return RankdColors.medalSilver
+        case 3: return RankdColors.medalBronze
         default: return CardColors.secondaryText
         }
     }
@@ -537,7 +537,7 @@ struct FavoritesCardView: View {
     private let cardSize: CGFloat = 1080
     
     private var heartColor: Color {
-        Color(red: 0.85, green: 0.30, blue: 0.35)
+        RankdColors.tierBad
     }
     
     var body: some View {

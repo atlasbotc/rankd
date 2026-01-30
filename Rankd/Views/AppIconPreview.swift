@@ -10,7 +10,7 @@ import SwiftUI
 #Preview("App Icon – 1024×1024") {
     ZStack {
         // Brand background
-        Color(red: 0.35, green: 0.435, blue: 0.58)
+        RankdColors.brand
         
         Text("R")
             .font(.system(size: 500, weight: .bold, design: .serif))

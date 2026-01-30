@@ -542,12 +542,7 @@ private struct TopRankedCard: View {
     }
     
     private var medalRingColor: Color {
-        switch rank {
-        case 1: return Color(red: 1.0, green: 0.84, blue: 0.0)   // Gold
-        case 2: return Color(red: 0.75, green: 0.75, blue: 0.78)  // Silver
-        case 3: return Color(red: 0.80, green: 0.50, blue: 0.20)  // Bronze
-        default: return Color.clear
-        }
+        RankdColors.medalColor(for: rank)
     }
 }
 

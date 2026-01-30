@@ -36,6 +36,11 @@ enum RankdColors {
     static let warning = Color(red: 0.75, green: 0.65, blue: 0.30)
     static let error = Color(red: 0.75, green: 0.35, blue: 0.35)
     
+    // Medals — podium positions
+    static let medalGold = Color(red: 1.0, green: 0.84, blue: 0.0)
+    static let medalSilver = Color(red: 0.75, green: 0.75, blue: 0.78)
+    static let medalBronze = Color(red: 0.80, green: 0.50, blue: 0.20)
+    
     // Utility
     static let divider = Color(red: 0.13, green: 0.13, blue: 0.15).opacity(0.08)
     static let shimmer = Color(red: 0.13, green: 0.13, blue: 0.15).opacity(0.04)
@@ -45,6 +50,15 @@ enum RankdColors {
         case .good: return tierGood
         case .medium: return tierMedium
         case .bad: return tierBad
+        }
+    }
+    
+    static func medalColor(for rank: Int) -> Color {
+        switch rank {
+        case 1: return medalGold
+        case 2: return medalSilver
+        case 3: return medalBronze
+        default: return .clear
         }
     }
 }
