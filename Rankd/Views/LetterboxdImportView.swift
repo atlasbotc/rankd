@@ -595,9 +595,31 @@ struct LetterboxdImportView: View {
             
             await MainActor.run {
                 try? modelContext.save()
+                updateWidgetDataAfterImport()
                 step = .done
             }
         }
+    }
+    
+    /// Push top ranked items to widget after Letterboxd import.
+    private func updateWidgetDataAfterImport() {
+        let descriptor = FetchDescriptor<RankedItem>(sortBy: [SortDescriptor(\.rank)])
+        guard let allItems = try? modelContext.fetch(descriptor) else { return }
+        let top10 = Array(allItems.prefix(10))
+        
+        let widgetItems = top10.map { item in
+            let score = RankedItem.calculateScore(for: item, allItems: allItems)
+            return WidgetDataManager.WidgetItem(
+                id: item.id.uuidString,
+                title: item.title,
+                score: score,
+                tier: item.tier.rawValue,
+                posterURL: item.posterURL?.absoluteString,
+                rank: item.rank
+            )
+        }
+        
+        WidgetDataManager.updateSharedData(items: widgetItems)
     }
 }
 

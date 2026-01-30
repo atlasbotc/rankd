@@ -925,6 +925,8 @@ struct ProfileView: View {
         for item in watchlistItems { modelContext.delete(item) }
         for list in customLists { modelContext.delete(list) }
         streakDatesString = ""
+        // Clear widget data
+        WidgetDataManager.updateSharedData(items: [])
         HapticManager.notification(.success)
     }
     

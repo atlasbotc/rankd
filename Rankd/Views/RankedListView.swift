@@ -396,6 +396,7 @@ struct RankedListView: View {
         }
         
         try? modelContext.save()
+        updateWidgetData()
     }
     
     private func moveItems(from source: IndexSet, to destination: Int) {
@@ -408,6 +409,27 @@ struct RankedListView: View {
         
         HapticManager.selection()
         try? modelContext.save()
+        updateWidgetData()
+    }
+    
+    /// Push updated rankings to widget after modifications.
+    private func updateWidgetData() {
+        let sorted = allItems.sorted { $0.rank < $1.rank }
+        let top10 = Array(sorted.prefix(10))
+        
+        let widgetItems = top10.map { item in
+            let score = RankedItem.calculateScore(for: item, allItems: allItems)
+            return WidgetDataManager.WidgetItem(
+                id: item.id.uuidString,
+                title: item.title,
+                score: score,
+                tier: item.tier.rawValue,
+                posterURL: item.posterURL?.absoluteString,
+                rank: item.rank
+            )
+        }
+        
+        WidgetDataManager.updateSharedData(items: widgetItems)
     }
 }
 
