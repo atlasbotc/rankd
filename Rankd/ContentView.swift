@@ -4,6 +4,7 @@ import SwiftData
 struct ContentView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var selectedTab = 0
+    @Binding var deepLinkTab: Int?
     
     var body: some View {
         if hasCompletedOnboarding {
@@ -47,6 +48,12 @@ struct ContentView: View {
         }
         .animation(RankdMotion.normal, value: selectedTab)
         .tint(RankdColors.brand)
+        .onChange(of: deepLinkTab) { _, newTab in
+            if let tab = newTab {
+                selectedTab = tab
+                deepLinkTab = nil
+            }
+        }
         .onAppear {
             let tabBarAppearance = UITabBarAppearance()
             tabBarAppearance.configureWithOpaqueBackground()
@@ -67,6 +74,6 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    ContentView(deepLinkTab: .constant(nil))
         .modelContainer(for: [RankedItem.self, WatchlistItem.self], inMemory: true)
 }
