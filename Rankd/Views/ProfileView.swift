@@ -116,7 +116,7 @@ struct ProfileView: View {
     private var topFourGrid: some View {
         HStack(spacing: RankdSpacing.sm) {
             ForEach(Array(topFour.enumerated()), id: \.element.id) { index, item in
-                TopFourCard(item: item, rank: index + 1)
+                TopFourCard(item: item, rank: index + 1, allItems: Array(rankedItems))
             }
             
             ForEach(0..<max(0, 4 - topFour.count), id: \.self) { _ in
@@ -398,6 +398,11 @@ private struct ProfileNavCard: View {
 private struct TopFourCard: View {
     let item: RankedItem
     let rank: Int
+    var allItems: [RankedItem] = []
+    
+    private var score: Double {
+        RankedItem.calculateScore(for: item, allItems: allItems)
+    }
     
     var body: some View {
         VStack(spacing: RankdSpacing.xs) {
@@ -431,10 +436,16 @@ private struct TopFourCard: View {
                     .padding(RankdSpacing.xs)
             }
             
-            Text(item.title)
-                .font(RankdTypography.labelSmall)
-                .foregroundStyle(RankdColors.textPrimary)
-                .lineLimit(1)
+            VStack(spacing: RankdSpacing.xxs) {
+                Text(item.title)
+                    .font(RankdTypography.labelSmall)
+                    .foregroundStyle(RankdColors.textPrimary)
+                    .lineLimit(1)
+                
+                if !allItems.isEmpty {
+                    ScoreBadge(score: score, tier: item.tier, compact: true)
+                }
+            }
         }
     }
 }

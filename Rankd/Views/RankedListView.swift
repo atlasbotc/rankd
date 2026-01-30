@@ -59,7 +59,7 @@ struct RankedListView: View {
                         if remainingItems.count > 0 {
                             Section {
                                 ForEach(Array(remainingItems.enumerated()), id: \.element.id) { index, item in
-                                    RankedItemRow(item: item, displayRank: index + 4)
+                                    RankedItemRow(item: item, displayRank: index + 4, allItems: filteredItems)
                                         .listRowBackground(
                                             isReorderMode ? RankdColors.surfaceSecondary : RankdColors.background
                                         )
@@ -185,6 +185,7 @@ struct RankedListView: View {
                     TopRankedCard(
                         item: item,
                         rank: index + 1,
+                        allItems: filteredItems,
                         onTap: {
                             selectedItem = item
                             showDetailSheet = true
@@ -252,8 +253,13 @@ struct RankedListView: View {
 private struct TopRankedCard: View {
     let item: RankedItem
     let rank: Int
+    var allItems: [RankedItem] = []
     let onTap: () -> Void
     let onDelete: () -> Void
+    
+    private var score: Double {
+        RankedItem.calculateScore(for: item, allItems: allItems)
+    }
     
     var body: some View {
         Button(action: onTap) {
@@ -280,17 +286,23 @@ private struct TopRankedCard: View {
                         .offset(x: RankdSpacing.xs, y: RankdSpacing.xs)
                 }
                 
-                // Title + tier dot
-                HStack(spacing: RankdSpacing.xxs) {
-                    Circle()
-                        .fill(RankdColors.tierColor(item.tier))
-                        .frame(width: 6, height: 6)
+                // Title + tier dot + score
+                VStack(spacing: RankdSpacing.xxs) {
+                    HStack(spacing: RankdSpacing.xxs) {
+                        Circle()
+                            .fill(RankdColors.tierColor(item.tier))
+                            .frame(width: 6, height: 6)
+                        
+                        Text(item.title)
+                            .font(RankdTypography.labelMedium)
+                            .foregroundStyle(RankdColors.textPrimary)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.center)
+                    }
                     
-                    Text(item.title)
-                        .font(RankdTypography.labelMedium)
-                        .foregroundStyle(RankdColors.textPrimary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.center)
+                    if !allItems.isEmpty {
+                        ScoreBadge(score: score, tier: item.tier, compact: true)
+                    }
                 }
             }
         }
@@ -335,6 +347,11 @@ private struct TopRankedCard: View {
 struct RankedItemRow: View {
     let item: RankedItem
     let displayRank: Int
+    var allItems: [RankedItem] = []
+    
+    private var score: Double {
+        RankedItem.calculateScore(for: item, allItems: allItems)
+    }
     
     var body: some View {
         HStack(spacing: RankdSpacing.sm) {
@@ -376,10 +393,10 @@ struct RankedItemRow: View {
             
             Spacer()
             
-            // Tier dot
-            Circle()
-                .fill(RankdColors.tierColor(item.tier))
-                .frame(width: 6, height: 6)
+            // Score badge
+            if !allItems.isEmpty {
+                ScoreBadge(score: score, tier: item.tier)
+            }
         }
         .padding(.vertical, RankdSpacing.xxs)
     }
@@ -437,6 +454,11 @@ struct ItemDetailSheet: View {
                             Text("Ranked #\(item.rank)")
                                 .font(RankdTypography.headingMedium)
                                 .foregroundStyle(RankdColors.brand)
+                            
+                            ScoreDisplay(
+                                score: RankedItem.calculateScore(for: item, allItems: allItems),
+                                tier: item.tier
+                            )
                         }
                     }
                     .padding(.horizontal, RankdSpacing.md)

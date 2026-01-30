@@ -70,6 +70,34 @@ final class RankedItem {
         self.review = review
     }
     
+    /// Calculate auto-score (1.0–10.0) based on tier and rank position within that tier.
+    /// Requires all ranked items of the same media type to determine position.
+    static func calculateScore(for item: RankedItem, allItems: [RankedItem]) -> Double {
+        let tierItems = allItems
+            .filter { $0.tier == item.tier && $0.mediaType == item.mediaType }
+            .sorted { $0.rank < $1.rank }
+        
+        let count = tierItems.count
+        guard count > 0 else { return 1.0 }
+        
+        let (top, bottom): (Double, Double) = {
+            switch item.tier {
+            case .good:   return (10.0, 7.0)
+            case .medium: return (6.9, 4.0)
+            case .bad:    return (3.9, 1.0)
+            }
+        }()
+        
+        guard count > 1,
+              let index = tierItems.firstIndex(where: { $0.id == item.id })
+        else {
+            return top // single item gets top of range
+        }
+        
+        let score = top - (top - bottom) * Double(index) / Double(count - 1)
+        return (score * 10).rounded() / 10 // round to 1 decimal
+    }
+    
     var posterURL: URL? {
         guard let path = posterPath else { return nil }
         return URL(string: "\(Config.tmdbImageBaseURL)/w500\(path)")

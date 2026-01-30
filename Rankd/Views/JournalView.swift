@@ -240,7 +240,7 @@ struct JournalView: View {
         ForEach(groupedByMonth, id: \.key) { group in
             Section {
                 ForEach(group.items) { item in
-                    JournalEntryCard(item: item)
+                    JournalEntryCard(item: item, allItems: allItems)
                         .contentShape(Rectangle())
                         .onTapGesture {
                             selectedItem = item
@@ -369,6 +369,11 @@ private struct JournalFilterChip<Label: View>: View {
 
 private struct JournalEntryCard: View {
     let item: RankedItem
+    var allItems: [RankedItem] = []
+    
+    private var score: Double {
+        RankedItem.calculateScore(for: item, allItems: allItems)
+    }
     
     private var dateFormatted: String {
         item.dateAdded.formatted(.dateTime.month(.abbreviated).day().year())
@@ -411,7 +416,7 @@ private struct JournalEntryCard: View {
                     .foregroundStyle(RankdColors.textPrimary)
                     .lineLimit(2)
                 
-                // Tier + Rank metadata
+                // Tier + Rank metadata + Score
                 HStack(spacing: RankdSpacing.xxs) {
                     Circle()
                         .fill(RankdColors.tierColor(item.tier))
@@ -420,6 +425,10 @@ private struct JournalEntryCard: View {
                         .foregroundStyle(RankdColors.textSecondary)
                     Text("· #\(item.rank) in \(mediaTypeLabel)")
                         .foregroundStyle(RankdColors.textSecondary)
+                    
+                    if !allItems.isEmpty {
+                        ScoreBadge(score: score, tier: item.tier, compact: true)
+                    }
                 }
                 .font(RankdTypography.labelMedium)
                 

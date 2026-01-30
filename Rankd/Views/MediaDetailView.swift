@@ -309,14 +309,20 @@ struct MediaDetailView: View {
     }
     
     private func rankBadge(_ ranked: RankedItem) -> some View {
-        HStack(spacing: RankdSpacing.xs) {
-            Circle()
-                .fill(RankdColors.tierColor(ranked.tier))
-                .frame(width: 8, height: 8)
+        let score = RankedItem.calculateScore(for: ranked, allItems: rankedItems)
+        
+        return VStack(alignment: .leading, spacing: RankdSpacing.xs) {
+            HStack(spacing: RankdSpacing.xs) {
+                Circle()
+                    .fill(RankdColors.tierColor(ranked.tier))
+                    .frame(width: 8, height: 8)
+                
+                Text("#\(ranked.rank) in \(ranked.mediaType == .movie ? "Movies" : "TV Shows")")
+                    .font(RankdTypography.labelMedium)
+                    .foregroundStyle(RankdColors.textSecondary)
+            }
             
-            Text("#\(ranked.rank) in \(ranked.mediaType == .movie ? "Movies" : "TV Shows")")
-                .font(RankdTypography.labelMedium)
-                .foregroundStyle(RankdColors.textSecondary)
+            ScoreDisplay(score: score, tier: ranked.tier)
         }
     }
     

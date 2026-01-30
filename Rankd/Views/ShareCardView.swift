@@ -207,7 +207,9 @@ struct Top4CardView: View {
     }
     
     private func posterCard(item: RankedItem, rank: Int, width: CGFloat, height: CGFloat) -> some View {
-        VStack(spacing: 16) {
+        let score = RankedItem.calculateScore(for: item, allItems: data.items)
+        
+        return VStack(spacing: 16) {
             ZStack(alignment: .topLeading) {
                 if let image = data.posterImage(for: item) {
                     Image(uiImage: image)
@@ -230,10 +232,22 @@ struct Top4CardView: View {
                     .foregroundStyle(CardColors.primaryText)
                     .lineLimit(1)
                 
-                if let year = item.year {
-                    Text(year)
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundStyle(CardColors.secondaryText)
+                HStack(spacing: 8) {
+                    if let year = item.year {
+                        Text(year)
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundStyle(CardColors.secondaryText)
+                    }
+                    
+                    Text(String(format: "%.1f", score))
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(RankdColors.tierColor(item.tier))
+                        )
                 }
             }
         }
@@ -422,6 +436,18 @@ struct Top10CardView: View {
                     }
                     
                     Spacer()
+                    
+                    // Score badge
+                    let score = RankedItem.calculateScore(for: item, allItems: data.items)
+                    Text(String(format: "%.1f", score))
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(RankdColors.tierColor(item.tier))
+                        )
                 }
                 .padding(.vertical, 6)
                 .padding(.horizontal, 16)
