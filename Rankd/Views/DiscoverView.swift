@@ -84,11 +84,6 @@ struct DiscoverView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
                 
-                // MARK: Hero Section
-                if let heroItem = trending.first {
-                    heroSection(heroItem)
-                }
-                
                 // MARK: New User Welcome
                 if !hasRankedItems {
                     welcomeHeader
