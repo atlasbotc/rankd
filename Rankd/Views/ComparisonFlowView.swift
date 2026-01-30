@@ -531,6 +531,11 @@ struct ComparisonFlowView: View {
         item.comparisonCount = Int(log2(Double(max(existingItems.count, 1)))) + 1
         
         modelContext.insert(item)
+        
+        // Log activity
+        let score = RankedItem.calculateScore(for: item, allItems: existingItems + [item])
+        ActivityLogger.logRanked(item: item, score: score, context: modelContext)
+        
         try? modelContext.save()
         
         HapticManager.notification(.success)

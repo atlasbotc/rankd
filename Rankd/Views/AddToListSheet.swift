@@ -160,6 +160,7 @@ struct AddToListSheet: View {
         modelContext.insert(item)
         list.dateModified = Date()
         addedToLists.insert(list.id)
+        ActivityLogger.logAddedToList(item: item, list: list, context: modelContext)
         try? modelContext.save()
     }
 }

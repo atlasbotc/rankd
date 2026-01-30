@@ -428,8 +428,6 @@ struct ProfileView: View {
             }
     }
     
-    // MARK: - Stats Grid (removed — replaced by quickStatsRow)
-    
     // MARK: - Taste Personality
     
     private var tasteSection: some View {
@@ -1181,66 +1179,7 @@ private struct TopFourCard: View {
     }
 }
 
-// MARK: - Stat Card (legacy — kept for compatibility)
-
-private struct StatCard: View {
-    let value: String
-    let label: String
-    let icon: String
-    @State private var displayedValue: Int = 0
-    
-    private var numericValue: Int? { Int(value) }
-    
-    var body: some View {
-        VStack(spacing: RankdSpacing.xs) {
-            Image(systemName: icon)
-                .font(RankdTypography.headingSmall)
-                .foregroundStyle(RankdColors.textTertiary)
-            
-            if let target = numericValue {
-                Text("\(displayedValue)")
-                    .font(RankdTypography.headingLarge)
-                    .foregroundStyle(RankdColors.textPrimary)
-                    .onAppear { animateCount(to: target) }
-                    .onChange(of: value) { _, newValue in
-                        if let newTarget = Int(newValue) {
-                            animateCount(to: newTarget)
-                        }
-                    }
-            } else {
-                Text(value)
-                    .font(RankdTypography.headingLarge)
-                    .foregroundStyle(RankdColors.textPrimary)
-            }
-            
-            Text(label)
-                .font(RankdTypography.labelMedium)
-                .foregroundStyle(RankdColors.textTertiary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, RankdSpacing.md)
-        .background(
-            RoundedRectangle(cornerRadius: RankdRadius.lg)
-                .fill(RankdColors.surfacePrimary)
-        )
-    }
-    
-    private func animateCount(to target: Int) {
-        guard target > 0 else {
-            displayedValue = 0
-            return
-        }
-        let steps = min(target, 20)
-        let interval = 0.4 / Double(steps)
-        for step in 0...steps {
-            DispatchQueue.main.asyncAfter(deadline: .now() + interval * Double(step)) {
-                withAnimation(RankdMotion.fast) {
-                    displayedValue = Int(Double(target) * Double(step) / Double(steps))
-                }
-            }
-        }
-    }
-}
+// StatCard removed — replaced by QuickStatCard
 
 // MARK: - Tier Bar
 

@@ -280,6 +280,7 @@ struct AddToListView: View {
         modelContext.insert(item)
         list.dateModified = Date()
         addedIds.insert(result.id)
+        ActivityLogger.logAddedToList(item: item, list: list, context: modelContext)
         try? modelContext.save()
     }
     
@@ -298,6 +299,7 @@ struct AddToListView: View {
         modelContext.insert(item)
         list.dateModified = Date()
         addedIds.insert(ranked.tmdbId)
+        ActivityLogger.logAddedToList(item: item, list: list, context: modelContext)
         try? modelContext.save()
     }
     

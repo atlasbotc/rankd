@@ -118,7 +118,8 @@ struct ActivityLogger {
             return profile.id
         }
         // Default local user ID when no profile exists yet
-        return UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+        // swiftlint:disable:next force_unwrapping
+        return UUID(uuidString: "00000000-0000-0000-0000-000000000000") ?? UUID()
     }
     
     private static func encodeMetadata(_ dict: [String: String]) -> String? {

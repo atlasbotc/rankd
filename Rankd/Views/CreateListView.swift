@@ -226,6 +226,7 @@ struct CreateListView: View {
                 emoji: selectedEmoji
             )
             modelContext.insert(newList)
+            ActivityLogger.logCreatedList(list: newList, context: modelContext)
         }
         
         try? modelContext.save()

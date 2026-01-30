@@ -17,7 +17,9 @@ actor PosterCache {
     // MARK: - Disk Cache
     
     private let diskCacheURL: URL = {
-        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        guard let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+            return FileManager.default.temporaryDirectory.appendingPathComponent("PosterCache", isDirectory: true)
+        }
         let dir = caches.appendingPathComponent("PosterCache", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir

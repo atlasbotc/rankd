@@ -747,6 +747,7 @@ struct MediaDetailView: View {
             mediaType: result.resolvedMediaType
         )
         modelContext.insert(item)
+        ActivityLogger.logAddedToWatchlist(item: item, context: modelContext)
         try? modelContext.save()
         HapticManager.impact(.light)
     }
