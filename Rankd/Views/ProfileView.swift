@@ -4,10 +4,13 @@ import SwiftData
 struct ProfileView: View {
     @Query(sort: \RankedItem.rank) private var rankedItems: [RankedItem]
     @Query private var watchlistItems: [WatchlistItem]
+    @Query(sort: \CustomList.dateModified, order: .reverse) private var customLists: [CustomList]
     
     @State private var showCompareView = false
     @State private var showLetterboxdImport = false
     @State private var showShareSheet = false
+    @State private var showCreateListSheet = false
+    @State private var suggestedListToCreate: SuggestedList?
     
     private var movieItems: [RankedItem] {
         rankedItems.filter { $0.mediaType == .movie }.sorted { $0.rank < $1.rank }
@@ -44,11 +47,13 @@ struct ProfileView: View {
                         tasteSection
                     }
                     
+                    // My Lists section
+                    myListsSection
+                    
                     // Navigation cards
                     VStack(spacing: RankdSpacing.sm) {
                         statisticsCard
                         journalCard
-                        myListsCard
                         compareCard
                     }
                     .padding(.horizontal, RankdSpacing.md)
@@ -256,17 +261,156 @@ struct ProfileView: View {
         .buttonStyle(.plain)
     }
     
-    private var myListsCard: some View {
-        NavigationLink {
-            ListsView()
-        } label: {
-            ProfileNavCard(
-                icon: "list.bullet.rectangle.portrait.fill",
-                title: "My Lists",
-                subtitle: "Create and curate themed collections"
-            )
+    // MARK: - My Lists Section
+    
+    private var myListsSection: some View {
+        VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+            // Header with "See All" link
+            HStack {
+                Text("My Lists")
+                    .font(RankdTypography.headingLarge)
+                    .foregroundStyle(RankdColors.textPrimary)
+                Spacer()
+                NavigationLink {
+                    ListsView()
+                } label: {
+                    HStack(spacing: RankdSpacing.xxs) {
+                        Text(customLists.isEmpty ? "Create" : "See All")
+                            .font(RankdTypography.labelMedium)
+                            .foregroundStyle(RankdColors.brand)
+                        Image(systemName: "chevron.right")
+                            .font(RankdTypography.caption)
+                            .foregroundStyle(RankdColors.brand)
+                    }
+                }
+            }
+            .padding(.horizontal, RankdSpacing.md)
+            
+            if customLists.isEmpty {
+                myListsEmptyState
+            } else {
+                myListsScrollCards
+            }
         }
-        .buttonStyle(.plain)
+    }
+    
+    private var myListsEmptyState: some View {
+        VStack(spacing: RankdSpacing.sm) {
+            // Template suggestion cards in horizontal scroll
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: RankdSpacing.sm) {
+                    // "Create New" card
+                    Button {
+                        suggestedListToCreate = nil
+                        showCreateListSheet = true
+                    } label: {
+                        VStack(spacing: RankdSpacing.sm) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: RankdRadius.md)
+                                    .fill(RankdColors.brandSubtle)
+                                    .frame(width: 60, height: 60)
+                                Image(systemName: "plus")
+                                    .font(RankdTypography.headingLarge)
+                                    .foregroundStyle(RankdColors.brand)
+                            }
+                            Text("Blank List")
+                                .font(RankdTypography.labelMedium)
+                                .foregroundStyle(RankdColors.textPrimary)
+                            Text("Start fresh")
+                                .font(RankdTypography.caption)
+                                .foregroundStyle(RankdColors.textTertiary)
+                        }
+                        .frame(width: 120)
+                        .padding(RankdSpacing.sm)
+                        .background(
+                            RoundedRectangle(cornerRadius: RankdRadius.lg)
+                                .fill(RankdColors.surfacePrimary)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    
+                    // Template cards
+                    ForEach(Array(SuggestedList.allSuggestions.prefix(4))) { suggestion in
+                        Button {
+                            suggestedListToCreate = suggestion
+                            showCreateListSheet = true
+                        } label: {
+                            VStack(spacing: RankdSpacing.sm) {
+                                Text(suggestion.emoji)
+                                    .font(.system(size: 32))
+                                    .frame(width: 60, height: 60)
+                                    .background(
+                                        Circle()
+                                            .fill(RankdColors.surfaceSecondary)
+                                    )
+                                Text(suggestion.name)
+                                    .font(RankdTypography.labelMedium)
+                                    .foregroundStyle(RankdColors.textPrimary)
+                                    .lineLimit(1)
+                                Text(suggestion.description)
+                                    .font(RankdTypography.caption)
+                                    .foregroundStyle(RankdColors.textTertiary)
+                                    .lineLimit(1)
+                            }
+                            .frame(width: 120)
+                            .padding(RankdSpacing.sm)
+                            .background(
+                                RoundedRectangle(cornerRadius: RankdRadius.lg)
+                                    .fill(RankdColors.surfacePrimary)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, RankdSpacing.md)
+            }
+        }
+        .sheet(isPresented: $showCreateListSheet) {
+            CreateListView(suggested: suggestedListToCreate)
+        }
+    }
+    
+    private var myListsScrollCards: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: RankdSpacing.sm) {
+                ForEach(customLists) { list in
+                    NavigationLink(destination: ListDetailView(list: list)) {
+                        ListPreviewCard(list: list)
+                    }
+                    .buttonStyle(.plain)
+                }
+                
+                // "New List" button at end
+                Button {
+                    suggestedListToCreate = nil
+                    showCreateListSheet = true
+                } label: {
+                    VStack(spacing: RankdSpacing.sm) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: RankdRadius.md)
+                                .fill(RankdColors.brandSubtle)
+                                .frame(width: 48, height: 48)
+                            Image(systemName: "plus")
+                                .font(RankdTypography.headingMedium)
+                                .foregroundStyle(RankdColors.brand)
+                        }
+                        Text("New List")
+                            .font(RankdTypography.labelMedium)
+                            .foregroundStyle(RankdColors.brand)
+                    }
+                    .frame(width: 100, height: 160)
+                    .background(
+                        RoundedRectangle(cornerRadius: RankdRadius.lg)
+                            .fill(RankdColors.surfacePrimary)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, RankdSpacing.md)
+        }
+        .sheet(isPresented: $showCreateListSheet) {
+            CreateListView(suggested: suggestedListToCreate)
+        }
     }
     
     private var compareCard: some View {

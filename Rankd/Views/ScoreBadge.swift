@@ -8,6 +8,11 @@ struct ScoreBadge: View {
     /// Compact variant for tight spaces
     var compact: Bool = false
     
+    /// Whether to animate in on appear (fade + scale)
+    var animated: Bool = true
+    
+    @State private var isVisible = false
+    
     private var backgroundColor: Color {
         RankdColors.tierColor(tier)
     }
@@ -30,6 +35,21 @@ struct ScoreBadge: View {
                 Capsule()
                     .fill(backgroundColor)
             )
+            .scaleEffect(animated ? (isVisible ? 1.0 : 0.5) : 1.0)
+            .opacity(animated ? (isVisible ? 1.0 : 0.0) : 1.0)
+            .onAppear {
+                guard animated else { return }
+                withAnimation(RankdMotion.slow) {
+                    isVisible = true
+                }
+            }
+            .onChange(of: score) { _, _ in
+                guard animated else { return }
+                isVisible = false
+                withAnimation(RankdMotion.slow) {
+                    isVisible = true
+                }
+            }
     }
 }
 

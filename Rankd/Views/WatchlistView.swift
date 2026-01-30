@@ -56,19 +56,39 @@ struct WatchlistView: View {
     }
     
     private var emptyState: some View {
-        VStack(spacing: RankdSpacing.sm) {
+        VStack(spacing: RankdSpacing.lg) {
             Spacer()
-            Image(systemName: "rectangle.stack.badge.plus")
-                .font(.system(size: 50))
+            
+            Image(systemName: "bookmark")
+                .font(.system(size: 48))
                 .foregroundStyle(RankdColors.textQuaternary)
-            Text("Watchlist empty")
-                .font(RankdTypography.headingMedium)
-                .foregroundStyle(RankdColors.textPrimary)
-            Text("Search for movies & shows to add")
-                .font(RankdTypography.bodySmall)
-                .foregroundStyle(RankdColors.textTertiary)
+            
+            VStack(spacing: RankdSpacing.xs) {
+                Text("Build your watch queue")
+                    .font(RankdTypography.headingLarge)
+                    .foregroundStyle(RankdColors.textPrimary)
+                
+                Text("Save movies and shows you want to watch\nso they're ready when you are.")
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(RankdColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+            }
+            
+            NavigationLink(destination: SearchView()) {
+                Text("Browse & Save")
+                    .font(RankdTypography.labelLarge)
+                    .foregroundStyle(RankdColors.surfacePrimary)
+                    .padding(.horizontal, RankdSpacing.xl)
+                    .padding(.vertical, RankdSpacing.sm)
+                    .background(RankdColors.brand)
+                    .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
+            }
+            .padding(.top, RankdSpacing.xs)
+            
             Spacer()
         }
+        .padding(.horizontal, RankdSpacing.lg)
     }
     
     private var watchlist: some View {

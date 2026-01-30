@@ -23,6 +23,11 @@ struct CreateListView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: RankdSpacing.lg) {
+                    // Template suggestions (only for new lists without a pre-selected template)
+                    if !isEditing && suggested == nil && name.isEmpty {
+                        templateSuggestions
+                    }
+                    
                     // List Name
                     VStack(alignment: .leading, spacing: RankdSpacing.xs) {
                         Text("List Name")
@@ -91,7 +96,49 @@ struct CreateListView: View {
                     selectedEmoji = list.emoji
                 } else if let suggestion = suggested {
                     name = suggestion.name
+                    listDescription = suggestion.description
                     selectedEmoji = suggestion.emoji
+                }
+            }
+        }
+    }
+    
+    // MARK: - Template Suggestions
+    
+    private var templateSuggestions: some View {
+        VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+            Text("Start from a template")
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(RankdColors.textTertiary)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: RankdSpacing.sm) {
+                    ForEach(SuggestedList.allSuggestions) { suggestion in
+                        Button {
+                            withAnimation(RankdMotion.normal) {
+                                name = suggestion.name
+                                listDescription = suggestion.description
+                                selectedEmoji = suggestion.emoji
+                            }
+                        } label: {
+                            VStack(spacing: RankdSpacing.xs) {
+                                Text(suggestion.emoji)
+                                    .font(.system(size: 28))
+                                Text(suggestion.name)
+                                    .font(RankdTypography.labelMedium)
+                                    .foregroundStyle(RankdColors.textPrimary)
+                                    .lineLimit(1)
+                            }
+                            .frame(width: 100)
+                            .padding(.vertical, RankdSpacing.sm)
+                            .padding(.horizontal, RankdSpacing.xs)
+                            .background(
+                                RoundedRectangle(cornerRadius: RankdRadius.md)
+                                    .fill(RankdColors.surfacePrimary)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
         }

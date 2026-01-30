@@ -148,6 +148,18 @@ enum RankdShadow {
 
 // MARK: - View Modifiers
 
+// MARK: - Press Effect Button Style
+
+/// Subtle scale-down on press (0.97) with easeOut spring-back.
+/// Use on tappable cards throughout the app.
+struct RankdPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .animation(RankdMotion.fast, value: configuration.isPressed)
+    }
+}
+
 struct RankdCardStyle: ViewModifier {
     func body(content: Content) -> some View {
         content

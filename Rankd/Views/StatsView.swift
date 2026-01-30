@@ -72,25 +72,48 @@ struct StatsView: View {
         }
     }
     
+    private static let statsThreshold = 5
+    
     // MARK: - Empty State
     
     private var emptyState: some View {
-        VStack(spacing: RankdSpacing.md) {
-            Image(systemName: "chart.bar.doc.horizontal")
-                .font(.system(size: 60))
-                .foregroundStyle(RankdColors.brand.opacity(0.4))
+        VStack(spacing: RankdSpacing.lg) {
+            Spacer()
             
-            Text("No Stats Yet")
-                .font(RankdTypography.headingLarge)
-                .foregroundStyle(RankdColors.textPrimary)
+            Image(systemName: "chart.bar.xaxis")
+                .font(.system(size: 48))
+                .foregroundStyle(RankdColors.textQuaternary)
             
-            Text("Start ranking movies and TV shows to see your viewing patterns and insights.")
-                .font(RankdTypography.bodyMedium)
-                .foregroundStyle(RankdColors.textSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, RankdSpacing.xl)
+            VStack(spacing: RankdSpacing.xs) {
+                Text("Rank more to unlock insights")
+                    .font(RankdTypography.headingLarge)
+                    .foregroundStyle(RankdColors.textPrimary)
+                
+                Text("Your stats and viewing patterns will appear\nonce you've ranked at least \(Self.statsThreshold) items.")
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(RankdColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+            }
+            
+            // Progress indicator
+            VStack(spacing: RankdSpacing.xs) {
+                let current = rankedItems.count
+                let needed = max(Self.statsThreshold - current, 0)
+                
+                ProgressView(value: Double(current), total: Double(Self.statsThreshold))
+                    .tint(RankdColors.brand)
+                    .frame(width: 200)
+                
+                Text("\(current) of \(Self.statsThreshold) ranked — \(needed) more to go")
+                    .font(RankdTypography.labelMedium)
+                    .foregroundStyle(RankdColors.textTertiary)
+            }
+            .padding(.top, RankdSpacing.xs)
+            
+            Spacer()
         }
-        .padding(.top, RankdSpacing.xxxl)
+        .padding(.horizontal, RankdSpacing.lg)
     }
     
     // MARK: - A. Summary Header

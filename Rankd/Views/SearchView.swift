@@ -70,19 +70,43 @@ struct SearchView: View {
                     }
                     Spacer()
                 } else if viewModel.searchQuery.isEmpty {
-                    Spacer()
-                    VStack(spacing: RankdSpacing.sm) {
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 50))
-                            .foregroundStyle(RankdColors.textQuaternary)
-                        Text("Search for movies or TV shows")
-                            .font(RankdTypography.bodyMedium)
-                            .foregroundStyle(RankdColors.textSecondary)
-                        Text("Add to rankings or watchlist")
-                            .font(RankdTypography.caption)
-                            .foregroundStyle(RankdColors.textTertiary)
+                    ScrollView {
+                        VStack(spacing: RankdSpacing.xl) {
+                            VStack(spacing: RankdSpacing.md) {
+                                Image(systemName: "magnifyingglass")
+                                    .font(.system(size: 48))
+                                    .foregroundStyle(RankdColors.textQuaternary)
+                                
+                                Text("Find movies and shows to rank")
+                                    .font(RankdTypography.headingLarge)
+                                    .foregroundStyle(RankdColors.textPrimary)
+                                
+                                Text("Search by title to add to your\nrankings or watchlist.")
+                                    .font(RankdTypography.bodyMedium)
+                                    .foregroundStyle(RankdColors.textSecondary)
+                                    .multilineTextAlignment(.center)
+                                    .lineSpacing(4)
+                            }
+                            .padding(.top, RankdSpacing.xxl)
+                            
+                            // Suggested searches
+                            VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+                                Text("Try searching for")
+                                    .font(RankdTypography.headingSmall)
+                                    .foregroundStyle(RankdColors.textSecondary)
+                                    .padding(.horizontal, RankdSpacing.md)
+                                
+                                let suggestions = ["The Godfather", "Breaking Bad", "Parasite", "The Office", "Interstellar", "Succession"]
+                                
+                                SearchSuggestionFlow(suggestions: suggestions) { title in
+                                    viewModel.searchQuery = title
+                                    viewModel.search()
+                                }
+                                .padding(.horizontal, RankdSpacing.md)
+                            }
+                        }
                     }
-                    Spacer()
+                    .scrollIndicators(.hidden)
                 } else {
                     List(viewModel.searchResults) { result in
                         NavigationLink(destination: MediaDetailView(

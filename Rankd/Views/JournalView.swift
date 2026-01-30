@@ -272,21 +272,35 @@ struct JournalView: View {
     // MARK: - Empty States
     
     private var emptyStateNoItems: some View {
-        VStack(spacing: RankdSpacing.md) {
-            Image(systemName: "book.closed")
-                .font(.system(size: 40))
+        VStack(spacing: RankdSpacing.lg) {
+            Image(systemName: "book")
+                .font(.system(size: 48))
                 .foregroundStyle(RankdColors.textQuaternary)
             
-            Text("Your Journal is Empty")
-                .font(RankdTypography.headingMedium)
-                .foregroundStyle(RankdColors.textPrimary)
+            VStack(spacing: RankdSpacing.xs) {
+                Text("Your ranking journey starts here")
+                    .font(RankdTypography.headingLarge)
+                    .foregroundStyle(RankdColors.textPrimary)
+                
+                Text("Every movie and show you rank appears\nin your journal, building a personal timeline\nof everything you've watched and rated.")
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(RankdColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+            }
             
-            Text("Start ranking movies and shows\nto build your journal")
-                .font(RankdTypography.bodyMedium)
-                .foregroundStyle(RankdColors.textSecondary)
-                .multilineTextAlignment(.center)
-                .lineSpacing(4)
+            NavigationLink(destination: SearchView()) {
+                Text("Rank Something")
+                    .font(RankdTypography.labelLarge)
+                    .foregroundStyle(RankdColors.surfacePrimary)
+                    .padding(.horizontal, RankdSpacing.xl)
+                    .padding(.vertical, RankdSpacing.sm)
+                    .background(RankdColors.brand)
+                    .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
+            }
+            .padding(.top, RankdSpacing.xs)
         }
+        .padding(.horizontal, RankdSpacing.lg)
     }
     
     private var emptyStateNoMatches: some View {

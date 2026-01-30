@@ -11,6 +11,10 @@ struct RankedListView: View {
     @State private var selectedItem: RankedItem?
     @State private var showDetailSheet = false
     @State private var isReorderMode = false
+    @State private var showReRankFlow = false
+    @State private var reRankSearchResult: TMDBSearchResult?
+    @State private var showReRankPrompt = false
+    @AppStorage("lastReRankMilestone") private var lastReRankMilestone: Int = 0
     
     var filteredItems: [RankedItem] {
         allItems
@@ -46,6 +50,15 @@ struct RankedListView: View {
                         .listRowBackground(Color.clear)
                         .listRowInsets(EdgeInsets())
                         
+                        // Re-rank milestone prompt
+                        if showReRankPrompt {
+                            Section {
+                                reRankPromptBanner
+                            }
+                            .listRowBackground(Color.clear)
+                            .listRowInsets(EdgeInsets())
+                        }
+                        
                         // Top 3 showcase
                         if topThree.count >= 1 {
                             Section {
@@ -67,6 +80,21 @@ struct RankedListView: View {
                                         .onTapGesture {
                                             selectedItem = item
                                             showDetailSheet = true
+                                        }
+                                        .contextMenu {
+                                            Button {
+                                                startReRank(for: item)
+                                            } label: {
+                                                Label("Re-rank this item", systemImage: "arrow.up.arrow.down")
+                                            }
+                                            
+                                            Button(role: .destructive) {
+                                                itemToDelete = item
+                                                showDeleteConfirmation = true
+                                                HapticManager.notification(.warning)
+                                            } label: {
+                                                Label("Remove", systemImage: "trash")
+                                            }
                                         }
                                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                             Button(role: .destructive) {
@@ -97,14 +125,26 @@ struct RankedListView: View {
             .navigationTitle("Rankings")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    if !filteredItems.isEmpty && remainingItems.count > 1 {
-                        Button(isReorderMode ? "Done" : "Reorder") {
-                            withAnimation(RankdMotion.normal) {
-                                isReorderMode.toggle()
+                    HStack(spacing: RankdSpacing.sm) {
+                        if filteredItems.count >= 2 {
+                            Button {
+                                startReRankLeastCompared()
+                            } label: {
+                                Image(systemName: "arrow.up.arrow.down")
+                                    .font(RankdTypography.labelLarge)
+                                    .foregroundStyle(RankdColors.brand)
                             }
                         }
-                        .font(RankdTypography.labelLarge)
-                        .foregroundStyle(RankdColors.textSecondary)
+                        
+                        if !filteredItems.isEmpty && remainingItems.count > 1 {
+                            Button(isReorderMode ? "Done" : "Reorder") {
+                                withAnimation(RankdMotion.normal) {
+                                    isReorderMode.toggle()
+                                }
+                            }
+                            .font(RankdTypography.labelLarge)
+                            .foregroundStyle(RankdColors.textSecondary)
+                        }
                     }
                 }
             }
@@ -124,6 +164,14 @@ struct RankedListView: View {
                 if let item = selectedItem {
                     ItemDetailSheet(item: item)
                 }
+            }
+            .fullScreenCover(isPresented: $showReRankFlow) {
+                if let result = reRankSearchResult {
+                    ComparisonFlowView(newItem: result)
+                }
+            }
+            .onChange(of: filteredItems.count) { _, newCount in
+                checkReRankMilestone(count: newCount)
             }
         }
     }
@@ -193,6 +241,9 @@ struct RankedListView: View {
                         onDelete: {
                             itemToDelete = item
                             showDeleteConfirmation = true
+                        },
+                        onReRank: {
+                            startReRank(for: item)
                         }
                     )
                 }
@@ -204,20 +255,132 @@ struct RankedListView: View {
     // MARK: - Empty State
     
     private var emptyState: some View {
-        VStack(spacing: RankdSpacing.md) {
-            Image(systemName: selectedMediaType == .movie ? "film" : "tv")
-                .font(.system(size: 40))
+        VStack(spacing: RankdSpacing.lg) {
+            Image(systemName: "film.stack")
+                .font(.system(size: 48))
                 .foregroundStyle(RankdColors.textQuaternary)
             
-            Text("No \(selectedMediaType == .movie ? "movies" : "TV shows") ranked yet")
-                .font(RankdTypography.headingMedium)
-                .foregroundStyle(RankdColors.textPrimary)
+            VStack(spacing: RankdSpacing.xs) {
+                Text("Start ranking what you love")
+                    .font(RankdTypography.headingLarge)
+                    .foregroundStyle(RankdColors.textPrimary)
+                
+                Text("Search for movies and shows you've watched,\nthen rank them through head-to-head comparisons\nto build your personal top list.")
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(RankdColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+            }
             
-            Text("Search for something you've watched\nand start building your list")
-                .font(RankdTypography.bodyMedium)
-                .foregroundStyle(RankdColors.textSecondary)
-                .multilineTextAlignment(.center)
+            NavigationLink(destination: SearchView()) {
+                Text("Search & Rank")
+                    .font(RankdTypography.labelLarge)
+                    .foregroundStyle(RankdColors.surfacePrimary)
+                    .padding(.horizontal, RankdSpacing.xl)
+                    .padding(.vertical, RankdSpacing.sm)
+                    .background(RankdColors.brand)
+                    .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
+            }
+            .padding(.top, RankdSpacing.xs)
         }
+        .padding(.horizontal, RankdSpacing.lg)
+    }
+    
+    // MARK: - Re-rank Prompt Banner
+    
+    private var reRankPromptBanner: some View {
+        HStack(spacing: RankdSpacing.sm) {
+            Image(systemName: "arrow.up.arrow.down")
+                .font(RankdTypography.bodyMedium)
+                .foregroundStyle(RankdColors.brand)
+            
+            VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
+                Text("Your rankings are growing!")
+                    .font(RankdTypography.labelLarge)
+                    .foregroundStyle(RankdColors.textPrimary)
+                Text("Want to re-rank to fine-tune your scores?")
+                    .font(RankdTypography.caption)
+                    .foregroundStyle(RankdColors.textSecondary)
+            }
+            
+            Spacer()
+            
+            Button {
+                startReRankLeastCompared()
+            } label: {
+                Text("Go")
+                    .font(RankdTypography.labelLarge)
+                    .foregroundStyle(RankdColors.surfacePrimary)
+                    .padding(.horizontal, RankdSpacing.sm)
+                    .padding(.vertical, RankdSpacing.xs)
+                    .background(RankdColors.brand)
+                    .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
+            }
+            
+            Button {
+                withAnimation(RankdMotion.fast) {
+                    showReRankPrompt = false
+                    lastReRankMilestone = filteredItems.count
+                }
+            } label: {
+                Image(systemName: "xmark")
+                    .font(RankdTypography.caption)
+                    .foregroundStyle(RankdColors.textTertiary)
+            }
+        }
+        .padding(RankdSpacing.sm)
+        .background(RankdColors.brandSubtle)
+        .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
+        .padding(.horizontal, RankdSpacing.md)
+        .padding(.vertical, RankdSpacing.xs)
+    }
+    
+    // MARK: - Re-rank Helpers
+    
+    private func checkReRankMilestone(count: Int) {
+        let milestones = [5, 10, 20]
+        for milestone in milestones {
+            if count == milestone && lastReRankMilestone < milestone {
+                withAnimation(RankdMotion.normal) {
+                    showReRankPrompt = true
+                }
+                return
+            }
+        }
+    }
+    
+    private func startReRank(for item: RankedItem) {
+        let result = TMDBSearchResult(
+            id: item.tmdbId,
+            title: item.mediaType == .movie ? item.title : nil,
+            name: item.mediaType == .tv ? item.title : nil,
+            overview: item.overview,
+            posterPath: item.posterPath,
+            releaseDate: item.mediaType == .movie ? item.releaseDate : nil,
+            firstAirDate: item.mediaType == .tv ? item.releaseDate : nil,
+            mediaType: item.mediaType.rawValue,
+            voteAverage: nil
+        )
+        
+        let deletedRank = item.rank
+        let mediaType = item.mediaType
+        modelContext.delete(item)
+        
+        let itemsToShift = allItems.filter { $0.mediaType == mediaType && $0.rank > deletedRank }
+        for shiftItem in itemsToShift {
+            shiftItem.rank -= 1
+        }
+        try? modelContext.save()
+        
+        HapticManager.impact(.medium)
+        
+        reRankSearchResult = result
+        showReRankFlow = true
+    }
+    
+    private func startReRankLeastCompared() {
+        guard let item = filteredItems.min(by: { $0.comparisonCount < $1.comparisonCount }) else { return }
+        startReRank(for: item)
     }
     
     // MARK: - Actions
@@ -256,6 +419,7 @@ private struct TopRankedCard: View {
     var allItems: [RankedItem] = []
     let onTap: () -> Void
     let onDelete: () -> Void
+    var onReRank: (() -> Void)? = nil
     
     private var score: Double {
         RankedItem.calculateScore(for: item, allItems: allItems)
@@ -308,6 +472,14 @@ private struct TopRankedCard: View {
         }
         .buttonStyle(.plain)
         .contextMenu {
+            if let onReRank = onReRank {
+                Button {
+                    onReRank()
+                } label: {
+                    Label("Re-rank this item", systemImage: "arrow.up.arrow.down")
+                }
+            }
+            
             Button(role: .destructive) {
                 onDelete()
             } label: {

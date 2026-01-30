@@ -55,26 +55,52 @@ struct ListsView: View {
     private var emptyState: some View {
         ScrollView {
             VStack(spacing: RankdSpacing.lg) {
-                Spacer().frame(height: RankdSpacing.xxl)
+                Spacer().frame(height: RankdSpacing.xl)
                 
-                Image(systemName: "list.bullet.rectangle.portrait")
-                    .font(.system(size: 60))
-                    .foregroundStyle(RankdColors.textQuaternary)
-                
-                VStack(spacing: RankdSpacing.xs) {
-                    Text("Create Your First List")
-                        .font(RankdTypography.headingLarge)
+                // Hero illustration area
+                VStack(spacing: RankdSpacing.sm) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: RankdRadius.lg)
+                            .fill(RankdColors.brandSubtle)
+                            .frame(width: 80, height: 80)
+                        Image(systemName: "rectangle.stack.fill")
+                            .font(.system(size: 36))
+                            .foregroundStyle(RankdColors.brand)
+                    }
+                    
+                    Text("Start a Collection")
+                        .font(RankdTypography.displayMedium)
                         .foregroundStyle(RankdColors.textPrimary)
-                    Text("Curate themed collections of movies and TV shows")
+                    
+                    Text("Organize movies and shows into themed lists.\nPick a template or create your own.")
                         .font(RankdTypography.bodyMedium)
                         .foregroundStyle(RankdColors.textSecondary)
                         .multilineTextAlignment(.center)
+                        .padding(.horizontal, RankdSpacing.lg)
                 }
                 
-                VStack(spacing: RankdSpacing.sm) {
-                    Text("Quick Start Ideas")
+                // Create blank button
+                Button {
+                    suggestedListToCreate = nil
+                    showCreateSheet = true
+                } label: {
+                    Label("Create Blank List", systemImage: "plus")
                         .font(RankdTypography.headingSmall)
-                        .foregroundStyle(RankdColors.textSecondary)
+                        .foregroundStyle(RankdColors.surfacePrimary)
+                        .padding(.horizontal, RankdSpacing.lg)
+                        .padding(.vertical, RankdSpacing.sm)
+                        .background(
+                            Capsule()
+                                .fill(RankdColors.brand)
+                        )
+                }
+                
+                // Template suggestions
+                VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+                    Text("Or start from a template")
+                        .font(RankdTypography.labelMedium)
+                        .foregroundStyle(RankdColors.textTertiary)
+                        .padding(.horizontal, RankdSpacing.md)
                     
                     ForEach(SuggestedList.allSuggestions) { suggestion in
                         Button {
@@ -83,15 +109,28 @@ struct ListsView: View {
                         } label: {
                             HStack(spacing: RankdSpacing.sm) {
                                 Text(suggestion.emoji)
-                                    .font(RankdTypography.headingLarge)
-                                Text(suggestion.name)
-                                    .font(RankdTypography.bodyLarge)
-                                    .foregroundStyle(RankdColors.textPrimary)
+                                    .font(.system(size: 28))
+                                    .frame(width: 44, height: 44)
+                                    .background(
+                                        Circle()
+                                            .fill(RankdColors.surfaceSecondary)
+                                    )
+                                
+                                VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
+                                    Text(suggestion.name)
+                                        .font(RankdTypography.headingSmall)
+                                        .foregroundStyle(RankdColors.textPrimary)
+                                    Text(suggestion.description)
+                                        .font(RankdTypography.bodySmall)
+                                        .foregroundStyle(RankdColors.textTertiary)
+                                }
+                                
                                 Spacer()
-                                Image(systemName: "plus.circle")
-                                    .foregroundStyle(RankdColors.textTertiary)
+                                
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundStyle(RankdColors.brand)
                             }
-                            .padding(RankdSpacing.md)
+                            .padding(RankdSpacing.sm)
                             .background(
                                 RoundedRectangle(cornerRadius: RankdRadius.md)
                                     .fill(RankdColors.surfacePrimary)
@@ -206,14 +245,16 @@ struct SuggestedList: Identifiable {
     let id = UUID()
     let emoji: String
     let name: String
+    let description: String
     
     static let allSuggestions: [SuggestedList] = [
-        SuggestedList(emoji: "🏆", name: "All-Time Favorites"),
-        SuggestedList(emoji: "😱", name: "Best Horror"),
-        SuggestedList(emoji: "😂", name: "Funniest Movies"),
-        SuggestedList(emoji: "❤️", name: "Comfort Watches"),
-        SuggestedList(emoji: "🍿", name: "Watch With Friends"),
-        SuggestedList(emoji: "🎄", name: "Holiday Movies"),
+        SuggestedList(emoji: "🏆", name: "All-Time Favorites", description: "The ones that never get old"),
+        SuggestedList(emoji: "🔥", name: "Best of 2024", description: "Top picks from this year"),
+        SuggestedList(emoji: "🍿", name: "Watch with Friends", description: "Perfect for movie night"),
+        SuggestedList(emoji: "📺", name: "Weekend Binge", description: "Clear your schedule for these"),
+        SuggestedList(emoji: "❤️", name: "Comfort Watches", description: "Warm, familiar, always good"),
+        SuggestedList(emoji: "💎", name: "Hidden Gems", description: "Underrated titles worth discovering"),
+        SuggestedList(emoji: "🤫", name: "Guilty Pleasures", description: "Love them, no apologies"),
     ]
 }
 
