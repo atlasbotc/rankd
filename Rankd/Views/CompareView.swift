@@ -124,8 +124,8 @@ struct CompareView: View {
                             .font(RankdTypography.headingSmall)
                             .padding(.horizontal, RankdSpacing.lg)
                             .padding(.vertical, RankdSpacing.sm)
-                            .background(RankdColors.accent)
-                            .foregroundStyle(.white)
+                            .background(RankdColors.brand)
+                            .foregroundStyle(RankdColors.surfacePrimary)
                             .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
                     }
                     .padding(.top, RankdSpacing.md)
@@ -159,12 +159,12 @@ struct CompareView: View {
                         .padding(.vertical, RankdSpacing.sm)
                         .background(
                             selectedMediaType == type
-                                ? RankdColors.accent
+                                ? RankdColors.brand
                                 : Color.clear
                         )
                         .foregroundStyle(
                             selectedMediaType == type
-                                ? Color.white
+                                ? RankdColors.surfacePrimary
                                 : RankdColors.textTertiary
                         )
                         .clipShape(Capsule())
@@ -298,8 +298,8 @@ struct FilterChip: View {
             .padding(.horizontal, RankdSpacing.sm)
             .padding(.vertical, RankdSpacing.xs)
             .frame(minHeight: 44)
-            .background(isSelected ? RankdColors.accent : RankdColors.surfaceSecondary)
-            .foregroundStyle(isSelected ? .white : RankdColors.textSecondary)
+            .background(isSelected ? RankdColors.brand : RankdColors.surfaceSecondary)
+            .foregroundStyle(isSelected ? RankdColors.surfacePrimary : RankdColors.textSecondary)
             .clipShape(Capsule())
         }
         .buttonStyle(.plain)

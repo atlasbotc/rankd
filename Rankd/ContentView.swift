@@ -45,15 +45,14 @@ struct ContentView: View {
                 }
                 .tag(4)
         }
-        .tint(RankdColors.accent)
-        .preferredColorScheme(.dark)
+        .tint(RankdColors.brand)
         .onAppear {
             let tabBarAppearance = UITabBarAppearance()
             tabBarAppearance.configureWithOpaqueBackground()
             tabBarAppearance.backgroundColor = UIColor(RankdColors.background)
             
             let normalColor = UIColor(RankdColors.textTertiary)
-            let selectedColor = UIColor(RankdColors.accent)
+            let selectedColor = UIColor(RankdColors.brand)
             
             tabBarAppearance.stackedLayoutAppearance.normal.iconColor = normalColor
             tabBarAppearance.stackedLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: normalColor]

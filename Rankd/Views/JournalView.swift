@@ -311,7 +311,7 @@ struct JournalView: View {
                 } label: {
                     Text("Clear All Filters")
                         .font(RankdTypography.labelMedium)
-                        .foregroundStyle(RankdColors.accent)
+                        .foregroundStyle(RankdColors.brand)
                 }
                 .padding(.top, RankdSpacing.xxs)
             }
@@ -358,7 +358,7 @@ private struct JournalFilterChip<Label: View>: View {
                 .foregroundStyle(isSelected ? RankdColors.textPrimary : RankdColors.textSecondary)
                 .padding(.horizontal, RankdSpacing.sm)
                 .padding(.vertical, RankdSpacing.xs)
-                .background(isSelected ? RankdColors.accent : RankdColors.surfaceSecondary)
+                .background(isSelected ? RankdColors.brand : RankdColors.surfaceSecondary)
                 .clipShape(Capsule())
         }
         .buttonStyle(.plain)

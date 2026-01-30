@@ -183,7 +183,7 @@ struct DiscoverView: View {
                             .foregroundStyle(RankdColors.textPrimary)
                             .padding(.horizontal, RankdSpacing.lg)
                             .padding(.vertical, RankdSpacing.sm)
-                            .background(RankdColors.accent)
+                            .background(RankdColors.brand)
                             .clipShape(Capsule())
                             .padding(.top, RankdSpacing.xs)
                     }
@@ -404,7 +404,7 @@ struct DiscoverView: View {
                     .foregroundStyle(RankdColors.textPrimary)
                     .padding(.horizontal, RankdSpacing.lg)
                     .frame(height: 48)
-                    .background(RankdColors.accent)
+                    .background(RankdColors.brand)
                     .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
             }
             .padding(.top, RankdSpacing.xs)

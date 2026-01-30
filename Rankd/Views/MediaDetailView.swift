@@ -332,7 +332,7 @@ struct MediaDetailView: View {
                         .foregroundStyle(RankdColors.textPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)
-                        .background(RankdColors.accent)
+                        .background(RankdColors.brand)
                         .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
                 }
                 
@@ -407,7 +407,7 @@ struct MediaDetailView: View {
                 } label: {
                     Text("Read more")
                         .font(RankdTypography.labelMedium)
-                        .foregroundStyle(RankdColors.accent)
+                        .foregroundStyle(RankdColors.brand)
                 }
                 .padding(.top, RankdSpacing.xxs)
             }

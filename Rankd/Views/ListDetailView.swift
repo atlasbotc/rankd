@@ -134,7 +134,7 @@ struct ListDetailView: View {
                     .font(RankdTypography.headingSmall)
                     .padding(.horizontal, RankdSpacing.lg)
                     .padding(.vertical, RankdSpacing.sm)
-                    .background(RankdColors.accent)
+                    .background(RankdColors.brand)
                     .foregroundStyle(RankdColors.textPrimary)
                     .clipShape(Capsule())
             }

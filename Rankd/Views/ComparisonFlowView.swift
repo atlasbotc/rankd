@@ -101,7 +101,7 @@ struct ComparisonFlowView: View {
             if let rank = finalRank {
                 Text("#\(rank) in \(newItem.resolvedMediaType == .movie ? "Movies" : "TV Shows")")
                     .font(RankdTypography.headingMedium)
-                    .foregroundStyle(RankdColors.accent)
+                    .foregroundStyle(RankdColors.brand)
             }
             
             Spacer()
@@ -197,7 +197,7 @@ struct ComparisonFlowView: View {
                             .frame(height: 4)
                         
                         RoundedRectangle(cornerRadius: 2)
-                            .fill(RankdColors.accent)
+                            .fill(RankdColors.brand)
                             .frame(
                                 width: geo.size.width * CGFloat(comparisonsMade) / CGFloat(max(totalComparisons, 1)),
                                 height: 4
@@ -237,7 +237,7 @@ struct ComparisonFlowView: View {
                     if let rank = finalRank {
                         Text("#\(rank) in \(newItem.resolvedMediaType == .movie ? "Movies" : "TV Shows")")
                             .font(RankdTypography.headingMedium)
-                            .foregroundStyle(RankdColors.accent)
+                            .foregroundStyle(RankdColors.brand)
                     }
                 }
                 
@@ -266,8 +266,8 @@ struct ComparisonFlowView: View {
                         .font(RankdTypography.headingSmall)
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)
-                        .background(RankdColors.accent)
-                        .foregroundStyle(.white)
+                        .background(RankdColors.brand)
+                        .foregroundStyle(RankdColors.surfacePrimary)
                         .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
                 }
                 .padding(.horizontal, RankdSpacing.md)

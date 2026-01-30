@@ -13,24 +13,24 @@ struct ListShareSheet: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Card preview
                 ScrollView {
                     cardPreview
-                        .padding(.horizontal)
-                        .padding(.top, 16)
+                        .padding(.horizontal, RankdSpacing.md)
+                        .padding(.top, RankdSpacing.md)
                 }
                 
-                // Action buttons
                 actionButtons
-                    .padding(.horizontal)
-                    .padding(.vertical, 16)
-                    .background(.ultraThinMaterial)
+                    .padding(.horizontal, RankdSpacing.md)
+                    .padding(.vertical, RankdSpacing.md)
+                    .background(RankdColors.surfacePrimary)
             }
+            .background(RankdColors.background)
             .navigationTitle("Share List")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
+                        .foregroundStyle(RankdColors.textSecondary)
                 }
             }
             .sheet(isPresented: $showShareSheet) {
@@ -49,25 +49,26 @@ struct ListShareSheet: View {
     private var cardPreview: some View {
         Group {
             if isLoading {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.secondarySystemBackground))
+                RoundedRectangle(cornerRadius: RankdRadius.lg)
+                    .fill(RankdColors.surfacePrimary)
                     .aspectRatio(1080.0 / 1920.0, contentMode: .fit)
                     .overlay {
-                        VStack(spacing: 12) {
+                        VStack(spacing: RankdSpacing.sm) {
                             ProgressView()
                                 .scaleEffect(1.2)
+                                .tint(RankdColors.textTertiary)
                             Text("Generating card...")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .font(RankdTypography.bodyMedium)
+                                .foregroundStyle(RankdColors.textSecondary)
                         }
                     }
             } else if let image = generatedImage {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .shadow(color: .black.opacity(0.3), radius: 20, y: 10)
-                    .padding(.vertical, 8)
+                    .clipShape(RoundedRectangle(cornerRadius: RankdRadius.lg))
+                    .shadow(color: RankdShadow.elevated, radius: RankdShadow.elevatedRadius, y: RankdShadow.elevatedY)
+                    .padding(.vertical, RankdSpacing.xs)
             }
         }
     }
@@ -75,27 +76,28 @@ struct ListShareSheet: View {
     // MARK: - Action Buttons
     
     private var actionButtons: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: RankdSpacing.sm) {
             Button {
                 if let image = generatedImage {
                     UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-                    withAnimation { savedToPhotos = true }
+                    withAnimation(RankdMotion.normal) { savedToPhotos = true }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        withAnimation { savedToPhotos = false }
+                        withAnimation(RankdMotion.normal) { savedToPhotos = false }
                     }
                 }
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: RankdSpacing.xs) {
                     Image(systemName: savedToPhotos ? "checkmark" : "arrow.down.to.line")
-                        .font(.body.weight(.semibold))
+                        .font(RankdTypography.headingSmall)
                     Text(savedToPhotos ? "Saved!" : "Save")
-                        .font(.body.weight(.semibold))
+                        .font(RankdTypography.headingSmall)
                 }
+                .foregroundStyle(RankdColors.textPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(Color(.secondarySystemBackground))
+                    RoundedRectangle(cornerRadius: RankdRadius.md)
+                        .fill(RankdColors.surfaceSecondary)
                 )
             }
             .buttonStyle(.plain)
@@ -104,18 +106,18 @@ struct ListShareSheet: View {
             Button {
                 showShareSheet = true
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: RankdSpacing.xs) {
                     Image(systemName: "square.and.arrow.up")
-                        .font(.body.weight(.semibold))
+                        .font(RankdTypography.headingSmall)
                     Text("Share")
-                        .font(.body.weight(.semibold))
+                        .font(RankdTypography.headingSmall)
                 }
-                .foregroundStyle(.white)
+                .foregroundStyle(RankdColors.textPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(Color.orange)
+                    RoundedRectangle(cornerRadius: RankdRadius.md)
+                        .fill(RankdColors.accent)
                 )
             }
             .buttonStyle(.plain)
@@ -132,7 +134,6 @@ struct ListShareSheet: View {
         let sortedItems = list.sortedItems
         let displayItems = Array(sortedItems.prefix(10))
         
-        // Pre-load poster images
         let urls = displayItems.compactMap { $0.posterURL }
         let posterImages = await PosterCache.shared.preload(urls: urls)
         
@@ -170,7 +171,7 @@ struct ListCardData {
     }
 }
 
-// MARK: - List Card View (1080×1920)
+// MARK: - List Card View (1080×1920) — Exported image, keeps its own gradient design
 
 struct ListCardView: View {
     let data: ListCardData
@@ -200,7 +201,6 @@ struct ListCardView: View {
         ZStack {
             Colors.backgroundGradient
             
-            // Subtle glow
             VStack {
                 Spacer()
                 Circle()
@@ -212,17 +212,14 @@ struct ListCardView: View {
             VStack(spacing: 0) {
                 Spacer().frame(height: 100)
                 
-                // Header
                 headerSection
                 
                 Spacer().frame(height: 48)
                 
-                // Items list
                 itemsList
                 
                 Spacer().frame(height: 40)
                 
-                // Item count
                 if data.totalCount > data.items.count {
                     Text("+ \(data.totalCount - data.items.count) more")
                         .font(.system(size: 22, weight: .medium))
@@ -235,7 +232,6 @@ struct ListCardView: View {
                 
                 Spacer()
                 
-                // Branding
                 Text("rankd")
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
                     .foregroundStyle(Colors.tertiaryText)
@@ -278,13 +274,11 @@ struct ListCardView: View {
         return VStack(spacing: 8) {
             ForEach(Array(data.items.enumerated()), id: \.element.id) { index, item in
                 HStack(spacing: 16) {
-                    // Rank number
                     Text("\(index + 1)")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundStyle(index < 3 ? medalColor(for: index + 1) : Colors.secondaryText)
                         .frame(width: 40, alignment: .trailing)
                     
-                    // Poster
                     if let image = data.posterImage(for: item) {
                         Image(uiImage: image)
                             .resizable()
@@ -302,7 +296,6 @@ struct ListCardView: View {
                             }
                     }
                     
-                    // Title + year
                     VStack(alignment: .leading, spacing: 4) {
                         Text(item.title)
                             .font(.system(size: 22, weight: .semibold))

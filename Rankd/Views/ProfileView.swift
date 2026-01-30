@@ -171,7 +171,7 @@ struct ProfileView: View {
             
             Text(tastePersonality)
                 .font(RankdTypography.headingMedium)
-                .foregroundStyle(RankdColors.accent)
+                .foregroundStyle(RankdColors.brand)
             
             Text(tasteDescription)
                 .font(RankdTypography.bodySmall)

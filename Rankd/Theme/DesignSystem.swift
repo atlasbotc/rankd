@@ -2,37 +2,43 @@ import SwiftUI
 
 // MARK: - Color System
 // Role-based colors. No raw hex values outside this file.
+// Light-first design. Muted slate/steel blue brand color.
 
 enum RankdColors {
-    // Backgrounds (darkest → lightest surface)
-    static let background = Color(red: 0.06, green: 0.06, blue: 0.07)       // #0F0F12 — true dark
-    static let surfacePrimary = Color(red: 0.10, green: 0.10, blue: 0.12)    // #1A1A1E — cards, sheets
-    static let surfaceSecondary = Color(red: 0.14, green: 0.14, blue: 0.16)  // #242428 — elevated
-    static let surfaceTertiary = Color(red: 0.18, green: 0.18, blue: 0.20)   // #2E2E33 — hover/pressed
+    // Backgrounds — light-first, warm off-white (no pure white)
+    static let background = Color(red: 0.96, green: 0.95, blue: 0.94)       // #F5F3F0 — warm off-white
+    static let surfacePrimary = Color(red: 0.99, green: 0.98, blue: 0.97)    // #FDFAF8 — cards, sheets
+    static let surfaceSecondary = Color(red: 0.93, green: 0.92, blue: 0.91)  // #EDEBE8 — elevated
+    static let surfaceTertiary = Color(red: 0.89, green: 0.88, blue: 0.87)   // #E3E1DE — hover/pressed
     
-    // Text
-    static let textPrimary = Color.white
-    static let textSecondary = Color.white.opacity(0.65)
-    static let textTertiary = Color.white.opacity(0.40)
-    static let textQuaternary = Color.white.opacity(0.20)
+    // Text — dark but not pure black
+    static let textPrimary = Color(red: 0.13, green: 0.13, blue: 0.15)      // #212125
+    static let textSecondary = Color(red: 0.13, green: 0.13, blue: 0.15).opacity(0.65)
+    static let textTertiary = Color(red: 0.13, green: 0.13, blue: 0.15).opacity(0.40)
+    static let textQuaternary = Color(red: 0.13, green: 0.13, blue: 0.15).opacity(0.20)
     
-    // Accent — used <5%, action-only
-    static let accent = Color(red: 1.0, green: 0.58, blue: 0.0)             // #FF9500
-    static let accentSubtle = Color(red: 1.0, green: 0.58, blue: 0.0).opacity(0.12)
+    // Brand — muted slate/steel blue, used <5%, action-only
+    // "Use blue as a promise, not a personality"
+    static let brand = Color(red: 0.35, green: 0.45, blue: 0.58)            // #596F94 — muted slate blue
+    static let brandSubtle = Color(red: 0.35, green: 0.45, blue: 0.58).opacity(0.12)
     
-    // Tiers — semantic, not decorative
-    static let tierGood = Color(red: 0.30, green: 0.78, blue: 0.47)         // Muted green
-    static let tierMedium = Color(red: 0.90, green: 0.78, blue: 0.30)       // Muted gold
-    static let tierBad = Color(red: 0.90, green: 0.35, blue: 0.35)          // Muted red
+    // Accent — alias for brand (backward compatibility)
+    static let accent = brand
+    static let accentSubtle = brandSubtle
     
-    // Feedback
-    static let success = Color(red: 0.30, green: 0.78, blue: 0.47)
-    static let warning = Color(red: 0.90, green: 0.78, blue: 0.30)
-    static let error = Color(red: 0.90, green: 0.35, blue: 0.35)
+    // Tiers — semantic, not decorative (muted for light backgrounds)
+    static let tierGood = Color(red: 0.30, green: 0.65, blue: 0.45)         // Muted green
+    static let tierMedium = Color(red: 0.75, green: 0.65, blue: 0.30)       // Muted gold
+    static let tierBad = Color(red: 0.75, green: 0.35, blue: 0.35)          // Muted red
+    
+    // Feedback — restrained, not attention-grabbing
+    static let success = Color(red: 0.30, green: 0.65, blue: 0.45)
+    static let warning = Color(red: 0.75, green: 0.65, blue: 0.30)
+    static let error = Color(red: 0.75, green: 0.35, blue: 0.35)
     
     // Utility
-    static let divider = Color.white.opacity(0.08)
-    static let shimmer = Color.white.opacity(0.06)
+    static let divider = Color(red: 0.13, green: 0.13, blue: 0.15).opacity(0.08)
+    static let shimmer = Color(red: 0.13, green: 0.13, blue: 0.15).opacity(0.04)
     
     static func tierColor(_ tier: Tier) -> Color {
         switch tier {
@@ -128,14 +134,14 @@ enum RankdPoster {
     static let cornerRadius: CGFloat = RankdRadius.md
 }
 
-// MARK: - Shadows
+// MARK: - Shadows (light theme — subtle, not heavy)
 
 enum RankdShadow {
-    static let card = Color.black.opacity(0.3)
+    static let card = Color.black.opacity(0.08)
     static let cardRadius: CGFloat = 12
     static let cardY: CGFloat = 4
     
-    static let elevated = Color.black.opacity(0.5)
+    static let elevated = Color.black.opacity(0.15)
     static let elevatedRadius: CGFloat = 20
     static let elevatedY: CGFloat = 8
 }

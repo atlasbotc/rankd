@@ -15,7 +15,7 @@ private enum ImportStep: Equatable {
 // MARK: - Unrated Action
 
 enum UnratedAction: String, CaseIterable {
-    case medium = "Add as 🟡 Medium"
+    case medium = "Add as Medium"
     case watchlist = "Add to Watchlist"
     case skip = "Skip"
 }
@@ -119,13 +119,15 @@ struct LetterboxdImportView: View {
                     doneView
                 }
             }
-            .animation(.easeInOut(duration: 0.3), value: step)
+            .background(RankdColors.background)
+            .animation(RankdMotion.normal, value: step)
             .navigationTitle(navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     if step != .importing {
                         Button("Cancel") { dismiss() }
+                            .foregroundStyle(RankdColors.textSecondary)
                     }
                 }
             }
@@ -161,49 +163,33 @@ struct LetterboxdImportView: View {
     
     private var instructionsView: some View {
         ScrollView {
-            VStack(spacing: 32) {
-                Spacer(minLength: 20)
+            VStack(spacing: RankdSpacing.xl) {
+                Spacer(minLength: RankdSpacing.lg)
                 
-                // Icon
-                ZStack {
-                    Circle()
-                        .fill(Color.orange.opacity(0.15))
-                        .frame(width: 100, height: 100)
-                    
-                    Image(systemName: "square.and.arrow.down.fill")
-                        .font(.system(size: 40))
-                        .foregroundStyle(.orange)
-                }
+                Image(systemName: "square.and.arrow.down.fill")
+                    .font(.system(size: 40))
+                    .foregroundStyle(RankdColors.textSecondary)
                 
-                // Header
-                VStack(spacing: 12) {
+                VStack(spacing: RankdSpacing.sm) {
                     Text("Import from Letterboxd")
-                        .font(.title2.bold())
+                        .font(RankdTypography.headingLarge)
+                        .foregroundStyle(RankdColors.textPrimary)
                     
                     Text("Bring your movie ratings into Rankd. We'll match them with TMDB and sort them into tiers.")
-                        .font(.body)
-                        .foregroundStyle(.secondary)
+                        .font(RankdTypography.bodyMedium)
+                        .foregroundStyle(RankdColors.textSecondary)
                         .multilineTextAlignment(.center)
                         .lineSpacing(4)
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, RankdSpacing.md)
                 
                 // Steps
-                VStack(alignment: .leading, spacing: 20) {
-                    InstructionRow(
-                        number: "1",
-                        text: "Go to **letterboxd.com/settings/data/**"
-                    )
-                    InstructionRow(
-                        number: "2",
-                        text: "Click **Export Your Data** and download the ZIP"
-                    )
-                    InstructionRow(
-                        number: "3",
-                        text: "Unzip and select **ratings.csv** below"
-                    )
+                VStack(alignment: .leading, spacing: RankdSpacing.lg) {
+                    InstructionRow(number: "1", text: "Go to **letterboxd.com/settings/data/**")
+                    InstructionRow(number: "2", text: "Click **Export Your Data** and download the ZIP")
+                    InstructionRow(number: "3", text: "Unzip and select **ratings.csv** below")
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, RankdSpacing.lg)
                 
                 // Select File Button
                 Button {
@@ -212,24 +198,23 @@ struct LetterboxdImportView: View {
                     HStack {
                         Image(systemName: "doc.badge.plus")
                         Text("Select CSV File")
-                            .fontWeight(.semibold)
+                            .font(RankdTypography.headingSmall)
                     }
+                    .foregroundStyle(RankdColors.textPrimary)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color.orange)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .frame(height: 52)
+                    .background(RankdColors.brand)
+                    .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, RankdSpacing.lg)
                 
-                // Note
                 Text("You can also import **watched.csv** or **diary.csv** — movies without ratings will be handled separately.")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .font(RankdTypography.caption)
+                    .foregroundStyle(RankdColors.textTertiary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
+                    .padding(.horizontal, RankdSpacing.xl)
                 
-                Spacer(minLength: 40)
+                Spacer(minLength: RankdSpacing.xxl)
             }
         }
     }
@@ -237,56 +222,54 @@ struct LetterboxdImportView: View {
     // MARK: - Step 2: Matching
     
     private var matchingView: some View {
-        VStack(spacing: 32) {
+        VStack(spacing: RankdSpacing.xl) {
             Spacer()
             
-            ZStack {
-                Circle()
-                    .fill(Color.blue.opacity(0.1))
-                    .frame(width: 100, height: 100)
-                
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.blue)
-                    .symbolEffect(.pulse)
-            }
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 40))
+                .foregroundStyle(RankdColors.textSecondary)
             
-            VStack(spacing: 8) {
+            VStack(spacing: RankdSpacing.xs) {
                 Text("Matching \(entries.count) movies")
-                    .font(.title3.bold())
+                    .font(RankdTypography.headingMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
                 
                 Text("Finding each movie on TMDB...")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(RankdColors.textSecondary)
             }
             
-            VStack(spacing: 12) {
+            VStack(spacing: RankdSpacing.sm) {
                 ProgressView(value: matchProgress.fraction)
-                    .tint(.orange)
+                    .tint(RankdColors.brand)
                     .scaleEffect(y: 2)
                     .clipShape(Capsule())
+                    .background(
+                        Capsule().fill(RankdColors.surfaceSecondary)
+                            .scaleEffect(y: 2)
+                    )
                 
-                HStack(spacing: 16) {
+                HStack(spacing: RankdSpacing.md) {
                     Label("\(matchProgress.matched)", systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                        .foregroundStyle(RankdColors.success)
                     
                     Label("\(matchProgress.notFound)", systemImage: "questionmark.circle.fill")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(RankdColors.textTertiary)
                     
                     Spacer()
                     
                     Text("\(matchProgress.processed) / \(matchProgress.total)")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(RankdColors.textSecondary)
                 }
-                .font(.subheadline)
+                .font(RankdTypography.bodySmall)
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, RankdSpacing.xl)
             
             if entries.count > 100 {
-                let estimatedSeconds = entries.count / 20 // ~10 per 0.5s
+                let estimatedSeconds = entries.count / 20
                 Text("Estimated time: ~\(estimatedSeconds / 60 + 1) min")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .font(RankdTypography.caption)
+                    .foregroundStyle(RankdColors.textTertiary)
             }
             
             Spacer()
@@ -297,60 +280,47 @@ struct LetterboxdImportView: View {
     
     private var reviewView: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: RankdSpacing.lg) {
                 // Summary Card
-                VStack(spacing: 16) {
-                    HStack(spacing: 16) {
-                        SummaryBadge(
-                            icon: "checkmark.circle.fill",
-                            count: matchedOnly.count,
-                            label: "Matched",
-                            color: .green
-                        )
-                        SummaryBadge(
-                            icon: "questionmark.circle.fill",
-                            count: notFoundEntries.count,
-                            label: "Not Found",
-                            color: .orange
-                        )
-                        SummaryBadge(
-                            icon: "arrow.right.circle.fill",
-                            count: duplicateCount,
-                            label: "Already In Rankd",
-                            color: .secondary
-                        )
-                    }
+                HStack(spacing: RankdSpacing.md) {
+                    SummaryBadge(icon: "checkmark.circle.fill", count: matchedOnly.count, label: "Matched", color: RankdColors.success)
+                    SummaryBadge(icon: "questionmark.circle.fill", count: notFoundEntries.count, label: "Not Found", color: RankdColors.textTertiary)
+                    SummaryBadge(icon: "arrow.right.circle.fill", count: duplicateCount, label: "Already In Rankd", color: RankdColors.textSecondary)
                 }
-                .padding()
+                .padding(RankdSpacing.md)
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(.secondarySystemBackground))
+                    RoundedRectangle(cornerRadius: RankdRadius.lg)
+                        .fill(RankdColors.surfacePrimary)
                 )
-                .padding(.horizontal)
+                .padding(.horizontal, RankdSpacing.md)
                 
                 // Tier Breakdown
-                VStack(spacing: 16) {
+                VStack(spacing: RankdSpacing.md) {
                     HStack {
                         Text("Tier Breakdown")
-                            .font(.headline)
+                            .font(RankdTypography.headingMedium)
+                            .foregroundStyle(RankdColors.textPrimary)
                         Spacer()
                     }
                     
-                    TierPreviewRow(emoji: "🟢", label: "Good (4-5★)", count: goodEntries.count, color: .green)
-                    TierPreviewRow(emoji: "🟡", label: "Medium (2.5-3.5★)", count: mediumEntries.count, color: .yellow)
-                    TierPreviewRow(emoji: "🔴", label: "Bad (0.5-2★)", count: badEntries.count, color: .red)
+                    TierPreviewRow(tier: .good, label: "Good (4-5★)", count: goodEntries.count)
+                    TierPreviewRow(tier: .medium, label: "Medium (2.5-3.5★)", count: mediumEntries.count)
+                    TierPreviewRow(tier: .bad, label: "Bad (0.5-2★)", count: badEntries.count)
                     
-                    Divider()
+                    Rectangle()
+                        .fill(RankdColors.divider)
+                        .frame(height: 1)
                     
                     // Unrated handling
-                    VStack(spacing: 12) {
+                    VStack(spacing: RankdSpacing.sm) {
                         HStack {
                             Text("Unrated")
-                                .font(.subheadline.bold())
+                                .font(RankdTypography.headingSmall)
+                                .foregroundStyle(RankdColors.textPrimary)
                             Spacer()
                             Text("\(unratedEntries.count) movies")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                                .font(RankdTypography.bodySmall)
+                                .foregroundStyle(RankdColors.textSecondary)
                         }
                         
                         if !unratedEntries.isEmpty {
@@ -363,35 +333,35 @@ struct LetterboxdImportView: View {
                         }
                     }
                 }
-                .padding()
+                .padding(RankdSpacing.md)
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(.secondarySystemBackground))
+                    RoundedRectangle(cornerRadius: RankdRadius.lg)
+                        .fill(RankdColors.surfacePrimary)
                 )
-                .padding(.horizontal)
+                .padding(.horizontal, RankdSpacing.md)
                 
                 // Expandable matched list
                 DisclosureGroup(isExpanded: $showMatchedList) {
-                    LazyVStack(spacing: 8) {
+                    LazyVStack(spacing: RankdSpacing.xs) {
                         ForEach(importableEntries) { entry in
                             MatchedEntryRow(entry: entry)
                         }
                     }
-                    .padding(.top, 8)
+                    .padding(.top, RankdSpacing.xs)
                 } label: {
                     HStack {
                         Image(systemName: "list.bullet")
                         Text("View all \(importableEntries.count) movies")
-                            .font(.subheadline)
+                            .font(RankdTypography.bodyMedium)
                     }
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(RankdColors.brand)
                 }
-                .padding()
+                .padding(RankdSpacing.md)
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color(.secondarySystemBackground))
+                    RoundedRectangle(cornerRadius: RankdRadius.lg)
+                        .fill(RankdColors.surfacePrimary)
                 )
-                .padding(.horizontal)
+                .padding(.horizontal, RankdSpacing.md)
                 
                 // Import Button
                 Button {
@@ -400,53 +370,51 @@ struct LetterboxdImportView: View {
                     HStack {
                         Image(systemName: "square.and.arrow.down")
                         Text("Import \(totalToImport) Movies")
-                            .fontWeight(.semibold)
+                            .font(RankdTypography.headingSmall)
                     }
+                    .foregroundStyle(RankdColors.textPrimary)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(totalToImport > 0 ? Color.orange : Color.gray)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .frame(height: 52)
+                    .background(totalToImport > 0 ? RankdColors.brand : RankdColors.surfaceTertiary)
+                    .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
                 }
                 .disabled(totalToImport == 0)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 32)
+                .padding(.horizontal, RankdSpacing.lg)
+                .padding(.bottom, RankdSpacing.xl)
             }
-            .padding(.top)
+            .padding(.top, RankdSpacing.md)
         }
     }
     
     // MARK: - Step 4: Importing
     
     private var importingView: some View {
-        VStack(spacing: 32) {
+        VStack(spacing: RankdSpacing.xl) {
             Spacer()
             
-            ZStack {
-                Circle()
-                    .fill(Color.orange.opacity(0.1))
-                    .frame(width: 100, height: 100)
-                
-                Image(systemName: "arrow.down.circle.fill")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.orange)
-                    .symbolEffect(.bounce, options: .repeating)
-            }
+            Image(systemName: "arrow.down.circle.fill")
+                .font(.system(size: 40))
+                .foregroundStyle(RankdColors.brand)
             
-            VStack(spacing: 8) {
+            VStack(spacing: RankdSpacing.xs) {
                 Text("Importing...")
-                    .font(.title3.bold())
+                    .font(RankdTypography.headingMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
                 
                 Text("\(importProgress) / \(importTotal)")
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
+                    .font(RankdTypography.headingSmall)
+                    .foregroundStyle(RankdColors.textSecondary)
             }
             
             ProgressView(value: Double(importProgress), total: Double(max(1, importTotal)))
-                .tint(.orange)
+                .tint(RankdColors.brand)
                 .scaleEffect(y: 2)
                 .clipShape(Capsule())
-                .padding(.horizontal, 48)
+                .background(
+                    Capsule().fill(RankdColors.surfaceSecondary)
+                        .scaleEffect(y: 2)
+                )
+                .padding(.horizontal, RankdSpacing.xxl)
             
             Spacer()
         }
@@ -455,26 +423,21 @@ struct LetterboxdImportView: View {
     // MARK: - Step 5: Done
     
     private var doneView: some View {
-        VStack(spacing: 32) {
+        VStack(spacing: RankdSpacing.xl) {
             Spacer()
             
-            ZStack {
-                Circle()
-                    .fill(Color.green.opacity(0.15))
-                    .frame(width: 120, height: 120)
-                
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 56))
-                    .foregroundStyle(.green)
-            }
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 56))
+                .foregroundStyle(RankdColors.success)
             
-            VStack(spacing: 12) {
-                Text("🎉 Imported \(importedCount) movies!")
-                    .font(.title2.bold())
+            VStack(spacing: RankdSpacing.sm) {
+                Text("Imported \(importedCount) movies!")
+                    .font(RankdTypography.headingLarge)
+                    .foregroundStyle(RankdColors.textPrimary)
                 
                 Text("Your rankings are ready.\nYou can refine them with comparisons anytime.")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(RankdColors.textSecondary)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
             }
@@ -485,15 +448,15 @@ struct LetterboxdImportView: View {
                 dismiss()
             } label: {
                 Text("Done")
-                    .font(.headline)
+                    .font(RankdTypography.headingSmall)
+                    .foregroundStyle(RankdColors.textPrimary)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color.orange)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .frame(height: 52)
+                    .background(RankdColors.brand)
+                    .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 48)
+            .padding(.horizontal, RankdSpacing.lg)
+            .padding(.bottom, RankdSpacing.xxl)
         }
     }
     
@@ -542,7 +505,6 @@ struct LetterboxdImportView: View {
     private func startImport() {
         step = .importing
         
-        // Build the list of entries to import with their target tier
         var toImport: [(MatchedEntry, Tier)] = []
         
         for entry in goodEntries {
@@ -555,14 +517,13 @@ struct LetterboxdImportView: View {
             toImport.append((entry, .bad))
         }
         
-        // Handle unrated
         switch unratedAction {
         case .medium:
             for entry in unratedEntries {
                 toImport.append((entry, .medium))
             }
         case .watchlist, .skip:
-            break // handled separately below
+            break
         }
         
         importTotal = toImport.count + (unratedAction == .watchlist ? unratedEntries.count : 0)
@@ -570,7 +531,6 @@ struct LetterboxdImportView: View {
         importedCount = 0
         
         Task {
-            // Sort for rank assignment: Good by rating desc, Medium by rating desc, Bad by rating desc
             let sorted = toImport.sorted { a, b in
                 let tierOrder: [Tier: Int] = [.good: 0, .medium: 1, .bad: 2]
                 let aTier = tierOrder[a.1] ?? 1
@@ -579,7 +539,6 @@ struct LetterboxdImportView: View {
                 return (a.0.entry.rating ?? 0) > (b.0.entry.rating ?? 0)
             }
             
-            // Get current max rank to append after existing items
             let currentMaxRank = await MainActor.run {
                 existingRanked.map(\.rank).max() ?? 0
             }
@@ -608,13 +567,11 @@ struct LetterboxdImportView: View {
                     importedCount += 1
                 }
                 
-                // Small yield to keep UI responsive
                 if importedCount % 20 == 0 {
-                    try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
+                    try? await Task.sleep(nanoseconds: 50_000_000)
                 }
             }
             
-            // Handle unrated → watchlist
             if unratedAction == .watchlist {
                 for entry in unratedEntries {
                     guard let tmdb = entry.tmdbResult else { continue }
@@ -636,7 +593,6 @@ struct LetterboxdImportView: View {
                 }
             }
             
-            // Save
             await MainActor.run {
                 try? modelContext.save()
                 step = .done
@@ -652,16 +608,17 @@ private struct InstructionRow: View {
     let text: LocalizedStringKey
     
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: RankdSpacing.md) {
             Text(number)
-                .font(.headline)
-                .foregroundStyle(.white)
+                .font(RankdTypography.headingSmall)
+                .foregroundStyle(RankdColors.textPrimary)
                 .frame(width: 28, height: 28)
-                .background(Color.orange)
+                .background(RankdColors.surfaceTertiary)
                 .clipShape(Circle())
             
             Text(text)
-                .font(.subheadline)
+                .font(RankdTypography.bodyMedium)
+                .foregroundStyle(RankdColors.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -674,17 +631,18 @@ private struct SummaryBadge: View {
     let color: Color
     
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: RankdSpacing.xs) {
             Image(systemName: icon)
-                .font(.title3)
+                .font(RankdTypography.headingSmall)
                 .foregroundStyle(color)
             
             Text("\(count)")
-                .font(.title3.bold())
+                .font(RankdTypography.headingMedium)
+                .foregroundStyle(RankdColors.textPrimary)
             
             Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                .font(RankdTypography.caption)
+                .foregroundStyle(RankdColors.textSecondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -692,20 +650,22 @@ private struct SummaryBadge: View {
 }
 
 private struct TierPreviewRow: View {
-    let emoji: String
+    let tier: Tier
     let label: String
     let count: Int
-    let color: Color
     
     var body: some View {
         HStack {
-            Text(emoji)
+            Circle()
+                .fill(RankdColors.tierColor(tier))
+                .frame(width: 8, height: 8)
             Text(label)
-                .font(.subheadline)
+                .font(RankdTypography.bodyMedium)
+                .foregroundStyle(RankdColors.textSecondary)
             Spacer()
             Text("\(count) movies")
-                .font(.subheadline.bold())
-                .foregroundStyle(color)
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(RankdColors.textPrimary)
         }
     }
 }
@@ -714,44 +674,46 @@ private struct MatchedEntryRow: View {
     let entry: MatchedEntry
     
     var body: some View {
-        HStack(spacing: 12) {
-            // Poster thumbnail
+        HStack(spacing: RankdSpacing.sm) {
             if let url = entry.tmdbResult?.posterURL {
                 AsyncImage(url: url) { image in
                     image.resizable().aspectRatio(contentMode: .fill)
                 } placeholder: {
-                    Color.secondary.opacity(0.2)
+                    RoundedRectangle(cornerRadius: RankdRadius.sm)
+                        .fill(RankdColors.surfaceSecondary)
                 }
                 .frame(width: 36, height: 54)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
             }
             
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
                 Text(entry.entry.name)
-                    .font(.subheadline)
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
                     .lineLimit(1)
                 
-                HStack(spacing: 8) {
+                HStack(spacing: RankdSpacing.xs) {
                     if let year = entry.entry.year {
                         Text(year)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(RankdTypography.labelSmall)
+                            .foregroundStyle(RankdColors.textTertiary)
                     }
                     
                     if let tier = entry.entry.tier {
-                        Text(tier.emoji)
-                            .font(.caption)
+                        Circle()
+                            .fill(RankdColors.tierColor(tier))
+                            .frame(width: 8, height: 8)
                     }
                     
                     Text(entry.entry.starDisplay)
-                        .font(.caption)
-                        .foregroundStyle(.orange)
+                        .font(RankdTypography.labelSmall)
+                        .foregroundStyle(RankdColors.brand)
                 }
             }
             
             Spacer()
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, RankdSpacing.xxs)
     }
 }
 

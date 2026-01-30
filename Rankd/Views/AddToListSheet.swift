@@ -78,7 +78,7 @@ struct AddToListSheet: View {
                                 .foregroundStyle(RankdColors.success)
                         } else {
                             Image(systemName: "plus.circle")
-                                .foregroundStyle(RankdColors.accent)
+                                .foregroundStyle(RankdColors.brand)
                         }
                     }
                 }
@@ -94,10 +94,10 @@ struct AddToListSheet: View {
                 } label: {
                     HStack {
                         Image(systemName: "plus.circle.fill")
-                            .foregroundStyle(RankdColors.accent)
+                            .foregroundStyle(RankdColors.brand)
                         Text("Create New List")
                             .font(RankdTypography.headingSmall)
-                            .foregroundStyle(RankdColors.accent)
+                            .foregroundStyle(RankdColors.brand)
                     }
                 }
                 .listRowBackground(RankdColors.background)
@@ -134,7 +134,7 @@ struct AddToListSheet: View {
                     .font(RankdTypography.headingSmall)
                     .padding(.horizontal, RankdSpacing.lg)
                     .padding(.vertical, RankdSpacing.sm)
-                    .background(RankdColors.accent)
+                    .background(RankdColors.brand)
                     .foregroundStyle(RankdColors.textPrimary)
                     .clipShape(Capsule())
             }

@@ -144,12 +144,12 @@ struct RankedListView: View {
                         .padding(.vertical, RankdSpacing.sm)
                         .background(
                             selectedMediaType == type
-                                ? RankdColors.accent
+                                ? RankdColors.brand
                                 : Color.clear
                         )
                         .foregroundStyle(
                             selectedMediaType == type
-                                ? Color.white
+                                ? RankdColors.surfacePrimary
                                 : RankdColors.textTertiary
                         )
                         .clipShape(Capsule())
@@ -316,7 +316,7 @@ private struct TopRankedCard: View {
             
             Text("\(rank)")
                 .font(RankdTypography.labelMedium)
-                .foregroundStyle(Color.white)
+                .foregroundStyle(RankdColors.textPrimary)
         }
     }
     
@@ -436,7 +436,7 @@ struct ItemDetailSheet: View {
                             
                             Text("Ranked #\(item.rank)")
                                 .font(RankdTypography.headingMedium)
-                                .foregroundStyle(RankdColors.accent)
+                                .foregroundStyle(RankdColors.brand)
                         }
                     }
                     .padding(.horizontal, RankdSpacing.md)
@@ -529,7 +529,7 @@ struct ItemDetailSheet: View {
                                 isEditing.toggle()
                             }
                             .font(RankdTypography.labelLarge)
-                            .foregroundStyle(RankdColors.accent)
+                            .foregroundStyle(RankdColors.brand)
                         }
                         
                         if isEditing {

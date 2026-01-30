@@ -13,28 +13,27 @@ struct ShareProfileSheet: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Format picker
                 formatPicker
-                    .padding(.top, 12)
-                    .padding(.bottom, 16)
+                    .padding(.top, RankdSpacing.sm)
+                    .padding(.bottom, RankdSpacing.md)
                 
-                // Card preview
                 ScrollView {
                     cardPreview
-                        .padding(.horizontal)
+                        .padding(.horizontal, RankdSpacing.md)
                 }
                 
-                // Action buttons
                 actionButtons
-                    .padding(.horizontal)
-                    .padding(.vertical, 16)
-                    .background(.ultraThinMaterial)
+                    .padding(.horizontal, RankdSpacing.md)
+                    .padding(.vertical, RankdSpacing.md)
+                    .background(RankdColors.surfacePrimary)
             }
+            .background(RankdColors.background)
             .navigationTitle("Share Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
+                        .foregroundStyle(RankdColors.textSecondary)
                 }
             }
             .sheet(isPresented: $showShareSheet) {
@@ -53,7 +52,6 @@ struct ShareProfileSheet: View {
     
     // MARK: - Format Picker
     
-    /// Profile share formats (excludes list, which has its own sheet)
     private static let profileFormats: [ShareCardFormat] = [.top4, .top10]
     
     private var formatPicker: some View {
@@ -63,7 +61,7 @@ struct ShareProfileSheet: View {
             }
         }
         .pickerStyle(.segmented)
-        .padding(.horizontal)
+        .padding(.horizontal, RankdSpacing.md)
     }
     
     // MARK: - Card Preview
@@ -76,9 +74,9 @@ struct ShareProfileSheet: View {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .shadow(color: .black.opacity(0.3), radius: 20, y: 10)
-                    .padding(.vertical, 8)
+                    .clipShape(RoundedRectangle(cornerRadius: RankdRadius.lg))
+                    .shadow(color: RankdShadow.elevated, radius: RankdShadow.elevatedRadius, y: RankdShadow.elevatedY)
+                    .padding(.vertical, RankdSpacing.xs)
             } else if let error = generator.errorMessage {
                 errorState(message: error)
             } else {
@@ -88,89 +86,89 @@ struct ShareProfileSheet: View {
     }
     
     private var loadingState: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: RankdSpacing.md) {
             let aspectRatio: CGFloat = selectedFormat == .top4 ? 1080.0 / 1920.0 : 1.0
             
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: RankdRadius.lg)
+                .fill(RankdColors.surfacePrimary)
                 .aspectRatio(aspectRatio, contentMode: .fit)
                 .overlay {
-                    VStack(spacing: 12) {
+                    VStack(spacing: RankdSpacing.sm) {
                         ProgressView()
                             .scaleEffect(1.2)
+                            .tint(RankdColors.textTertiary)
                         Text("Generating card...")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .font(RankdTypography.bodyMedium)
+                            .foregroundStyle(RankdColors.textSecondary)
                     }
                 }
         }
     }
     
     private func errorState(message: String) -> some View {
-        VStack(spacing: 12) {
+        VStack(spacing: RankdSpacing.sm) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.largeTitle)
-                .foregroundStyle(.orange)
+                .foregroundStyle(RankdColors.textTertiary)
             Text(message)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(RankdTypography.bodyMedium)
+                .foregroundStyle(RankdColors.textSecondary)
             Button("Retry") {
                 Task { await generateCard() }
             }
-            .buttonStyle(.bordered)
+            .font(RankdTypography.labelMedium)
+            .foregroundStyle(RankdColors.brand)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 80)
+        .padding(.vertical, RankdSpacing.xxxl)
     }
     
     // MARK: - Action Buttons
     
     private var actionButtons: some View {
-        HStack(spacing: 12) {
-            // Save to Photos
+        HStack(spacing: RankdSpacing.sm) {
             Button {
                 generator.saveToPhotos()
                 HapticManager.notification(.success)
-                withAnimation {
+                withAnimation(RankdMotion.normal) {
                     savedToPhotos = true
                 }
-                // Reset after 2 seconds
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    withAnimation { savedToPhotos = false }
+                    withAnimation(RankdMotion.normal) { savedToPhotos = false }
                 }
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: RankdSpacing.xs) {
                     Image(systemName: savedToPhotos ? "checkmark" : "arrow.down.to.line")
-                        .font(.body.weight(.semibold))
+                        .font(RankdTypography.headingSmall)
                     Text(savedToPhotos ? "Saved!" : "Save")
-                        .font(.body.weight(.semibold))
+                        .font(RankdTypography.headingSmall)
                 }
+                .foregroundStyle(RankdColors.textPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(Color(.secondarySystemBackground))
+                    RoundedRectangle(cornerRadius: RankdRadius.md)
+                        .fill(RankdColors.surfaceSecondary)
                 )
             }
             .buttonStyle(.plain)
             .disabled(generator.generatedImage == nil || generator.isLoading)
             
-            // Share
             Button {
                 showShareSheet = true
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: RankdSpacing.xs) {
                     Image(systemName: "square.and.arrow.up")
-                        .font(.body.weight(.semibold))
+                        .font(RankdTypography.headingSmall)
                     Text("Share")
-                        .font(.body.weight(.semibold))
+                        .font(RankdTypography.headingSmall)
                 }
-                .foregroundStyle(.white)
+                .foregroundStyle(RankdColors.textPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(Color.orange)
+                    RoundedRectangle(cornerRadius: RankdRadius.md)
+                        .fill(RankdColors.brand)
                 )
             }
             .buttonStyle(.plain)

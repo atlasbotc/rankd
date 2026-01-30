@@ -10,8 +10,6 @@ struct StatsView: View {
     @State private var backfillProgress: Int = 0
     @State private var animateCharts = false
     
-    // MARK: - Computed Properties
-    
     private var movieItems: [RankedItem] {
         rankedItems.filter { $0.mediaType == .movie }
     }
@@ -34,7 +32,7 @@ struct StatsView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: RankdSpacing.lg) {
                 if rankedItems.isEmpty {
                     emptyState
                 } else {
@@ -47,12 +45,12 @@ struct StatsView: View {
                     funInsights
                 }
             }
-            .padding(.vertical)
+            .padding(.vertical, RankdSpacing.md)
         }
+        .background(RankdColors.background)
         .navigationTitle("Statistics")
         .navigationBarTitleDisplayMode(.large)
         .task {
-            // Trigger backfill for items missing genre data
             let itemsMissingGenres = rankedItems.filter { $0.genreNames.isEmpty }
             if !itemsMissingGenres.isEmpty {
                 isBackfilling = true
@@ -64,8 +62,7 @@ struct StatsView: View {
                 isBackfilling = false
             }
             
-            // Trigger chart animations after a brief delay
-            withAnimation(.easeOut(duration: 0.8).delay(0.2)) {
+            withAnimation(RankdMotion.reveal.delay(0.2)) {
                 animateCharts = true
             }
         }
@@ -74,117 +71,116 @@ struct StatsView: View {
     // MARK: - Empty State
     
     private var emptyState: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: RankdSpacing.md) {
             Image(systemName: "chart.bar.doc.horizontal")
                 .font(.system(size: 60))
-                .foregroundStyle(.orange.opacity(0.5))
+                .foregroundStyle(RankdColors.textQuaternary)
             
             Text("No Stats Yet")
-                .font(.title2.bold())
+                .font(RankdTypography.headingLarge)
+                .foregroundStyle(RankdColors.textPrimary)
             
             Text("Start ranking movies and TV shows to see your viewing patterns and insights.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(RankdTypography.bodyMedium)
+                .foregroundStyle(RankdColors.textSecondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+                .padding(.horizontal, RankdSpacing.xl)
         }
-        .padding(.top, 60)
+        .padding(.top, RankdSpacing.xxxl)
     }
     
-    // MARK: - A. Summary Header
+    // MARK: - Summary Header
     
     private var summaryHeader: some View {
-        VStack(spacing: 16) {
-            // Big number
+        VStack(spacing: RankdSpacing.md) {
             Text("\(rankedItems.count)")
-                .font(.system(size: 56, weight: .bold, design: .rounded))
-                .foregroundStyle(.orange)
+                .font(RankdTypography.displayLarge)
+                .foregroundStyle(RankdColors.accent)
             
             Text("Items Ranked")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(RankdColors.textTertiary)
             
-            // Sub-stats row
-            HStack(spacing: 24) {
+            HStack(spacing: RankdSpacing.lg) {
                 MiniStat(value: movieItems.count, label: "Movies", icon: "film")
                 
-                Divider()
+                StatsDivider()
                     .frame(height: 30)
                 
                 MiniStat(value: tvItems.count, label: "TV Shows", icon: "tv")
                 
-                Divider()
+                StatsDivider()
                     .frame(height: 30)
                 
                 MiniStat(value: watchlistItems.count, label: "Watchlist", icon: "bookmark")
             }
             
-            // Member since
             if let date = memberSinceDate {
                 Text("Member since \(date.formatted(.dateTime.month(.wide).year()))")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .font(RankdTypography.caption)
+                    .foregroundStyle(RankdColors.textTertiary)
             }
         }
-        .padding()
+        .padding(RankdSpacing.md)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color(.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: RankdRadius.lg)
+                .fill(RankdColors.surfacePrimary)
         )
-        .padding(.horizontal)
+        .padding(.horizontal, RankdSpacing.md)
     }
     
-    // MARK: - B. Genre Distribution
+    // MARK: - Genre Distribution
     
     private var genreDistribution: some View {
         StatsSection(title: "Genre Distribution", icon: "theatermasks") {
             if isBackfilling && itemsWithGenres.isEmpty {
-                HStack(spacing: 12) {
+                HStack(spacing: RankdSpacing.sm) {
                     ProgressView()
+                        .tint(RankdColors.textTertiary)
                     Text("Analyzing your taste...")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(RankdTypography.bodyMedium)
+                        .foregroundStyle(RankdColors.textSecondary)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
+                .padding(.vertical, RankdSpacing.lg)
             } else if itemsWithGenres.isEmpty {
                 Text("Rank more to see genre stats")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, 20)
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(RankdColors.textSecondary)
+                    .padding(.vertical, RankdSpacing.lg)
             } else {
                 let genreCounts = computeGenreCounts()
                 let maxCount = genreCounts.first?.count ?? 1
                 
-                VStack(spacing: 10) {
-                    ForEach(Array(genreCounts.prefix(8).enumerated()), id: \.element.name) { index, genre in
+                VStack(spacing: RankdSpacing.xs) {
+                    ForEach(Array(genreCounts.prefix(8).enumerated()), id: \.element.name) { _, genre in
                         GenreBar(
                             name: genre.name,
                             count: genre.count,
                             total: itemsWithGenres.count,
                             maxCount: maxCount,
-                            color: genreColor(for: index),
                             animate: animateCharts
                         )
                     }
                 }
                 
                 if isBackfilling {
-                    HStack(spacing: 6) {
+                    HStack(spacing: RankdSpacing.xs) {
                         ProgressView()
                             .scaleEffect(0.7)
+                            .tint(RankdColors.textTertiary)
                         Text("Loading more genre data...")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
+                            .font(RankdTypography.caption)
+                            .foregroundStyle(RankdColors.textTertiary)
                     }
-                    .padding(.top, 4)
+                    .padding(.top, RankdSpacing.xxs)
                 }
             }
         }
     }
     
-    // MARK: - C. Decade Breakdown
+    // MARK: - Decade Breakdown
     
     private var decadeBreakdown: some View {
         StatsSection(title: "Decades", icon: "calendar.badge.clock") {
@@ -192,13 +188,13 @@ struct StatsView: View {
             
             if decades.isEmpty {
                 Text("No release date information available")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, 20)
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(RankdColors.textSecondary)
+                    .padding(.vertical, RankdSpacing.lg)
             } else {
                 let maxCount = decades.first?.count ?? 1
                 
-                VStack(spacing: 10) {
+                VStack(spacing: RankdSpacing.xs) {
                     ForEach(decades, id: \.decade) { item in
                         DecadeBar(
                             decade: item.decade,
@@ -213,7 +209,7 @@ struct StatsView: View {
         }
     }
     
-    // MARK: - D. Tier Analysis
+    // MARK: - Tier Analysis
     
     private var tierAnalysis: some View {
         StatsSection(title: "Tier Analysis", icon: "chart.pie") {
@@ -222,8 +218,7 @@ struct StatsView: View {
             let badCount = rankedItems.filter { $0.tier == .bad }.count
             let total = rankedItems.count
             
-            VStack(spacing: 20) {
-                // Segmented bar
+            VStack(spacing: RankdSpacing.lg) {
                 TierSegmentedBar(
                     good: goodCount,
                     medium: mediumCount,
@@ -232,126 +227,113 @@ struct StatsView: View {
                     animate: animateCharts
                 )
                 
-                // Percentages
                 HStack(spacing: 0) {
-                    TierStatPill(
-                        tier: .good,
-                        count: goodCount,
-                        total: total
-                    )
+                    TierStatPill(tier: .good, count: goodCount, total: total)
                     Spacer()
-                    TierStatPill(
-                        tier: .medium,
-                        count: mediumCount,
-                        total: total
-                    )
+                    TierStatPill(tier: .medium, count: mediumCount, total: total)
                     Spacer()
-                    TierStatPill(
-                        tier: .bad,
-                        count: badCount,
-                        total: total
-                    )
+                    TierStatPill(tier: .bad, count: badCount, total: total)
                 }
                 
-                // Average score and insight
                 let avgScore = total > 0
                     ? Double(goodCount * 3 + mediumCount * 2 + badCount) / Double(total)
                     : 0.0
                 
-                VStack(spacing: 6) {
-                    HStack(spacing: 4) {
+                VStack(spacing: RankdSpacing.xs) {
+                    HStack(spacing: RankdSpacing.xxs) {
                         Text("Average Score:")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .font(RankdTypography.bodySmall)
+                            .foregroundStyle(RankdColors.textSecondary)
                         Text(String(format: "%.1f", avgScore))
-                            .font(.subheadline.bold())
+                            .font(RankdTypography.headingSmall)
+                            .foregroundStyle(RankdColors.textPrimary)
                         Text("/ 3.0")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
+                            .font(RankdTypography.caption)
+                            .foregroundStyle(RankdColors.textTertiary)
                     }
                     
                     Text(viewerInsight(avgScore: avgScore))
-                        .font(.subheadline)
-                        .foregroundStyle(.orange)
+                        .font(RankdTypography.bodySmall)
+                        .foregroundStyle(RankdColors.textSecondary)
                         .fontWeight(.medium)
                 }
             }
         }
     }
     
-    // MARK: - E. Watch Time
+    // MARK: - Watch Time
     
     private var watchTimeSection: some View {
         StatsSection(title: "Watch Time", icon: "clock") {
             if itemsWithRuntime.isEmpty {
-                VStack(spacing: 8) {
+                VStack(spacing: RankdSpacing.xs) {
                     Text("No runtime data available yet")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .font(RankdTypography.bodyMedium)
+                        .foregroundStyle(RankdColors.textSecondary)
                     
                     if isBackfilling {
-                        HStack(spacing: 6) {
+                        HStack(spacing: RankdSpacing.xs) {
                             ProgressView()
                                 .scaleEffect(0.7)
+                                .tint(RankdColors.textTertiary)
                             Text("Fetching runtime data...")
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
+                                .font(RankdTypography.caption)
+                                .foregroundStyle(RankdColors.textTertiary)
                         }
                     }
                 }
-                .padding(.vertical, 12)
+                .padding(.vertical, RankdSpacing.sm)
             } else {
                 let totalMinutes = itemsWithRuntime.reduce(0) { $0 + $1.runtimeMinutes }
                 let days = totalMinutes / (60 * 24)
                 let hours = (totalMinutes % (60 * 24)) / 60
                 let minutes = totalMinutes % 60
                 
-                VStack(spacing: 16) {
-                    // Total watch time
-                    HStack(spacing: 4) {
+                VStack(spacing: RankdSpacing.md) {
+                    HStack(spacing: RankdSpacing.xxs) {
                         if days > 0 {
                             Text("\(days)")
-                                .font(.system(size: 36, weight: .bold, design: .rounded))
-                                .foregroundStyle(.orange)
+                                .font(RankdTypography.displayMedium)
+                                .foregroundStyle(RankdColors.accent)
                             Text("d")
-                                .font(.title3)
-                                .foregroundStyle(.secondary)
+                                .font(RankdTypography.labelMedium)
+                                .foregroundStyle(RankdColors.textTertiary)
                         }
                         Text("\(hours)")
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
-                            .foregroundStyle(.orange)
+                            .font(RankdTypography.displayMedium)
+                            .foregroundStyle(RankdColors.accent)
                         Text("h")
-                            .font(.title3)
-                            .foregroundStyle(.secondary)
+                            .font(RankdTypography.labelMedium)
+                            .foregroundStyle(RankdColors.textTertiary)
                         Text("\(minutes)")
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
-                            .foregroundStyle(.orange)
+                            .font(RankdTypography.displayMedium)
+                            .foregroundStyle(RankdColors.accent)
                         Text("m")
-                            .font(.title3)
-                            .foregroundStyle(.secondary)
+                            .font(RankdTypography.labelMedium)
+                            .foregroundStyle(RankdColors.textTertiary)
                     }
                     
                     Text("Total estimated watch time")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(RankdTypography.labelMedium)
+                        .foregroundStyle(RankdColors.textTertiary)
                     
                     if itemsWithRuntime.count < rankedItems.count {
                         Text("\(itemsWithRuntime.count) of \(rankedItems.count) items have runtime data")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
+                            .font(RankdTypography.caption)
+                            .foregroundStyle(RankdColors.textTertiary)
                     }
                     
-                    Divider()
+                    Rectangle()
+                        .fill(RankdColors.divider)
+                        .frame(height: 1)
                     
-                    // Longest & shortest
-                    HStack(spacing: 16) {
+                    HStack(spacing: RankdSpacing.md) {
                         if let longest = itemsWithRuntime.max(by: { $0.runtimeMinutes < $1.runtimeMinutes }) {
                             WatchTimeExtreme(
                                 label: "Longest",
                                 title: longest.title,
                                 minutes: longest.runtimeMinutes,
-                                icon: "arrow.up.circle.fill",
-                                color: .orange
+                                icon: "arrow.up.circle.fill"
                             )
                         }
                         
@@ -361,8 +343,7 @@ struct StatsView: View {
                                 label: "Shortest",
                                 title: shortest.title,
                                 minutes: shortest.runtimeMinutes,
-                                icon: "arrow.down.circle.fill",
-                                color: .blue
+                                icon: "arrow.down.circle.fill"
                             )
                         }
                     }
@@ -371,7 +352,7 @@ struct StatsView: View {
         }
     }
     
-    // MARK: - F. Activity Timeline
+    // MARK: - Activity Timeline
     
     private var activityTimeline: some View {
         StatsSection(title: "Activity", icon: "chart.bar.fill") {
@@ -379,26 +360,25 @@ struct StatsView: View {
             
             if monthlyData.isEmpty {
                 Text("Not enough data yet")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, 12)
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(RankdColors.textSecondary)
+                    .padding(.vertical, RankdSpacing.sm)
             } else {
                 let maxCount = monthlyData.map(\.count).max() ?? 1
                 
-                VStack(spacing: 12) {
-                    // Bar chart
-                    HStack(alignment: .bottom, spacing: 6) {
+                VStack(spacing: RankdSpacing.sm) {
+                    HStack(alignment: .bottom, spacing: RankdSpacing.xs) {
                         ForEach(monthlyData, id: \.label) { month in
-                            VStack(spacing: 4) {
+                            VStack(spacing: RankdSpacing.xxs) {
                                 Text("\(month.count)")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
+                                    .font(RankdTypography.caption)
+                                    .foregroundStyle(RankdColors.textTertiary)
                                 
-                                RoundedRectangle(cornerRadius: 4)
+                                RoundedRectangle(cornerRadius: RankdRadius.sm)
                                     .fill(
                                         month.count == maxCount
-                                            ? Color.orange
-                                            : Color.orange.opacity(0.4)
+                                            ? RankdColors.accent
+                                            : RankdColors.accent.opacity(0.3)
                                     )
                                     .frame(
                                         height: animateCharts
@@ -407,56 +387,56 @@ struct StatsView: View {
                                     )
                                 
                                 Text(month.label)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
+                                    .font(RankdTypography.labelSmall)
+                                    .foregroundStyle(RankdColors.textTertiary)
                             }
                             .frame(maxWidth: .infinity)
                         }
                     }
                     .frame(height: 140)
-                    .animation(.easeOut(duration: 0.8), value: animateCharts)
+                    .animation(RankdMotion.reveal, value: animateCharts)
                     
-                    // Most active month
                     if let mostActive = monthlyData.max(by: { $0.count < $1.count }), mostActive.count > 0 {
                         Text("Most active: \(mostActive.fullLabel) (\(mostActive.count) items)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(RankdTypography.caption)
+                            .foregroundStyle(RankdColors.textSecondary)
                     }
                 }
             }
         }
     }
     
-    // MARK: - G. Fun Insights
+    // MARK: - Fun Insights
     
     private var funInsights: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: RankdSpacing.sm) {
             HStack {
                 Image(systemName: "lightbulb.fill")
-                    .foregroundStyle(.yellow)
+                    .foregroundStyle(RankdColors.textSecondary)
                 Text("Insights")
-                    .font(.headline)
+                    .font(RankdTypography.headingMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
                 Spacer()
             }
-            .padding(.horizontal)
+            .padding(.horizontal, RankdSpacing.md)
             
             let insights = computeInsights()
             
             if insights.isEmpty {
                 Text("Rank more items to unlock insights!")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding()
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(RankdColors.textSecondary)
+                    .padding(RankdSpacing.md)
             } else {
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RankdSpacing.sm) {
                     ForEach(Array(insights.prefix(4).enumerated()), id: \.offset) { _, insight in
                         InsightCard(icon: insight.icon, text: insight.text)
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, RankdSpacing.md)
             }
         }
-        .padding(.bottom, 16)
+        .padding(.bottom, RankdSpacing.md)
     }
     
     // MARK: - Data Computation
@@ -494,8 +474,6 @@ struct StatsView: View {
     private func computeMonthlyActivity() -> [MonthData] {
         let calendar = Calendar.current
         let now = Date()
-        
-        // Show last 6 months
         var months: [MonthData] = []
         let formatter = DateFormatter()
         let fullFormatter = DateFormatter()
@@ -504,19 +482,15 @@ struct StatsView: View {
         for i in (0..<6).reversed() {
             guard let date = calendar.date(byAdding: .month, value: -i, to: now) else { continue }
             let components = calendar.dateComponents([.year, .month], from: date)
-            
             formatter.dateFormat = "MMM"
             let label = formatter.string(from: date)
             let full = fullFormatter.string(from: date)
-            
             let count = rankedItems.filter { item in
                 let itemComponents = calendar.dateComponents([.year, .month], from: item.dateAdded)
                 return itemComponents.year == components.year && itemComponents.month == components.month
             }.count
-            
             months.append(MonthData(label: label, fullLabel: full, count: count))
         }
-        
         return months
     }
     
@@ -528,59 +502,36 @@ struct StatsView: View {
     private func computeInsights() -> [Insight] {
         var insights: [Insight] = []
         
-        // #1 Genre
         let genreCounts = computeGenreCounts()
         if let topGenre = genreCounts.first {
-            insights.append(Insight(
-                icon: "star.fill",
-                text: "Your #1 genre is \(topGenre.name)"
-            ))
+            insights.append(Insight(icon: "star.fill", text: "Your #1 genre is \(topGenre.name)"))
         }
         
-        // Decade count
         let decades = computeDecades()
         if let topDecade = decades.first {
-            insights.append(Insight(
-                icon: "calendar",
-                text: "You've ranked \(topDecade.count) titles from the \(topDecade.decade)"
-            ))
+            insights.append(Insight(icon: "calendar", text: "You've ranked \(topDecade.count) titles from the \(topDecade.decade)"))
         }
         
-        // Longest movie
         if let longest = itemsWithRuntime.max(by: { $0.runtimeMinutes < $1.runtimeMinutes }),
            longest.runtimeMinutes > 0 {
             let h = longest.runtimeMinutes / 60
             let m = longest.runtimeMinutes % 60
             let timeStr = h > 0 ? "\(h)h \(m)m" : "\(m)m"
-            insights.append(Insight(
-                icon: "hourglass",
-                text: "Longest: \(longest.title) at \(timeStr)"
-            ))
+            insights.append(Insight(icon: "hourglass", text: "Longest: \(longest.title) at \(timeStr)"))
         }
         
-        // Total comparisons
         let totalComparisons = rankedItems.reduce(0) { $0 + $1.comparisonCount }
         if totalComparisons > 0 {
-            insights.append(Insight(
-                icon: "arrow.left.arrow.right",
-                text: "You've made \(totalComparisons) comparisons"
-            ))
+            insights.append(Insight(icon: "arrow.left.arrow.right", text: "You've made \(totalComparisons) comparisons"))
         }
         
-        // Movie vs TV ratio
         if movieItems.count > 0 && tvItems.count > 0 {
             let ratio = Double(movieItems.count) / Double(tvItems.count)
             if ratio > 2 {
-                insights.append(Insight(
-                    icon: "film",
-                    text: "You watch \(String(format: "%.0f", ratio))x more movies than TV"
-                ))
+                insights.append(Insight(icon: "film", text: "You watch \(String(format: "%.0f", ratio))x more movies than TV"))
             } else if ratio < 0.5 {
                 let tvRatio = Double(tvItems.count) / Double(movieItems.count)
-                insights.append(Insight(
-                    icon: "tv",
-                    text: "You watch \(String(format: "%.0f", tvRatio))x more TV than movies"
-                ))
+                insights.append(Insight(icon: "tv", text: "You watch \(String(format: "%.0f", tvRatio))x more TV than movies"))
             }
         }
         
@@ -589,23 +540,24 @@ struct StatsView: View {
     
     private func viewerInsight(avgScore: Double) -> String {
         if avgScore >= 2.5 {
-            return "You're a generous viewer 🎉"
+            return "You're a generous viewer"
         } else if avgScore >= 1.8 {
-            return "You're a balanced viewer ⚖️"
+            return "You're a balanced viewer"
         } else {
-            return "You're a critical viewer 🧐"
+            return "You're a critical viewer"
         }
-    }
-    
-    private func genreColor(for index: Int) -> Color {
-        let colors: [Color] = [
-            .orange, .blue, .purple, .green, .pink, .cyan, .yellow, .red
-        ]
-        return colors[index % colors.count]
     }
 }
 
 // MARK: - Supporting Views
+
+private struct StatsDivider: View {
+    var body: some View {
+        Rectangle()
+            .fill(RankdColors.divider)
+            .frame(width: 1)
+    }
+}
 
 private struct MiniStat: View {
     let value: Int
@@ -613,15 +565,16 @@ private struct MiniStat: View {
     let icon: String
     
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: RankdSpacing.xxs) {
             Image(systemName: icon)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(RankdTypography.caption)
+                .foregroundStyle(RankdColors.textTertiary)
             Text("\(value)")
-                .font(.title3.bold())
+                .font(RankdTypography.headingSmall)
+                .foregroundStyle(RankdColors.textPrimary)
             Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                .font(RankdTypography.labelSmall)
+                .foregroundStyle(RankdColors.textSecondary)
         }
     }
 }
@@ -632,23 +585,24 @@ private struct StatsSection<Content: View>: View {
     @ViewBuilder let content: Content
     
     var body: some View {
-        VStack(spacing: 14) {
-            HStack(spacing: 8) {
+        VStack(spacing: RankdSpacing.sm) {
+            HStack(spacing: RankdSpacing.xs) {
                 Image(systemName: icon)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(RankdColors.textSecondary)
                 Text(title)
-                    .font(.headline)
+                    .font(RankdTypography.headingMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
                 Spacer()
             }
             
             content
         }
-        .padding()
+        .padding(RankdSpacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: RankdRadius.lg)
+                .fill(RankdColors.surfacePrimary)
         )
-        .padding(.horizontal)
+        .padding(.horizontal, RankdSpacing.md)
     }
 }
 
@@ -657,7 +611,6 @@ private struct GenreBar: View {
     let count: Int
     let total: Int
     let maxCount: Int
-    let color: Color
     let animate: Bool
     
     private var percentage: Int {
@@ -666,15 +619,16 @@ private struct GenreBar: View {
     }
     
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: RankdSpacing.xs) {
             Text(name)
-                .font(.caption)
+                .font(RankdTypography.bodySmall)
+                .foregroundStyle(RankdColors.textSecondary)
                 .frame(width: 80, alignment: .trailing)
                 .lineLimit(1)
             
             GeometryReader { geo in
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(color.opacity(0.7))
+                RoundedRectangle(cornerRadius: RankdRadius.sm)
+                    .fill(RankdColors.accent.opacity(0.6))
                     .frame(
                         width: animate
                             ? max(4, geo.size.width * CGFloat(count) / CGFloat(maxCount))
@@ -682,15 +636,16 @@ private struct GenreBar: View {
                     )
             }
             .frame(height: 22)
-            .animation(.easeOut(duration: 0.6), value: animate)
+            .animation(RankdMotion.reveal, value: animate)
             
             Text("\(count)")
-                .font(.caption.bold())
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(RankdColors.textPrimary)
                 .frame(width: 24, alignment: .trailing)
             
             Text("\(percentage)%")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                .font(RankdTypography.labelSmall)
+                .foregroundStyle(RankdColors.textTertiary)
                 .frame(width: 32, alignment: .trailing)
         }
     }
@@ -704,14 +659,15 @@ private struct DecadeBar: View {
     let animate: Bool
     
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: RankdSpacing.xs) {
             Text(decade)
-                .font(.caption.bold())
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(RankdColors.textPrimary)
                 .frame(width: 50, alignment: .trailing)
             
             GeometryReader { geo in
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.cyan.opacity(0.6))
+                RoundedRectangle(cornerRadius: RankdRadius.sm)
+                    .fill(RankdColors.surfaceTertiary)
                     .frame(
                         width: animate
                             ? max(4, geo.size.width * CGFloat(count) / CGFloat(maxCount))
@@ -719,10 +675,11 @@ private struct DecadeBar: View {
                     )
             }
             .frame(height: 22)
-            .animation(.easeOut(duration: 0.6), value: animate)
+            .animation(RankdMotion.reveal, value: animate)
             
             Text("\(count)")
-                .font(.caption.bold())
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(RankdColors.textPrimary)
                 .frame(width: 28, alignment: .trailing)
         }
     }
@@ -739,25 +696,25 @@ private struct TierSegmentedBar: View {
         GeometryReader { geo in
             HStack(spacing: 2) {
                 if good > 0 {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.green.opacity(0.7))
+                    RoundedRectangle(cornerRadius: RankdRadius.sm)
+                        .fill(RankdColors.tierGood)
                         .frame(width: animate ? geo.size.width * CGFloat(good) / CGFloat(max(total, 1)) : 0)
                 }
                 if medium > 0 {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.yellow.opacity(0.7))
+                    RoundedRectangle(cornerRadius: RankdRadius.sm)
+                        .fill(RankdColors.tierMedium)
                         .frame(width: animate ? geo.size.width * CGFloat(medium) / CGFloat(max(total, 1)) : 0)
                 }
                 if bad > 0 {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.red.opacity(0.7))
+                    RoundedRectangle(cornerRadius: RankdRadius.sm)
+                        .fill(RankdColors.tierBad)
                         .frame(width: animate ? geo.size.width * CGFloat(bad) / CGFloat(max(total, 1)) : 0)
                 }
             }
         }
         .frame(height: 28)
-        .clipShape(RoundedRectangle(cornerRadius: 6))
-        .animation(.easeOut(duration: 0.8), value: animate)
+        .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
+        .animation(RankdMotion.reveal, value: animate)
     }
 }
 
@@ -771,27 +728,19 @@ private struct TierStatPill: View {
         return Int(round(Double(count) / Double(total) * 100))
     }
     
-    private var tierColor: Color {
-        switch tier {
-        case .good: return .green
-        case .medium: return .yellow
-        case .bad: return .red
-        }
-    }
-    
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: RankdSpacing.xs) {
             Circle()
-                .fill(tierColor.opacity(0.7))
+                .fill(RankdColors.tierColor(tier))
                 .frame(width: 10, height: 10)
             
             VStack(alignment: .leading, spacing: 1) {
                 Text(tier.rawValue)
-                    .font(.caption)
-                    .fontWeight(.medium)
+                    .font(RankdTypography.labelMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
                 Text("\(count) (\(percentage)%)")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .font(RankdTypography.caption)
+                    .foregroundStyle(RankdColors.textSecondary)
             }
         }
     }
@@ -802,36 +751,33 @@ private struct WatchTimeExtreme: View {
     let title: String
     let minutes: Int
     let icon: String
-    let color: Color
     
     private var formatted: String {
         let h = minutes / 60
         let m = minutes % 60
-        if h > 0 {
-            return "\(h)h \(m)m"
-        }
+        if h > 0 { return "\(h)h \(m)m" }
         return "\(m)m"
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 4) {
+        VStack(alignment: .leading, spacing: RankdSpacing.xs) {
+            HStack(spacing: RankdSpacing.xxs) {
                 Image(systemName: icon)
-                    .foregroundStyle(color)
-                    .font(.caption)
+                    .foregroundStyle(RankdColors.textSecondary)
+                    .font(RankdTypography.caption)
                 Text(label)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(RankdTypography.caption)
+                    .foregroundStyle(RankdColors.textSecondary)
             }
             
             Text(title)
-                .font(.caption)
-                .fontWeight(.medium)
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(RankdColors.textPrimary)
                 .lineLimit(2)
             
             Text(formatted)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
+                .font(RankdTypography.caption)
+                .foregroundStyle(RankdColors.textTertiary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -842,22 +788,23 @@ private struct InsightCard: View {
     let text: String
     
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: RankdSpacing.xs) {
             Image(systemName: icon)
-                .foregroundStyle(.orange)
-                .font(.callout)
+                .foregroundStyle(RankdColors.textSecondary)
+                .font(RankdTypography.bodyMedium)
                 .frame(width: 24)
             
             Text(text)
-                .font(.caption)
+                .font(RankdTypography.bodySmall)
+                .foregroundStyle(RankdColors.textPrimary)
                 .lineLimit(3)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(12)
+        .padding(RankdSpacing.sm)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.orange.opacity(0.08))
+            RoundedRectangle(cornerRadius: RankdRadius.md)
+                .fill(RankdColors.surfaceSecondary)
         )
     }
 }

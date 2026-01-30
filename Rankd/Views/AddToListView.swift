@@ -45,7 +45,7 @@ struct AddToListView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                         .fontWeight(.semibold)
-                        .foregroundStyle(RankdColors.accent)
+                        .foregroundStyle(RankdColors.brand)
                 }
             }
         }
@@ -156,7 +156,7 @@ struct AddToListView: View {
                     .foregroundStyle(RankdColors.success)
             } else {
                 Image(systemName: "plus.circle.fill")
-                    .foregroundStyle(RankdColors.accent)
+                    .foregroundStyle(RankdColors.brand)
             }
         }
         .opacity(inList ? 0.5 : 1.0)
@@ -255,7 +255,7 @@ struct AddToListView: View {
             Spacer()
             
             Image(systemName: "plus.circle.fill")
-                .foregroundStyle(RankdColors.accent)
+                .foregroundStyle(RankdColors.brand)
         }
     }
     

@@ -81,7 +81,7 @@ struct CreateListView: View {
                     }
                     .disabled(!canSave)
                     .fontWeight(.semibold)
-                    .foregroundStyle(canSave ? RankdColors.accent : RankdColors.textTertiary)
+                    .foregroundStyle(canSave ? RankdColors.brand : RankdColors.textTertiary)
                 }
             }
             .onAppear {
@@ -111,7 +111,7 @@ struct CreateListView: View {
                             .frame(width: 36, height: 36)
                             .background(
                                 Circle()
-                                    .fill(selectedEmoji == emoji ? RankdColors.accent.opacity(0.3) : Color.clear)
+                                    .fill(selectedEmoji == emoji ? RankdColors.brand.opacity(0.3) : Color.clear)
                             )
                     }
                     .buttonStyle(.plain)
@@ -136,7 +136,7 @@ struct CreateListView: View {
                     showCustomEmoji.toggle()
                 }
                 .font(RankdTypography.labelMedium)
-                .foregroundStyle(RankdColors.accent)
+                .foregroundStyle(RankdColors.brand)
             }
             
             if showCustomEmoji {

@@ -157,7 +157,7 @@ private struct GetStartedPage: View {
                         Text("Already track movies? Import from Letterboxd")
                             .font(RankdTypography.bodySmall)
                     }
-                    .foregroundStyle(RankdColors.accent)
+                    .foregroundStyle(RankdColors.brand)
                 }
                 
                 PageIndicator(current: 2, total: 3)
@@ -207,7 +207,7 @@ private struct PageIndicator: View {
         HStack(spacing: RankdSpacing.xs) {
             ForEach(0..<total, id: \.self) { index in
                 Circle()
-                    .fill(index == current ? RankdColors.accent : RankdColors.surfaceSecondary)
+                    .fill(index == current ? RankdColors.brand : RankdColors.surfaceSecondary)
                     .frame(width: 8, height: 8)
                     .animation(RankdMotion.fast, value: current)
             }
@@ -226,7 +226,7 @@ private struct OnboardingButton: View {
                 .foregroundStyle(RankdColors.textPrimary)
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)
-                .background(RankdColors.accent)
+                .background(RankdColors.brand)
                 .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
         }
     }

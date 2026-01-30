@@ -21,23 +21,19 @@ struct ShareCardData {
     let tvCount: Int
     let tastePersonality: String
     
-    /// Items to display for Top 4 format.
     var topFourItems: [RankedItem] {
         Array(items.sorted { $0.rank < $1.rank }.prefix(4))
     }
     
-    /// Items to display for Top 10 format.
     var topTenItems: [RankedItem] {
         Array(items.sorted { $0.rank < $1.rank }.prefix(10))
     }
     
-    /// Get pre-loaded poster image for an item.
     func posterImage(for item: RankedItem) -> UIImage? {
         guard let url = item.posterURL else { return nil }
         return posterImages[url]
     }
     
-    /// Stats string like "42 movies · 12 TV shows"
     var statsString: String {
         var parts: [String] = []
         if movieCount > 0 {
@@ -51,12 +47,14 @@ struct ShareCardData {
 }
 
 // MARK: - Card Color Constants
+// These are for EXPORTED images only — not in-app UI.
+// They intentionally use their own palette separate from the design system.
 
 private enum CardColors {
-    static let gradientTop = Color(red: 0.102, green: 0.102, blue: 0.180)       // #1a1a2e
-    static let gradientMiddle = Color(red: 0.086, green: 0.129, blue: 0.243)     // #16213e
-    static let gradientBottom = Color(red: 0.059, green: 0.204, blue: 0.376)     // #0f3460
-    static let accent = Color(red: 1.0, green: 0.584, blue: 0.0)                 // #FF9500
+    static let gradientTop = Color(red: 0.102, green: 0.102, blue: 0.180)
+    static let gradientMiddle = Color(red: 0.086, green: 0.129, blue: 0.243)
+    static let gradientBottom = Color(red: 0.059, green: 0.204, blue: 0.376)
+    static let accent = Color(red: 1.0, green: 0.584, blue: 0.0)
     static let primaryText = Color.white
     static let secondaryText = Color.white.opacity(0.7)
     static let tertiaryText = Color.white.opacity(0.5)
@@ -80,10 +78,8 @@ struct Top4CardView: View {
     
     var body: some View {
         ZStack {
-            // Background
             CardColors.backgroundGradient
             
-            // Subtle pattern overlay
             VStack {
                 Spacer()
                 Circle()
@@ -92,40 +88,22 @@ struct Top4CardView: View {
                     .offset(x: 200, y: 200)
             }
             
-            // Content
             VStack(spacing: 0) {
-                Spacer()
-                    .frame(height: 120)
-                
-                // Header
+                Spacer().frame(height: 120)
                 headerSection
-                
-                Spacer()
-                    .frame(height: 64)
-                
-                // Poster Grid
+                Spacer().frame(height: 64)
                 posterGrid
+                Spacer().frame(height: 64)
                 
-                Spacer()
-                    .frame(height: 64)
-                
-                // Taste personality
                 if !data.tastePersonality.isEmpty && data.tastePersonality != "Getting Started" {
                     tasteBadge
-                    Spacer()
-                        .frame(height: 32)
+                    Spacer().frame(height: 32)
                 }
                 
-                // Stats
                 statsBar
-                
                 Spacer()
-                
-                // Branding
                 brandingFooter
-                
-                Spacer()
-                    .frame(height: 80)
+                Spacer().frame(height: 80)
             }
             .padding(.horizontal, 72)
         }
@@ -134,7 +112,6 @@ struct Top4CardView: View {
     
     private var headerSection: some View {
         VStack(spacing: 16) {
-            // Decorative line
             RoundedRectangle(cornerRadius: 2)
                 .fill(CardColors.accent)
                 .frame(width: 48, height: 4)
@@ -183,7 +160,6 @@ struct Top4CardView: View {
     private func posterCard(item: RankedItem, rank: Int, width: CGFloat, height: CGFloat) -> some View {
         VStack(spacing: 16) {
             ZStack(alignment: .topLeading) {
-                // Poster image
                 if let image = data.posterImage(for: item) {
                     Image(uiImage: image)
                         .resizable()
@@ -194,22 +170,16 @@ struct Top4CardView: View {
                     posterPlaceholder(item: item, width: width, height: height)
                 }
                 
-                // Rank badge
                 rankBadge(rank: rank)
                     .padding(12)
             }
             .shadow(color: .black.opacity(0.4), radius: 16, y: 8)
             
-            // Title + year + tier
             VStack(spacing: 6) {
-                HStack(spacing: 8) {
-                    Text(item.tier.emoji)
-                        .font(.system(size: 20))
-                    Text(item.title)
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundStyle(CardColors.primaryText)
-                        .lineLimit(1)
-                }
+                Text(item.title)
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(CardColors.primaryText)
+                    .lineLimit(1)
                 
                 if let year = item.year {
                     Text(year)
@@ -277,23 +247,19 @@ struct Top4CardView: View {
     }
     
     private var tasteBadge: some View {
-        HStack(spacing: 12) {
-            Text("🎬")
-                .font(.system(size: 24))
-            Text(data.tastePersonality)
-                .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(CardColors.accent)
-        }
-        .padding(.horizontal, 28)
-        .padding(.vertical, 14)
-        .background(
-            Capsule()
-                .fill(CardColors.accent.opacity(0.15))
-                .overlay(
-                    Capsule()
-                        .strokeBorder(CardColors.accent.opacity(0.3), lineWidth: 1)
-                )
-        )
+        Text(data.tastePersonality)
+            .font(.system(size: 24, weight: .semibold))
+            .foregroundStyle(CardColors.accent)
+            .padding(.horizontal, 28)
+            .padding(.vertical, 14)
+            .background(
+                Capsule()
+                    .fill(CardColors.accent.opacity(0.15))
+                    .overlay(
+                        Capsule()
+                            .strokeBorder(CardColors.accent.opacity(0.3), lineWidth: 1)
+                    )
+            )
     }
     
     private var statsBar: some View {
@@ -303,18 +269,16 @@ struct Top4CardView: View {
     }
     
     private var brandingFooter: some View {
-        HStack(spacing: 8) {
-            Text("rankd")
-                .font(.system(size: 20, weight: .semibold, design: .rounded))
-                .foregroundStyle(CardColors.tertiaryText)
-        }
+        Text("rankd")
+            .font(.system(size: 20, weight: .semibold, design: .rounded))
+            .foregroundStyle(CardColors.tertiaryText)
     }
     
     private func medalColor(for rank: Int) -> Color {
         switch rank {
-        case 1: return Color(red: 1.0, green: 0.84, blue: 0.0)   // Gold
-        case 2: return Color(red: 0.75, green: 0.75, blue: 0.78)  // Silver
-        case 3: return Color(red: 0.80, green: 0.50, blue: 0.20)  // Bronze
+        case 1: return Color(red: 1.0, green: 0.84, blue: 0.0)
+        case 2: return Color(red: 0.75, green: 0.75, blue: 0.78)
+        case 3: return Color(red: 0.80, green: 0.50, blue: 0.20)
         default: return Color(red: 0.5, green: 0.5, blue: 0.55)
         }
     }
@@ -329,43 +293,23 @@ struct Top10CardView: View {
     
     var body: some View {
         ZStack {
-            // Background
             CardColors.backgroundGradient
             
-            // Subtle accent glow
             Circle()
                 .fill(CardColors.accent.opacity(0.05))
                 .frame(width: 500, height: 500)
                 .offset(x: -300, y: -300)
             
-            // Content
             VStack(spacing: 0) {
-                Spacer()
-                    .frame(height: 64)
-                
-                // Header
+                Spacer().frame(height: 64)
                 top10Header
-                
-                Spacer()
-                    .frame(height: 40)
-                
-                // Rankings list
+                Spacer().frame(height: 40)
                 rankingsList
-                
-                Spacer()
-                    .frame(height: 36)
-                
-                // Stats
+                Spacer().frame(height: 36)
                 top10StatsBar
-                
-                Spacer()
-                    .frame(height: 24)
-                
-                // Branding
+                Spacer().frame(height: 24)
                 top10Branding
-                
-                Spacer()
-                    .frame(height: 48)
+                Spacer().frame(height: 48)
             }
             .padding(.horizontal, 64)
         }
@@ -392,13 +336,11 @@ struct Top10CardView: View {
         return VStack(spacing: 6) {
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                 HStack(spacing: 16) {
-                    // Rank number
                     Text("\(index + 1)")
                         .font(.system(size: 22, weight: .bold, design: .rounded))
                         .foregroundStyle(index < 3 ? medalColorForRank(index + 1) : CardColors.secondaryText)
                         .frame(width: 36, alignment: .trailing)
                     
-                    // Poster thumbnail
                     if let image = data.posterImage(for: item) {
                         Image(uiImage: image)
                             .resizable()
@@ -416,7 +358,6 @@ struct Top10CardView: View {
                             }
                     }
                     
-                    // Title + year
                     VStack(alignment: .leading, spacing: 4) {
                         Text(item.title)
                             .font(.system(size: 20, weight: .semibold))
@@ -431,10 +372,6 @@ struct Top10CardView: View {
                     }
                     
                     Spacer()
-                    
-                    // Tier emoji
-                    Text(item.tier.emoji)
-                        .font(.system(size: 20))
                 }
                 .padding(.vertical, 6)
                 .padding(.horizontal, 16)
@@ -444,7 +381,6 @@ struct Top10CardView: View {
                 )
             }
             
-            // Empty slot rows if fewer than 10
             if items.count < 10 {
                 ForEach(items.count..<min(10, items.count + 3), id: \.self) { index in
                     HStack(spacing: 16) {
@@ -472,15 +408,10 @@ struct Top10CardView: View {
     
     private var top10StatsBar: some View {
         HStack(spacing: 24) {
-            // Taste personality
             if !data.tastePersonality.isEmpty && data.tastePersonality != "Getting Started" {
-                HStack(spacing: 6) {
-                    Text("🎬")
-                        .font(.system(size: 18))
-                    Text(data.tastePersonality)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(CardColors.accent)
-                }
+                Text(data.tastePersonality)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(CardColors.accent)
             }
             
             Text("•")
