@@ -1,6 +1,26 @@
 import SwiftUI
 import SwiftData
 
+// MARK: - Sort & Filter Types
+
+enum WatchlistSortOption: String, CaseIterable {
+    case dateNewest = "Newest First"
+    case dateOldest = "Oldest First"
+    case titleAZ = "Title A–Z"
+    case titleZA = "Title Z–A"
+    case moviesFirst = "Movies First"
+    case tvFirst = "TV First"
+    case priorityHigh = "Priority (High First)"
+}
+
+enum WatchlistFilter: String, CaseIterable {
+    case all = "All"
+    case movies = "Movies"
+    case tvShows = "TV Shows"
+}
+
+// MARK: - WatchlistView
+
 struct WatchlistView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \WatchlistItem.dateAdded, order: .reverse) private var items: [WatchlistItem]
@@ -11,6 +31,46 @@ struct WatchlistView: View {
     @State private var itemToDelete: WatchlistItem?
     @State private var showDeleteConfirmation = false
     @State private var searchResultToRank: TMDBSearchResult?
+    
+    @State private var sortOption: WatchlistSortOption = .dateNewest
+    @State private var filterOption: WatchlistFilter = .all
+    
+    private var filteredAndSorted: [WatchlistItem] {
+        let filtered: [WatchlistItem]
+        switch filterOption {
+        case .all:
+            filtered = items
+        case .movies:
+            filtered = items.filter { $0.mediaType == .movie }
+        case .tvShows:
+            filtered = items.filter { $0.mediaType == .tv }
+        }
+        
+        return filtered.sorted { a, b in
+            switch sortOption {
+            case .dateNewest:
+                return a.dateAdded > b.dateAdded
+            case .dateOldest:
+                return a.dateAdded < b.dateAdded
+            case .titleAZ:
+                return a.title.localizedCaseInsensitiveCompare(b.title) == .orderedAscending
+            case .titleZA:
+                return a.title.localizedCaseInsensitiveCompare(b.title) == .orderedDescending
+            case .moviesFirst:
+                if a.mediaType != b.mediaType { return a.mediaType == .movie }
+                return a.dateAdded > b.dateAdded
+            case .tvFirst:
+                if a.mediaType != b.mediaType { return a.mediaType == .tv }
+                return a.dateAdded > b.dateAdded
+            case .priorityHigh:
+                if a.priority != b.priority { return a.priority < b.priority }
+                return a.dateAdded > b.dateAdded
+            }
+        }
+    }
+    
+    private var movieCount: Int { items.filter { $0.mediaType == .movie }.count }
+    private var tvCount: Int { items.filter { $0.mediaType == .tv }.count }
     
     var body: some View {
         NavigationStack {
@@ -23,6 +83,13 @@ struct WatchlistView: View {
             }
             .background(RankdColors.background)
             .navigationTitle("Watchlist")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    if !items.isEmpty {
+                        sortMenu
+                    }
+                }
+            }
             .refreshable {
                 HapticManager.impact(.light)
             }
@@ -56,6 +123,87 @@ struct WatchlistView: View {
             }
         }
     }
+    
+    // MARK: - Sort Menu
+    
+    private var sortMenu: some View {
+        Menu {
+            ForEach(WatchlistSortOption.allCases, id: \.self) { option in
+                Button {
+                    withAnimation(RankdMotion.fast) {
+                        sortOption = option
+                    }
+                } label: {
+                    if sortOption == option {
+                        Label(option.rawValue, systemImage: "checkmark")
+                    } else {
+                        Text(option.rawValue)
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "arrow.up.arrow.down")
+                .font(RankdTypography.bodyMedium)
+                .foregroundStyle(RankdColors.brand)
+        }
+    }
+    
+    // MARK: - Pill Picker
+    
+    private var pillPicker: some View {
+        HStack(spacing: 0) {
+            ForEach(WatchlistFilter.allCases, id: \.self) { filter in
+                Button {
+                    withAnimation(RankdMotion.fast) {
+                        filterOption = filter
+                    }
+                } label: {
+                    Text(filter.rawValue)
+                        .font(RankdTypography.labelLarge)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, RankdSpacing.sm)
+                        .background(
+                            filterOption == filter
+                                ? RankdColors.brand
+                                : Color.clear
+                        )
+                        .foregroundStyle(
+                            filterOption == filter
+                                ? RankdColors.surfacePrimary
+                                : RankdColors.textTertiary
+                        )
+                        .clipShape(Capsule())
+                }
+            }
+        }
+        .padding(RankdSpacing.xxs)
+        .background(RankdColors.surfaceSecondary)
+        .clipShape(Capsule())
+        .padding(.horizontal, RankdSpacing.md)
+    }
+    
+    // MARK: - Item Count Header
+    
+    private var itemCountHeader: some View {
+        HStack {
+            let display = filteredAndSorted.count
+            let parts: [String] = {
+                var p = ["\(display) item\(display == 1 ? "" : "s")"]
+                if filterOption == .all {
+                    if movieCount > 0 { p.append("\(movieCount) movie\(movieCount == 1 ? "" : "s")") }
+                    if tvCount > 0 { p.append("\(tvCount) show\(tvCount == 1 ? "" : "s")") }
+                }
+                return p
+            }()
+            Text(parts.joined(separator: " · "))
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(RankdColors.textTertiary)
+            Spacer()
+        }
+        .padding(.horizontal, RankdSpacing.md)
+    }
+    
+    // MARK: - Empty State
     
     private var emptyState: some View {
         VStack(spacing: RankdSpacing.lg) {
@@ -93,41 +241,101 @@ struct WatchlistView: View {
         .padding(.horizontal, RankdSpacing.lg)
     }
     
+    // MARK: - Watchlist
+    
     private var watchlist: some View {
         List {
-            ForEach(items) { item in
-                WatchlistRow(item: item)
-                    .listRowBackground(RankdColors.background)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            itemToDelete = item
-                            showDeleteConfirmation = true
-                            HapticManager.notification(.warning)
-                        } label: {
-                            Label("Remove", systemImage: "trash")
+            Section {
+                VStack(spacing: RankdSpacing.sm) {
+                    pillPicker
+                    itemCountHeader
+                }
+                .listRowBackground(RankdColors.background)
+                .listRowInsets(EdgeInsets(top: RankdSpacing.xs, leading: 0, bottom: RankdSpacing.xs, trailing: 0))
+                .listRowSeparator(.hidden)
+            }
+            
+            Section {
+                ForEach(filteredAndSorted) { item in
+                    WatchlistRow(item: item)
+                        .listRowBackground(RankdColors.background)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                itemToDelete = item
+                                showDeleteConfirmation = true
+                                HapticManager.notification(.warning)
+                            } label: {
+                                Label("Remove", systemImage: "trash")
+                            }
+                            .tint(RankdColors.error)
                         }
-                        .tint(RankdColors.error)
-                    }
-                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                        Button {
-                            itemToRank = item
-                            searchResultToRank = TMDBSearchResult(
-                                id: item.tmdbId,
-                                title: item.mediaType == .movie ? item.title : nil,
-                                name: item.mediaType == .tv ? item.title : nil,
-                                overview: item.overview,
-                                posterPath: item.posterPath,
-                                releaseDate: item.mediaType == .movie ? item.releaseDate : nil,
-                                firstAirDate: item.mediaType == .tv ? item.releaseDate : nil,
-                                mediaType: item.mediaType.rawValue,
-                                voteAverage: nil
-                            )
-                            showComparisonFlow = true
-                        } label: {
-                            Label("Watched", systemImage: "checkmark.circle")
+                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                            Button {
+                                itemToRank = item
+                                searchResultToRank = TMDBSearchResult(
+                                    id: item.tmdbId,
+                                    title: item.mediaType == .movie ? item.title : nil,
+                                    name: item.mediaType == .tv ? item.title : nil,
+                                    overview: item.overview,
+                                    posterPath: item.posterPath,
+                                    releaseDate: item.mediaType == .movie ? item.releaseDate : nil,
+                                    firstAirDate: item.mediaType == .tv ? item.releaseDate : nil,
+                                    mediaType: item.mediaType.rawValue,
+                                    voteAverage: nil
+                                )
+                                showComparisonFlow = true
+                            } label: {
+                                Label("Rank It", systemImage: "list.number")
+                            }
+                            .tint(RankdColors.brand)
                         }
-                        .tint(RankdColors.success)
-                    }
+                        .contextMenu {
+                            Section("Priority") {
+                                ForEach(WatchlistPriority.allCases, id: \.self) { priority in
+                                    Button {
+                                        item.priority = priority
+                                        try? modelContext.save()
+                                    } label: {
+                                        Label {
+                                            Text(priority.label)
+                                        } icon: {
+                                            Image(systemName: priority.iconName)
+                                        }
+                                        if item.priority == priority {
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            Section {
+                                Button {
+                                    itemToRank = item
+                                    searchResultToRank = TMDBSearchResult(
+                                        id: item.tmdbId,
+                                        title: item.mediaType == .movie ? item.title : nil,
+                                        name: item.mediaType == .tv ? item.title : nil,
+                                        overview: item.overview,
+                                        posterPath: item.posterPath,
+                                        releaseDate: item.mediaType == .movie ? item.releaseDate : nil,
+                                        firstAirDate: item.mediaType == .tv ? item.releaseDate : nil,
+                                        mediaType: item.mediaType.rawValue,
+                                        voteAverage: nil
+                                    )
+                                    showComparisonFlow = true
+                                } label: {
+                                    Label("Rank It", systemImage: "list.number")
+                                }
+                                
+                                Button(role: .destructive) {
+                                    itemToDelete = item
+                                    showDeleteConfirmation = true
+                                } label: {
+                                    Label("Remove", systemImage: "trash")
+                                }
+                            }
+                        }
+                }
             }
         }
         .listStyle(.plain)
@@ -141,11 +349,19 @@ struct WatchlistView: View {
 }
 
 // MARK: - Watchlist Row
+
 struct WatchlistRow: View {
     let item: WatchlistItem
     
     var body: some View {
         HStack(spacing: RankdSpacing.sm) {
+            // Priority indicator
+            if item.priority == .high {
+                Circle()
+                    .fill(RankdColors.warning)
+                    .frame(width: 8, height: 8)
+            }
+            
             // Poster
             AsyncImage(url: item.posterURL) { image in
                 image
@@ -179,6 +395,12 @@ struct WatchlistRow: View {
                     Text(item.mediaType == .movie ? "Movie" : "TV")
                         .font(RankdTypography.labelSmall)
                         .foregroundStyle(RankdColors.textTertiary)
+                    
+                    if item.priority == .low {
+                        Text("Low")
+                            .font(RankdTypography.caption)
+                            .foregroundStyle(RankdColors.textTertiary)
+                    }
                 }
                 
                 Text("Added \(item.dateAdded.formatted(.relative(presentation: .named)))")

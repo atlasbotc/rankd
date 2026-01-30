@@ -1,6 +1,32 @@
 import Foundation
 import SwiftData
 
+enum WatchlistPriority: Int, Codable, CaseIterable, Comparable {
+    case high = 0
+    case normal = 1
+    case low = 2
+    
+    static func < (lhs: WatchlistPriority, rhs: WatchlistPriority) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+    
+    var label: String {
+        switch self {
+        case .high: return "High"
+        case .normal: return "Normal"
+        case .low: return "Low"
+        }
+    }
+    
+    var iconName: String {
+        switch self {
+        case .high: return "exclamationmark.circle.fill"
+        case .normal: return "minus.circle"
+        case .low: return "arrow.down.circle"
+        }
+    }
+}
+
 @Model
 final class WatchlistItem {
     var id: UUID
@@ -12,6 +38,12 @@ final class WatchlistItem {
     var mediaType: MediaType
     var dateAdded: Date
     var notes: String?
+    var priorityRaw: Int = 1
+    
+    var priority: WatchlistPriority {
+        get { WatchlistPriority(rawValue: priorityRaw) ?? .normal }
+        set { priorityRaw = newValue.rawValue }
+    }
     
     init(
         tmdbId: Int,
@@ -19,7 +51,8 @@ final class WatchlistItem {
         overview: String = "",
         posterPath: String? = nil,
         releaseDate: String? = nil,
-        mediaType: MediaType
+        mediaType: MediaType,
+        priority: WatchlistPriority = .normal
     ) {
         self.id = UUID()
         self.tmdbId = tmdbId
@@ -30,6 +63,7 @@ final class WatchlistItem {
         self.mediaType = mediaType
         self.dateAdded = Date()
         self.notes = nil
+        self.priorityRaw = priority.rawValue
     }
     
     var posterURL: URL? {
