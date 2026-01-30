@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct RankedListView: View {
     @Environment(\.modelContext) private var modelContext
@@ -28,10 +29,9 @@ struct RankedListView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Custom pill picker
                 pillPicker
-                    .padding(.top, 8)
-                    .padding(.bottom, 4)
+                    .padding(.top, RankdSpacing.xs)
+                    .padding(.bottom, RankdSpacing.xxs)
                 
                 if filteredItems.isEmpty {
                     Spacer()
@@ -60,6 +60,9 @@ struct RankedListView: View {
                             Section {
                                 ForEach(Array(remainingItems.enumerated()), id: \.element.id) { index, item in
                                     RankedItemRow(item: item, displayRank: index + 4)
+                                        .listRowBackground(
+                                            isReorderMode ? RankdColors.surfaceSecondary : RankdColors.background
+                                        )
                                         .contentShape(Rectangle())
                                         .onTapGesture {
                                             selectedItem = item
@@ -73,31 +76,35 @@ struct RankedListView: View {
                                             } label: {
                                                 Label("Remove", systemImage: "trash")
                                             }
+                                            .tint(RankdColors.error)
                                         }
                                 }
                                 .onMove(perform: isReorderMode ? moveItems : nil)
                             } header: {
                                 Text("All Rankings")
-                                    .font(.headline)
-                                    .foregroundStyle(.primary)
+                                    .font(RankdTypography.headingSmall)
+                                    .foregroundStyle(RankdColors.textPrimary)
                                     .textCase(nil)
                             }
                         }
                     }
                     .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                     .environment(\.editMode, .constant(isReorderMode ? .active : .inactive))
                 }
             }
+            .background(RankdColors.background)
             .navigationTitle("Rankings")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     if !filteredItems.isEmpty && remainingItems.count > 1 {
                         Button(isReorderMode ? "Done" : "Reorder") {
-                            withAnimation {
+                            withAnimation(RankdMotion.normal) {
                                 isReorderMode.toggle()
                             }
                         }
-                        .font(.subheadline)
+                        .font(RankdTypography.labelLarge)
+                        .foregroundStyle(RankdColors.textSecondary)
                     }
                 }
             }
@@ -127,83 +134,53 @@ struct RankedListView: View {
         HStack(spacing: 0) {
             ForEach([MediaType.movie, MediaType.tv], id: \.self) { type in
                 Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    withAnimation(RankdMotion.fast) {
                         selectedMediaType = type
                     }
                 } label: {
                     Text(type == .movie ? "Movies" : "TV Shows")
-                        .font(.subheadline.weight(.semibold))
+                        .font(RankdTypography.labelLarge)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
+                        .padding(.vertical, RankdSpacing.sm)
                         .background(
                             selectedMediaType == type
-                                ? Color.orange
+                                ? RankdColors.accent
                                 : Color.clear
                         )
-                        .foregroundStyle(selectedMediaType == type ? .white : .secondary)
+                        .foregroundStyle(
+                            selectedMediaType == type
+                                ? Color.white
+                                : RankdColors.textTertiary
+                        )
                         .clipShape(Capsule())
                 }
             }
         }
-        .padding(4)
-        .background(Color(.secondarySystemBackground))
+        .padding(RankdSpacing.xxs)
+        .background(RankdColors.surfaceSecondary)
         .clipShape(Capsule())
-        .padding(.horizontal)
+        .padding(.horizontal, RankdSpacing.md)
     }
     
     // MARK: - Stats Bar
     
     private var statsBar: some View {
-        HStack(spacing: 16) {
+        HStack {
             let label = selectedMediaType == .movie ? "movies" : "shows"
-            
-            HStack(spacing: 4) {
-                Image(systemName: "number")
-                    .foregroundStyle(.orange)
-                Text("\(filteredItems.count) \(label) ranked")
-            }
-            
-            let goodCount = filteredItems.filter { $0.tier == .good }.count
-            if goodCount > 0 {
-                HStack(spacing: 4) {
-                    Text("🟢")
-                    Text("\(goodCount)")
-                }
-            }
-            
-            let mediumCount = filteredItems.filter { $0.tier == .medium }.count
-            if mediumCount > 0 {
-                HStack(spacing: 4) {
-                    Text("🟡")
-                    Text("\(mediumCount)")
-                }
-            }
-            
-            let badCount = filteredItems.filter { $0.tier == .bad }.count
-            if badCount > 0 {
-                HStack(spacing: 4) {
-                    Text("🔴")
-                    Text("\(badCount)")
-                }
-            }
+            Text("\(filteredItems.count) \(label) ranked")
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(RankdColors.textTertiary)
+            Spacer()
         }
-        .font(.caption)
-        .foregroundStyle(.secondary)
-        .padding(.horizontal)
+        .padding(.horizontal, RankdSpacing.md)
+        .padding(.vertical, RankdSpacing.xs)
     }
     
     // MARK: - Top 3 Showcase
     
     private var topShowcase: some View {
-        VStack(spacing: 12) {
-            HStack {
-                Text("🏆 Top \(min(3, topThree.count))")
-                    .font(.headline)
-                Spacer()
-            }
-            .padding(.horizontal)
-            
-            HStack(alignment: .bottom, spacing: 12) {
+        VStack(spacing: RankdSpacing.sm) {
+            HStack(alignment: .bottom, spacing: RankdSpacing.sm) {
                 ForEach(Array(topThree.enumerated()), id: \.element.id) { index, item in
                     TopRankedCard(
                         item: item,
@@ -219,34 +196,26 @@ struct RankedListView: View {
                     )
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, RankdSpacing.md)
         }
     }
-    
-    // MARK: - Remaining List
     
     // MARK: - Empty State
     
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(Color.orange.opacity(0.1))
-                    .frame(width: 100, height: 100)
-                
-                Image(systemName: selectedMediaType == .movie ? "film" : "tv")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.orange)
-            }
+        VStack(spacing: RankdSpacing.md) {
+            Image(systemName: selectedMediaType == .movie ? "film" : "tv")
+                .font(.system(size: 40))
+                .foregroundStyle(RankdColors.textQuaternary)
             
             Text("No \(selectedMediaType == .movie ? "movies" : "TV shows") ranked yet")
-                .font(.title3.bold())
+                .font(RankdTypography.headingMedium)
+                .foregroundStyle(RankdColors.textPrimary)
             
             Text("Search for something you've watched\nand start building your list")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .font(RankdTypography.bodyMedium)
+                .foregroundStyle(RankdColors.textSecondary)
                 .multilineTextAlignment(.center)
-                .lineSpacing(4)
         }
     }
     
@@ -266,11 +235,9 @@ struct RankedListView: View {
     }
     
     private func moveItems(from source: IndexSet, to destination: Int) {
-        // Work with remaining items (rank #4+)
         var reordered = remainingItems
         reordered.move(fromOffsets: source, toOffset: destination)
         
-        // Update rank numbers: top 3 keep ranks 1-3, remaining start at 4
         for (index, item) in reordered.enumerated() {
             item.rank = index + 4
         }
@@ -290,38 +257,41 @@ private struct TopRankedCard: View {
     
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 8) {
-                ZStack(alignment: .top) {
+            VStack(spacing: RankdSpacing.xs) {
+                ZStack(alignment: .topLeading) {
                     AsyncImage(url: item.posterURL) { image in
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                     } placeholder: {
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(Color.secondary.opacity(0.15))
+                        RoundedRectangle(cornerRadius: RankdPoster.cornerRadius)
+                            .fill(RankdColors.surfaceSecondary)
                             .overlay {
                                 Image(systemName: item.mediaType == .movie ? "film" : "tv")
                                     .font(.title)
-                                    .foregroundStyle(.tertiary)
+                                    .foregroundStyle(RankdColors.textQuaternary)
                             }
                     }
                     .aspectRatio(2/3, contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
-                    .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
+                    .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
                     
-                    // Medal
-                    medalBadge
-                        .offset(y: -12)
+                    // Rank badge
+                    rankBadge
+                        .offset(x: RankdSpacing.xs, y: RankdSpacing.xs)
                 }
                 
-                Text(item.title)
-                    .font(.caption.weight(.semibold))
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(.primary)
-                
-                Text(item.tier.emoji)
-                    .font(.caption)
+                // Title + tier dot
+                HStack(spacing: RankdSpacing.xxs) {
+                    Circle()
+                        .fill(RankdColors.tierColor(item.tier))
+                        .frame(width: 6, height: 6)
+                    
+                    Text(item.title)
+                        .font(RankdTypography.labelMedium)
+                        .foregroundStyle(RankdColors.textPrimary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                }
             }
         }
         .buttonStyle(.plain)
@@ -334,25 +304,28 @@ private struct TopRankedCard: View {
         }
     }
     
-    private var medalBadge: some View {
+    private var rankBadge: some View {
         ZStack {
             Circle()
-                .fill(medalColor)
-                .frame(width: 28, height: 28)
-                .shadow(color: medalColor.opacity(0.5), radius: 4, y: 2)
+                .fill(RankdColors.surfaceTertiary)
+                .frame(width: 26, height: 26)
+                .overlay(
+                    Circle()
+                        .stroke(medalRingColor, lineWidth: 2)
+                )
             
             Text("\(rank)")
-                .font(.caption.bold())
-                .foregroundStyle(.white)
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(Color.white)
         }
     }
     
-    private var medalColor: Color {
+    private var medalRingColor: Color {
         switch rank {
-        case 1: return Color(red: 1.0, green: 0.84, blue: 0.0) // Gold
-        case 2: return Color(red: 0.75, green: 0.75, blue: 0.78) // Silver
-        case 3: return Color(red: 0.80, green: 0.50, blue: 0.20) // Bronze
-        default: return .gray
+        case 1: return Color(red: 1.0, green: 0.84, blue: 0.0)   // Gold
+        case 2: return Color(red: 0.75, green: 0.75, blue: 0.78)  // Silver
+        case 3: return Color(red: 0.80, green: 0.50, blue: 0.20)  // Bronze
+        default: return Color.clear
         }
     }
 }
@@ -364,12 +337,12 @@ struct RankedItemRow: View {
     let displayRank: Int
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: RankdSpacing.sm) {
             // Rank number
-            Text("#\(displayRank)")
-                .font(.headline)
-                .foregroundStyle(.secondary)
-                .frame(width: 40, alignment: .leading)
+            Text("\(displayRank)")
+                .font(RankdTypography.headingSmall)
+                .foregroundStyle(RankdColors.textTertiary)
+                .frame(width: 32, alignment: .leading)
             
             // Poster
             AsyncImage(url: item.posterURL) { image in
@@ -378,46 +351,42 @@ struct RankedItemRow: View {
                     .aspectRatio(contentMode: .fill)
             } placeholder: {
                 Rectangle()
-                    .fill(.quaternary)
+                    .fill(RankdColors.surfaceSecondary)
                     .overlay {
                         Image(systemName: item.mediaType == .movie ? "film" : "tv")
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(RankdColors.textQuaternary)
                     }
             }
-            .frame(width: 45, height: 67)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .frame(width: RankdPoster.thumbWidth, height: RankdPoster.thumbHeight)
+            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
             
             // Info
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
                 Text(item.title)
-                    .font(.subheadline.weight(.semibold))
+                    .font(RankdTypography.headingSmall)
+                    .foregroundStyle(RankdColors.textPrimary)
                     .lineLimit(2)
                 
-                HStack(spacing: 8) {
-                    if let year = item.year {
-                        Text(year)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    
-                    if item.review != nil {
-                        Image(systemName: "text.quote")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
+                if let year = item.year {
+                    Text(year)
+                        .font(RankdTypography.caption)
+                        .foregroundStyle(RankdColors.textTertiary)
                 }
             }
             
             Spacer()
             
-            // Tier
-            Text(item.tier.emoji)
-                .font(.title3)
+            // Tier dot
+            Circle()
+                .fill(RankdColors.tierColor(item.tier))
+                .frame(width: 6, height: 6)
         }
+        .padding(.vertical, RankdSpacing.xxs)
     }
 }
 
 // MARK: - Item Detail Sheet
+
 struct ItemDetailSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -431,108 +400,126 @@ struct ItemDetailSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: RankdSpacing.lg) {
                     // Header
-                    HStack(alignment: .top, spacing: 16) {
+                    HStack(alignment: .top, spacing: RankdSpacing.md) {
                         AsyncImage(url: item.posterURL) { image in
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                         } placeholder: {
                             Rectangle()
-                                .fill(.quaternary)
+                                .fill(RankdColors.surfaceSecondary)
                         }
                         .frame(width: 100, height: 150)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                        .shadow(color: .black.opacity(0.1), radius: 6, y: 3)
+                        .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
                         
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: RankdSpacing.xs) {
                             Text(item.title)
-                                .font(.title2.bold())
+                                .font(RankdTypography.headingLarge)
+                                .foregroundStyle(RankdColors.textPrimary)
                             
                             if let year = item.year {
                                 Text(year)
-                                    .foregroundStyle(.secondary)
+                                    .font(RankdTypography.bodySmall)
+                                    .foregroundStyle(RankdColors.textSecondary)
                             }
                             
-                            HStack(spacing: 6) {
-                                Text(item.tier.emoji)
+                            HStack(spacing: RankdSpacing.xs) {
+                                Circle()
+                                    .fill(RankdColors.tierColor(item.tier))
+                                    .frame(width: 8, height: 8)
                                 Text(item.tier.rawValue)
-                                    .foregroundStyle(.secondary)
+                                    .font(RankdTypography.labelMedium)
+                                    .foregroundStyle(RankdColors.textSecondary)
                             }
                             
                             Text("Ranked #\(item.rank)")
-                                .font(.headline)
-                                .foregroundStyle(.orange)
+                                .font(RankdTypography.headingMedium)
+                                .foregroundStyle(RankdColors.accent)
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, RankdSpacing.md)
                     
-                    Divider()
+                    Rectangle()
+                        .fill(RankdColors.divider)
+                        .frame(height: 1)
                     
                     // Change Tier
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: RankdSpacing.sm) {
                         Text("Tier")
-                            .font(.headline)
+                            .font(RankdTypography.headingSmall)
+                            .foregroundStyle(RankdColors.textPrimary)
                         
-                        HStack(spacing: 12) {
+                        HStack(spacing: RankdSpacing.sm) {
                             ForEach(Tier.allCases, id: \.self) { t in
                                 Button {
                                     guard t != item.tier else { return }
-                                    item.tier = t
+                                    withAnimation(RankdMotion.fast) {
+                                        item.tier = t
+                                    }
                                     try? modelContext.save()
                                     HapticManager.impact(.medium)
                                 } label: {
-                                    HStack(spacing: 4) {
-                                        Text(t.emoji)
+                                    HStack(spacing: RankdSpacing.xs) {
+                                        Circle()
+                                            .fill(RankdColors.tierColor(t))
+                                            .frame(width: 8, height: 8)
                                         Text(t.rawValue)
-                                            .font(.subheadline.weight(.medium))
+                                            .font(RankdTypography.labelLarge)
+                                            .foregroundStyle(
+                                                item.tier == t
+                                                    ? RankdColors.textPrimary
+                                                    : RankdColors.textSecondary
+                                            )
                                     }
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 8)
+                                    .padding(.horizontal, RankdSpacing.sm)
+                                    .padding(.vertical, RankdSpacing.xs)
+                                    .frame(minHeight: 44)
                                     .background(
                                         item.tier == t
-                                            ? tierColor(t).opacity(0.25)
-                                            : Color(.secondarySystemBackground)
+                                            ? RankdColors.tierColor(t).opacity(0.15)
+                                            : RankdColors.surfaceSecondary
                                     )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .stroke(item.tier == t ? tierColor(t) : .clear, lineWidth: 2)
-                                    )
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                    .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
                                 }
                                 .buttonStyle(.plain)
                             }
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, RankdSpacing.md)
                     
-                    Divider()
+                    Rectangle()
+                        .fill(RankdColors.divider)
+                        .frame(height: 1)
                     
                     // Re-rank Button
                     Button {
                         startReRank()
                     } label: {
-                        HStack(spacing: 8) {
+                        HStack(spacing: RankdSpacing.xs) {
                             Image(systemName: "arrow.up.arrow.down")
                             Text("Re-rank")
-                                .fontWeight(.medium)
+                                .font(RankdTypography.headingSmall)
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.orange.opacity(0.15))
-                        .foregroundStyle(.orange)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .padding(.vertical, RankdSpacing.sm)
+                        .background(RankdColors.surfaceSecondary)
+                        .foregroundStyle(RankdColors.textSecondary)
+                        .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, RankdSpacing.md)
                     
-                    Divider()
+                    Rectangle()
+                        .fill(RankdColors.divider)
+                        .frame(height: 1)
                     
                     // Review
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: RankdSpacing.sm) {
                         HStack {
                             Text("Your Review")
-                                .font(.headline)
+                                .font(RankdTypography.headingSmall)
+                                .foregroundStyle(RankdColors.textPrimary)
                             Spacer()
                             Button(isEditing ? "Done" : "Edit") {
                                 if isEditing {
@@ -541,44 +528,57 @@ struct ItemDetailSheet: View {
                                 }
                                 isEditing.toggle()
                             }
+                            .font(RankdTypography.labelLarge)
+                            .foregroundStyle(RankdColors.accent)
                         }
                         
                         if isEditing {
                             TextEditor(text: $editedReview)
+                                .font(RankdTypography.bodyMedium)
                                 .frame(minHeight: 100)
-                                .padding(8)
-                                .background(Color(.systemGray6))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .padding(RankdSpacing.xs)
+                                .scrollContentBackground(.hidden)
+                                .background(RankdColors.surfaceSecondary)
+                                .foregroundStyle(RankdColors.textPrimary)
+                                .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
                         } else if let review = item.review, !review.isEmpty {
                             Text(review)
-                                .foregroundStyle(.secondary)
+                                .font(RankdTypography.bodyMedium)
+                                .foregroundStyle(RankdColors.textSecondary)
                         } else {
                             Text("No review yet — tap Edit to add one")
-                                .foregroundStyle(.tertiary)
-                                .italic()
+                                .font(RankdTypography.bodyMedium)
+                                .foregroundStyle(RankdColors.textTertiary)
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, RankdSpacing.md)
                     
                     if !item.overview.isEmpty {
-                        Divider()
+                        Rectangle()
+                            .fill(RankdColors.divider)
+                            .frame(height: 1)
                         
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: RankdSpacing.xs) {
                             Text("Synopsis")
-                                .font(.headline)
+                                .font(RankdTypography.headingSmall)
+                                .foregroundStyle(RankdColors.textPrimary)
                             Text(item.overview)
-                                .foregroundStyle(.secondary)
+                                .font(RankdTypography.bodyMedium)
+                                .foregroundStyle(RankdColors.textSecondary)
                         }
-                        .padding(.horizontal)
+                        .padding(.horizontal, RankdSpacing.md)
                     }
                 }
-                .padding(.vertical)
+                .padding(.vertical, RankdSpacing.md)
             }
+            .background(RankdColors.background)
             .navigationTitle("Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
+                        .font(RankdTypography.labelLarge)
+                        .foregroundStyle(RankdColors.textSecondary)
                 }
             }
             .onAppear {
@@ -591,23 +591,13 @@ struct ItemDetailSheet: View {
             }
             .onChange(of: showReRank) { _, isShowing in
                 if !isShowing {
-                    // Dismiss the detail sheet after re-ranking completes
                     dismiss()
                 }
             }
         }
     }
     
-    private func tierColor(_ tier: Tier) -> Color {
-        switch tier {
-        case .good: return .green
-        case .medium: return .yellow
-        case .bad: return .red
-        }
-    }
-    
     private func startReRank() {
-        // Build a TMDBSearchResult from the ranked item
         let result = TMDBSearchResult(
             id: item.tmdbId,
             title: item.mediaType == .movie ? item.title : nil,
@@ -620,7 +610,6 @@ struct ItemDetailSheet: View {
             voteAverage: nil
         )
         
-        // Remove the item from rankings and shift others up
         let deletedRank = item.rank
         let mediaType = item.mediaType
         modelContext.delete(item)
@@ -633,7 +622,6 @@ struct ItemDetailSheet: View {
         
         HapticManager.impact(.medium)
         
-        // Open comparison flow
         reRankSearchResult = result
         showReRank = true
     }

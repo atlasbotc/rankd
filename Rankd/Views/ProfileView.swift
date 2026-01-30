@@ -26,7 +26,7 @@ struct ProfileView: View {
     private func buildShareCardData() -> ShareCardData {
         ShareCardData(
             items: Array(rankedItems),
-            posterImages: [:], // Will be loaded by ShareCardGenerator
+            posterImages: [:],
             movieCount: movieItems.count,
             tvCount: tvItems.count,
             tastePersonality: tastePersonality
@@ -36,40 +36,32 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
-                    // Top 4 Showcase
+                VStack(spacing: RankdSpacing.lg) {
                     topFourSection
-                    
-                    // Quick Stats
                     statsGrid
                     
-                    // Taste Personality
                     if !rankedItems.isEmpty {
                         tasteSection
                     }
                     
-                    // Statistics
-                    statisticsButton
+                    // Navigation cards
+                    VStack(spacing: RankdSpacing.sm) {
+                        statisticsCard
+                        journalCard
+                        myListsCard
+                        compareCard
+                    }
+                    .padding(.horizontal, RankdSpacing.md)
                     
-                    // Watch Journal
-                    journalButton
-                    
-                    // My Lists
-                    myListsButton
-                    
-                    // Compare Button
-                    compareButton
-                    
-                    // Tier Breakdown
                     if !rankedItems.isEmpty {
                         tierBreakdown
                     }
                     
-                    // Settings / Import
                     settingsSection
                 }
-                .padding(.vertical)
+                .padding(.vertical, RankdSpacing.md)
             }
+            .background(RankdColors.background)
             .navigationTitle("Profile")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -77,6 +69,7 @@ struct ProfileView: View {
                         showShareSheet = true
                     } label: {
                         Image(systemName: "square.and.arrow.up")
+                            .foregroundStyle(RankdColors.textSecondary)
                     }
                     .disabled(rankedItems.isEmpty)
                 }
@@ -103,13 +96,14 @@ struct ProfileView: View {
     // MARK: - Top 4 Showcase
     
     private var topFourSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: RankdSpacing.md) {
             HStack {
-                Text("My Top 4")
-                    .font(.title2.bold())
+                Text("Top 4")
+                    .font(RankdTypography.headingLarge)
+                    .foregroundStyle(RankdColors.textPrimary)
                 Spacer()
             }
-            .padding(.horizontal)
+            .padding(.horizontal, RankdSpacing.md)
             
             if topFour.isEmpty {
                 emptyTopFour
@@ -120,36 +114,35 @@ struct ProfileView: View {
     }
     
     private var topFourGrid: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: RankdSpacing.sm) {
             ForEach(Array(topFour.enumerated()), id: \.element.id) { index, item in
                 TopFourCard(item: item, rank: index + 1)
             }
             
-            // Fill remaining slots
             ForEach(0..<max(0, 4 - topFour.count), id: \.self) { _ in
                 emptySlot
             }
         }
-        .padding(.horizontal)
+        .padding(.horizontal, RankdSpacing.md)
     }
     
     private var emptyTopFour: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: RankdSpacing.sm) {
             ForEach(0..<4, id: \.self) { _ in
                 emptySlot
             }
         }
-        .padding(.horizontal)
+        .padding(.horizontal, RankdSpacing.md)
     }
     
     private var emptySlot: some View {
-        RoundedRectangle(cornerRadius: 12)
-            .fill(Color.secondary.opacity(0.1))
+        RoundedRectangle(cornerRadius: RankdPoster.cornerRadius)
+            .fill(RankdColors.surfacePrimary)
             .aspectRatio(2/3, contentMode: .fit)
             .overlay {
                 Image(systemName: "plus")
-                    .font(.title2)
-                    .foregroundStyle(.secondary)
+                    .font(RankdTypography.headingLarge)
+                    .foregroundStyle(RankdColors.textQuaternary)
             }
     }
     
@@ -160,59 +153,37 @@ struct ProfileView: View {
             GridItem(.flexible()),
             GridItem(.flexible()),
             GridItem(.flexible())
-        ], spacing: 12) {
-            StatCard(
-                value: "\(movieItems.count)",
-                label: "Movies",
-                icon: "film",
-                color: .orange
-            )
-            
-            StatCard(
-                value: "\(tvItems.count)",
-                label: "TV Shows",
-                icon: "tv",
-                color: .blue
-            )
-            
-            StatCard(
-                value: "\(watchlistItems.count)",
-                label: "Watchlist",
-                icon: "bookmark",
-                color: .purple
-            )
+        ], spacing: RankdSpacing.sm) {
+            StatCard(value: "\(movieItems.count)", label: "Movies", icon: "film")
+            StatCard(value: "\(tvItems.count)", label: "TV Shows", icon: "tv")
+            StatCard(value: "\(watchlistItems.count)", label: "Watchlist", icon: "bookmark")
         }
-        .padding(.horizontal)
+        .padding(.horizontal, RankdSpacing.md)
     }
     
     // MARK: - Taste Personality
     
     private var tasteSection: some View {
-        VStack(spacing: 12) {
-            HStack {
-                Image(systemName: "sparkles")
-                    .foregroundStyle(.orange)
-                Text("Taste Profile")
-                    .font(.headline)
-                Spacer()
-            }
+        VStack(alignment: .leading, spacing: RankdSpacing.xs) {
+            Text("Taste Profile")
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(RankdColors.textTertiary)
             
             Text(tastePersonality)
-                .font(.title3.bold())
-                .foregroundStyle(.orange)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .font(RankdTypography.headingMedium)
+                .foregroundStyle(RankdColors.accent)
             
             Text(tasteDescription)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .font(RankdTypography.bodySmall)
+                .foregroundStyle(RankdColors.textSecondary)
         }
-        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(RankdSpacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.orange.opacity(0.08))
+            RoundedRectangle(cornerRadius: RankdRadius.lg)
+                .fill(RankdColors.surfacePrimary)
         )
-        .padding(.horizontal)
+        .padding(.horizontal, RankdSpacing.md)
     }
     
     private var tastePersonality: String {
@@ -257,197 +228,114 @@ struct ProfileView: View {
         }
     }
     
-    // MARK: - Statistics Button
+    // MARK: - Navigation Cards
     
-    private var statisticsButton: some View {
+    private var statisticsCard: some View {
         NavigationLink {
             StatsView()
         } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "chart.bar.xaxis")
-                    .font(.title2)
-                    .foregroundStyle(.orange)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Statistics")
-                        .font(.headline)
-                    Text("See your watching patterns, genres, and insights")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.secondary)
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.secondarySystemBackground))
+            ProfileNavCard(
+                icon: "chart.bar.xaxis",
+                title: "Statistics",
+                subtitle: "See your watching patterns, genres, and insights"
             )
         }
         .buttonStyle(.plain)
-        .padding(.horizontal)
     }
     
-    // MARK: - Journal Button
-    
-    private var journalButton: some View {
+    private var journalCard: some View {
         NavigationLink {
             JournalView()
         } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "book.closed.fill")
-                    .font(.title2)
-                    .foregroundStyle(.orange)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Watch Journal")
-                        .font(.headline)
-                    Text("Your ranking diary — \(rankedItems.count) \(rankedItems.count == 1 ? "entry" : "entries")")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.secondary)
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.secondarySystemBackground))
+            ProfileNavCard(
+                icon: "book.closed.fill",
+                title: "Watch Journal",
+                subtitle: "Your ranking diary — \(rankedItems.count) \(rankedItems.count == 1 ? "entry" : "entries")"
             )
         }
         .buttonStyle(.plain)
-        .padding(.horizontal)
     }
     
-    // MARK: - My Lists Button
-    
-    private var myListsButton: some View {
+    private var myListsCard: some View {
         NavigationLink {
             ListsView()
         } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "list.bullet.rectangle.portrait.fill")
-                    .font(.title2)
-                    .foregroundStyle(.orange)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("My Lists")
-                        .font(.headline)
-                    Text("Create and curate themed collections")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.secondary)
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.secondarySystemBackground))
+            ProfileNavCard(
+                icon: "list.bullet.rectangle.portrait.fill",
+                title: "My Lists",
+                subtitle: "Create and curate themed collections"
             )
         }
         .buttonStyle(.plain)
-        .padding(.horizontal)
     }
     
-    // MARK: - Compare Button
-    
-    private var compareButton: some View {
+    private var compareCard: some View {
         Button {
             showCompareView = true
         } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "arrow.left.arrow.right.circle.fill")
-                    .font(.title2)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Compare")
-                        .font(.headline)
-                    Text("Refine your rankings with head-to-head picks")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.secondary)
-            }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.secondarySystemBackground))
+            ProfileNavCard(
+                icon: "arrow.left.arrow.right.circle.fill",
+                title: "Compare",
+                subtitle: "Refine your rankings with head-to-head picks"
             )
         }
         .buttonStyle(.plain)
-        .padding(.horizontal)
     }
     
     // MARK: - Settings Section
     
     private var settingsSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: RankdSpacing.sm) {
             HStack {
                 Text("Settings")
-                    .font(.headline)
+                    .font(RankdTypography.headingSmall)
+                    .foregroundStyle(RankdColors.textPrimary)
                 Spacer()
             }
             
             Button {
                 showLetterboxdImport = true
             } label: {
-                HStack(spacing: 12) {
+                HStack(spacing: RankdSpacing.sm) {
                     Image(systemName: "square.and.arrow.down.fill")
-                        .font(.title3)
-                        .foregroundStyle(.orange)
+                        .font(RankdTypography.headingSmall)
+                        .foregroundStyle(RankdColors.textSecondary)
                         .frame(width: 32)
                     
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
                         Text("Import from Letterboxd")
-                            .font(.subheadline.weight(.medium))
+                            .font(RankdTypography.headingSmall)
+                            .foregroundStyle(RankdColors.textPrimary)
                         Text("Bring in your ratings and watched films")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(RankdTypography.bodySmall)
+                            .foregroundStyle(RankdColors.textTertiary)
                     }
                     
                     Spacer()
                     
                     Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                        .font(RankdTypography.caption)
+                        .foregroundStyle(RankdColors.textQuaternary)
                 }
-                .padding()
+                .padding(RankdSpacing.md)
                 .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(Color(.secondarySystemBackground))
+                    RoundedRectangle(cornerRadius: RankdRadius.lg)
+                        .fill(RankdColors.surfacePrimary)
                 )
             }
             .buttonStyle(.plain)
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.secondarySystemBackground).opacity(0.5))
-        )
-        .padding(.horizontal)
+        .padding(.horizontal, RankdSpacing.md)
     }
     
     // MARK: - Tier Breakdown
     
     private var tierBreakdown: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: RankdSpacing.sm) {
             HStack {
                 Text("Tier Breakdown")
-                    .font(.headline)
+                    .font(RankdTypography.headingMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
                 Spacer()
             }
             
@@ -458,12 +346,50 @@ struct ProfileView: View {
                 TierBar(tier: tier, count: count, fraction: fraction)
             }
         }
-        .padding()
+        .padding(RankdSpacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: RankdRadius.lg)
+                .fill(RankdColors.surfacePrimary)
         )
-        .padding(.horizontal)
+        .padding(.horizontal, RankdSpacing.md)
+    }
+}
+
+// MARK: - Profile Nav Card
+
+private struct ProfileNavCard: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    
+    var body: some View {
+        HStack(spacing: RankdSpacing.sm) {
+            Image(systemName: icon)
+                .font(RankdTypography.headingLarge)
+                .foregroundStyle(RankdColors.textSecondary)
+                .frame(width: 32)
+            
+            VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
+                Text(title)
+                    .font(RankdTypography.headingSmall)
+                    .foregroundStyle(RankdColors.textPrimary)
+                Text(subtitle)
+                    .font(RankdTypography.bodySmall)
+                    .foregroundStyle(RankdColors.textTertiary)
+            }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(RankdTypography.caption)
+                .foregroundStyle(RankdColors.textQuaternary)
+        }
+        .padding(RankdSpacing.md)
+        .frame(minHeight: 48)
+        .background(
+            RoundedRectangle(cornerRadius: RankdRadius.lg)
+                .fill(RankdColors.surfacePrimary)
+        )
     }
 }
 
@@ -474,37 +400,40 @@ private struct TopFourCard: View {
     let rank: Int
     
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: RankdSpacing.xs) {
             ZStack(alignment: .topLeading) {
                 AsyncImage(url: item.posterURL) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                 } placeholder: {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.secondary.opacity(0.15))
+                    RoundedRectangle(cornerRadius: RankdPoster.cornerRadius)
+                        .fill(RankdColors.surfacePrimary)
                         .overlay {
                             Image(systemName: item.mediaType == .movie ? "film" : "tv")
-                                .font(.title2)
-                                .foregroundStyle(.tertiary)
+                                .font(RankdTypography.headingLarge)
+                                .foregroundStyle(RankdColors.textQuaternary)
                         }
                 }
                 .aspectRatio(2/3, contentMode: .fit)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
                 
                 // Rank badge
                 Text("#\(rank)")
-                    .font(.caption2.bold())
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Capsule())
-                    .padding(6)
+                    .font(RankdTypography.labelSmall)
+                    .foregroundStyle(RankdColors.textSecondary)
+                    .padding(.horizontal, RankdSpacing.xs)
+                    .padding(.vertical, RankdSpacing.xxs)
+                    .background(
+                        Capsule()
+                            .fill(RankdColors.surfaceTertiary)
+                    )
+                    .padding(RankdSpacing.xs)
             }
             
             Text(item.title)
-                .font(.caption2)
-                .fontWeight(.medium)
+                .font(RankdTypography.labelSmall)
+                .foregroundStyle(RankdColors.textPrimary)
                 .lineLimit(1)
         }
     }
@@ -516,25 +445,21 @@ private struct StatCard: View {
     let value: String
     let label: String
     let icon: String
-    let color: Color
     @State private var displayedValue: Int = 0
     
-    private var numericValue: Int? {
-        Int(value)
-    }
+    private var numericValue: Int? { Int(value) }
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: RankdSpacing.xs) {
             Image(systemName: icon)
-                .font(.title3)
-                .foregroundStyle(color)
+                .font(RankdTypography.headingSmall)
+                .foregroundStyle(RankdColors.textTertiary)
             
             if let target = numericValue {
                 Text("\(displayedValue)")
-                    .font(.title2.bold())
-                    .onAppear {
-                        animateCount(to: target)
-                    }
+                    .font(RankdTypography.headingLarge)
+                    .foregroundStyle(RankdColors.textPrimary)
+                    .onAppear { animateCount(to: target) }
                     .onChange(of: value) { _, newValue in
                         if let newTarget = Int(newValue) {
                             animateCount(to: newTarget)
@@ -542,18 +467,19 @@ private struct StatCard: View {
                     }
             } else {
                 Text(value)
-                    .font(.title2.bold())
+                    .font(RankdTypography.headingLarge)
+                    .foregroundStyle(RankdColors.textPrimary)
             }
             
             Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(RankdColors.textTertiary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 16)
+        .padding(.vertical, RankdSpacing.md)
         .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color(.secondarySystemBackground))
+            RoundedRectangle(cornerRadius: RankdRadius.lg)
+                .fill(RankdColors.surfacePrimary)
         )
     }
     
@@ -562,13 +488,11 @@ private struct StatCard: View {
             displayedValue = 0
             return
         }
-        
         let steps = min(target, 20)
         let interval = 0.4 / Double(steps)
-        
         for step in 0...steps {
             DispatchQueue.main.asyncAfter(deadline: .now() + interval * Double(step)) {
-                withAnimation(.easeOut(duration: 0.05)) {
+                withAnimation(RankdMotion.fast) {
                     displayedValue = Int(Double(target) * Double(step) / Double(steps))
                 }
             }
@@ -584,34 +508,28 @@ private struct TierBar: View {
     let fraction: Double
     
     var body: some View {
-        HStack(spacing: 12) {
-            Text(tier.emoji)
-                .frame(width: 24)
+        HStack(spacing: RankdSpacing.sm) {
+            Circle()
+                .fill(RankdColors.tierColor(tier))
+                .frame(width: 8, height: 8)
             
             Text(tier.rawValue)
-                .font(.subheadline)
+                .font(RankdTypography.bodySmall)
+                .foregroundStyle(RankdColors.textSecondary)
                 .frame(width: 64, alignment: .leading)
             
             GeometryReader { geo in
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(tierColor.opacity(0.3))
+                RoundedRectangle(cornerRadius: RankdRadius.sm)
+                    .fill(RankdColors.tierColor(tier).opacity(0.4))
                     .frame(width: max(4, geo.size.width * fraction))
-                    .animation(.easeOut(duration: 0.5), value: fraction)
+                    .animation(RankdMotion.reveal, value: fraction)
             }
             .frame(height: 20)
             
             Text("\(count)")
-                .font(.subheadline.bold())
-                .foregroundStyle(.secondary)
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(RankdColors.textSecondary)
                 .frame(width: 32, alignment: .trailing)
-        }
-    }
-    
-    private var tierColor: Color {
-        switch tier {
-        case .good: return .green
-        case .medium: return .yellow
-        case .bad: return .red
         }
     }
 }

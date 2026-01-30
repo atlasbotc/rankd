@@ -21,30 +21,36 @@ struct TMDBSearchResult: Codable, Identifiable {
     let name: String? // For TV shows
     let overview: String?
     let posterPath: String?
+    let backdropPath: String?
     let releaseDate: String?
     let firstAirDate: String? // For TV shows
     let mediaType: String?
     let voteAverage: Double?
+    let genreIds: [Int]?
     
     enum CodingKeys: String, CodingKey {
         case id, title, name, overview
         case posterPath = "poster_path"
+        case backdropPath = "backdrop_path"
         case releaseDate = "release_date"
         case firstAirDate = "first_air_date"
         case mediaType = "media_type"
         case voteAverage = "vote_average"
+        case genreIds = "genre_ids"
     }
     
-    init(id: Int, title: String?, name: String?, overview: String?, posterPath: String?, releaseDate: String?, firstAirDate: String?, mediaType: String?, voteAverage: Double?) {
+    init(id: Int, title: String?, name: String?, overview: String?, posterPath: String?, releaseDate: String?, firstAirDate: String?, mediaType: String?, voteAverage: Double?, backdropPath: String? = nil, genreIds: [Int]? = nil) {
         self.id = id
         self.title = title
         self.name = name
         self.overview = overview
         self.posterPath = posterPath
+        self.backdropPath = backdropPath
         self.releaseDate = releaseDate
         self.firstAirDate = firstAirDate
         self.mediaType = mediaType
         self.voteAverage = voteAverage
+        self.genreIds = genreIds
     }
     
     var displayTitle: String {
@@ -63,6 +69,11 @@ struct TMDBSearchResult: Codable, Identifiable {
     var posterURL: URL? {
         guard let path = posterPath else { return nil }
         return URL(string: "\(Config.tmdbImageBaseURL)/w500\(path)")
+    }
+    
+    var backdropURL: URL? {
+        guard let path = backdropPath else { return nil }
+        return URL(string: "\(Config.tmdbImageBaseURL)/w780\(path)")
     }
     
     var resolvedMediaType: MediaType {

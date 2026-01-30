@@ -65,6 +65,9 @@ struct DiscoverView: View {
                     scrollContent
                 }
             }
+            .background(RankdColors.background)
+            .toolbarBackground(RankdColors.background, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .navigationTitle("Discover")
             .refreshable {
                 await loadAllContent()
@@ -79,50 +82,140 @@ struct DiscoverView: View {
     
     private var scrollContent: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 24) {
+            LazyVStack(alignment: .leading, spacing: 0) {
+                
+                // MARK: Hero Section
+                if let heroItem = trending.first {
+                    heroSection(heroItem)
+                }
                 
                 // MARK: New User Welcome
                 if !hasRankedItems {
                     welcomeHeader
+                        .padding(.top, RankdSpacing.lg)
                 }
                 
                 // MARK: Personalized Sections
                 if hasRankedItems {
                     personalizedContent
+                        .padding(.top, RankdSpacing.lg)
                 }
                 
                 // MARK: Generic Sections
                 genericContent
+                    .padding(.top, RankdSpacing.lg)
             }
-            .padding(.vertical)
+            .padding(.bottom, RankdSpacing.xl)
         }
+        .scrollIndicators(.hidden)
+    }
+    
+    // MARK: - Hero Section
+    
+    private func heroSection(_ item: TMDBSearchResult) -> some View {
+        NavigationLink(destination: MediaDetailView(tmdbId: item.id, mediaType: item.resolvedMediaType)) {
+            GeometryReader { geo in
+                ZStack(alignment: .bottomLeading) {
+                    // Backdrop image
+                    if let backdropURL = item.backdropURL {
+                        AsyncImage(url: backdropURL) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: geo.size.width, height: geo.size.height)
+                                .clipped()
+                        } placeholder: {
+                            Rectangle()
+                                .fill(RankdColors.surfacePrimary)
+                                .shimmer()
+                        }
+                    } else if let posterURL = item.posterURL {
+                        AsyncImage(url: posterURL) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: geo.size.width, height: geo.size.height)
+                                .clipped()
+                                .blur(radius: 20)
+                        } placeholder: {
+                            Rectangle()
+                                .fill(RankdColors.surfacePrimary)
+                                .shimmer()
+                        }
+                    } else {
+                        Rectangle()
+                            .fill(RankdColors.surfacePrimary)
+                    }
+                    
+                    // Gradient overlay
+                    LinearGradient(
+                        colors: [
+                            .clear,
+                            RankdColors.background.opacity(0.3),
+                            RankdColors.background.opacity(0.8),
+                            RankdColors.background
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    
+                    // Content over gradient
+                    VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+                        Text(item.displayTitle)
+                            .font(RankdTypography.displayLarge)
+                            .foregroundStyle(RankdColors.textPrimary)
+                            .lineLimit(2)
+                        
+                        HStack(spacing: RankdSpacing.xs) {
+                            if let year = item.displayYear {
+                                Text(year)
+                            }
+                            if item.resolvedMediaType == .tv {
+                                Text("TV Series")
+                            }
+                        }
+                        .font(RankdTypography.bodySmall)
+                        .foregroundStyle(RankdColors.textSecondary)
+                        
+                        // Rank It button
+                        Text("Rank It")
+                            .font(RankdTypography.labelLarge)
+                            .foregroundStyle(RankdColors.textPrimary)
+                            .padding(.horizontal, RankdSpacing.lg)
+                            .padding(.vertical, RankdSpacing.sm)
+                            .background(RankdColors.accent)
+                            .clipShape(Capsule())
+                            .padding(.top, RankdSpacing.xs)
+                    }
+                    .padding(.horizontal, RankdSpacing.md)
+                    .padding(.bottom, RankdSpacing.lg)
+                }
+            }
+            .frame(height: UIScreen.main.bounds.height * 0.55)
+        }
+        .buttonStyle(.plain)
     }
     
     // MARK: - Welcome Header
     
     private var welcomeHeader: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 36))
-                .foregroundStyle(.orange)
-            
-            Text("Personalized For You")
-                .font(.title3.bold())
+        VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+            Text("Welcome to Rankd")
+                .font(RankdTypography.headingLarge)
+                .foregroundStyle(RankdColors.textPrimary)
             
             Text("Start ranking movies and shows to unlock recommendations tailored to your taste.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+                .font(RankdTypography.bodyMedium)
+                .foregroundStyle(RankdColors.textSecondary)
+                .lineSpacing(4)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
-        .padding(.horizontal)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(RankdSpacing.lg)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.orange.opacity(0.08))
-                .padding(.horizontal)
+            RoundedRectangle(cornerRadius: RankdRadius.lg)
+                .fill(RankdColors.surfacePrimary)
         )
+        .padding(.horizontal, RankdSpacing.md)
     }
     
     // MARK: - Personalized Content
@@ -130,39 +223,32 @@ struct DiscoverView: View {
     private var personalizedContent: some View {
         Group {
             if isPersonalizedLoading {
-                // Shimmer placeholder while personalized content loads
                 personalizedLoadingPlaceholder
             } else {
-                // "Because you loved [Title]" sections
-                ForEach(becauseYouLoved) { section in
-                    DiscoverSection(
-                        title: section.title,
-                        items: section.items,
-                        itemStatus: itemStatus
-                    )
-                }
-                
-                // "More [Genre] for you" sections
-                ForEach(genreRecommendations) { section in
-                    DiscoverSection(
-                        title: "More \(section.genre.name) for you",
-                        items: section.items,
-                        itemStatus: itemStatus
-                    )
-                }
-                
-                // "You Haven't Seen These Yet"
-                if !hiddenGems.isEmpty {
-                    DiscoverSection(
-                        title: "💎 You Haven't Seen These Yet",
-                        items: hiddenGems,
-                        itemStatus: itemStatus
-                    )
-                }
-                
-                // Divider between personalized and generic
-                if !becauseYouLoved.isEmpty || !genreRecommendations.isEmpty || !hiddenGems.isEmpty {
-                    sectionDivider
+                VStack(alignment: .leading, spacing: RankdSpacing.lg) {
+                    // "Because you loved [Title]" sections
+                    ForEach(becauseYouLoved) { section in
+                        DiscoverSection(
+                            title: section.title,
+                            items: section.items
+                        )
+                    }
+                    
+                    // "More [Genre] for you" sections
+                    ForEach(genreRecommendations) { section in
+                        DiscoverSection(
+                            title: "More \(section.genre.name) For You",
+                            items: section.items
+                        )
+                    }
+                    
+                    // Hidden gems
+                    if !hiddenGems.isEmpty {
+                        DiscoverSection(
+                            title: "Hidden Gems",
+                            items: hiddenGems
+                        )
+                    }
                 }
             }
         }
@@ -171,92 +257,72 @@ struct DiscoverView: View {
     // MARK: - Loading Placeholder
     
     private var personalizedLoadingPlaceholder: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: RankdSpacing.lg) {
             ForEach(0..<2, id: \.self) { _ in
-                VStack(alignment: .leading, spacing: 12) {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(.quaternary)
+                VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+                    RoundedRectangle(cornerRadius: RankdRadius.sm)
+                        .fill(RankdColors.surfaceSecondary)
                         .frame(width: 200, height: 20)
-                        .padding(.horizontal)
+                        .shimmer()
+                        .padding(.horizontal, RankdSpacing.md)
                     
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
+                        HStack(spacing: RankdSpacing.sm) {
                             ForEach(0..<5, id: \.self) { _ in
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(.quaternary)
-                                    .frame(width: 120, height: 180)
+                                RoundedRectangle(cornerRadius: RankdPoster.cornerRadius)
+                                    .fill(RankdColors.surfaceSecondary)
+                                    .frame(width: RankdPoster.standardWidth, height: RankdPoster.standardHeight)
+                                    .shimmer()
                             }
                         }
-                        .padding(.horizontal)
+                        .padding(.horizontal, RankdSpacing.md)
                     }
                 }
             }
         }
-        .redacted(reason: .placeholder)
-    }
-    
-    // MARK: - Section Divider
-    
-    private var sectionDivider: some View {
-        HStack(spacing: 12) {
-            VStack { Divider() }
-            Text("Explore")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundStyle(.secondary)
-                .textCase(.uppercase)
-            VStack { Divider() }
-        }
-        .padding(.horizontal)
-        .padding(.vertical, 4)
     }
     
     // MARK: - Generic Content
     
     private var genericContent: some View {
-        Group {
-            // Trending
-            if !trending.isEmpty {
+        VStack(alignment: .leading, spacing: RankdSpacing.lg) {
+            // Trending (skip first since it's the hero)
+            if trending.count > 1 {
                 DiscoverSection(
-                    title: "🔥 Trending This Week",
-                    items: trending,
-                    itemStatus: itemStatus
+                    title: "Trending",
+                    items: Array(trending.dropFirst())
                 )
             }
             
             // Popular Movies
             if !popularMovies.isEmpty {
                 DiscoverSection(
-                    title: "🎬 Popular Movies",
-                    items: popularMovies,
-                    itemStatus: itemStatus
+                    title: "Popular Movies",
+                    items: popularMovies
                 )
             }
             
             // Popular TV
             if !popularTV.isEmpty {
                 DiscoverSection(
-                    title: "📺 Popular TV Shows",
-                    items: popularTV,
-                    itemStatus: itemStatus
+                    title: "Popular TV Shows",
+                    items: popularTV
                 )
             }
             
             // Top Rated Movies
             if !topRatedMovies.isEmpty {
                 DiscoverSection(
-                    title: "⭐ Top Rated Movies",
-                    items: topRatedMovies,
-                    itemStatus: itemStatus
+                    title: "Top Rated Movies",
+                    items: topRatedMovies
                 )
             }
             
             // Top Rated TV
             if !topRatedTV.isEmpty {
                 DiscoverSection(
-                    title: "🏆 Top Rated TV",
-                    items: topRatedTV,
-                    itemStatus: itemStatus
+                    title: "Top Rated TV",
+                    items: topRatedTV
                 )
             }
             
@@ -271,55 +337,79 @@ struct DiscoverView: View {
     
     private var discoverSkeleton: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 24) {
-                ForEach(0..<3, id: \.self) { sectionIndex in
-                    VStack(alignment: .leading, spacing: 12) {
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.secondary.opacity(0.15))
-                            .frame(width: 200, height: 24)
-                            .shimmer()
-                            .padding(.horizontal)
-                        
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 12) {
-                                ForEach(0..<5, id: \.self) { _ in
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(Color.secondary.opacity(0.15))
-                                            .frame(width: 120, height: 180)
-                                            .shimmer()
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .fill(Color.secondary.opacity(0.15))
-                                            .frame(width: 100, height: 12)
-                                            .shimmer()
+            VStack(alignment: .leading, spacing: 0) {
+                // Hero skeleton
+                RoundedRectangle(cornerRadius: 0)
+                    .fill(RankdColors.surfacePrimary)
+                    .frame(height: UIScreen.main.bounds.height * 0.55)
+                    .shimmer()
+                
+                VStack(alignment: .leading, spacing: RankdSpacing.lg) {
+                    ForEach(0..<3, id: \.self) { _ in
+                        VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+                            RoundedRectangle(cornerRadius: RankdRadius.sm)
+                                .fill(RankdColors.surfaceSecondary)
+                                .frame(width: 180, height: 22)
+                                .shimmer()
+                                .padding(.horizontal, RankdSpacing.md)
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: RankdSpacing.sm) {
+                                    ForEach(0..<5, id: \.self) { _ in
+                                        VStack(alignment: .leading, spacing: RankdSpacing.xs) {
+                                            RoundedRectangle(cornerRadius: RankdPoster.cornerRadius)
+                                                .fill(RankdColors.surfaceSecondary)
+                                                .frame(width: RankdPoster.standardWidth, height: RankdPoster.standardHeight)
+                                                .shimmer()
+                                            RoundedRectangle(cornerRadius: RankdRadius.sm)
+                                                .fill(RankdColors.surfaceSecondary)
+                                                .frame(width: 100, height: 12)
+                                                .shimmer()
+                                        }
                                     }
                                 }
+                                .padding(.horizontal, RankdSpacing.md)
                             }
-                            .padding(.horizontal)
                         }
                     }
                 }
+                .padding(.top, RankdSpacing.lg)
             }
-            .padding(.vertical)
         }
+        .scrollIndicators(.hidden)
     }
     
     // MARK: - Error View
     
     private func errorView(_ message: String) -> some View {
-        VStack(spacing: 16) {
+        VStack(spacing: RankdSpacing.md) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 50))
-                .foregroundStyle(.orange)
+                .font(.system(size: 48))
+                .foregroundStyle(RankdColors.textTertiary)
+            
+            Text("Something went wrong")
+                .font(RankdTypography.headingMedium)
+                .foregroundStyle(RankdColors.textPrimary)
+            
             Text(message)
+                .font(RankdTypography.bodyMedium)
                 .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-            Button("Try Again") {
+                .foregroundStyle(RankdColors.textSecondary)
+            
+            Button {
                 Task { await loadAllContent() }
+            } label: {
+                Text("Try Again")
+                    .font(RankdTypography.labelLarge)
+                    .foregroundStyle(RankdColors.textPrimary)
+                    .padding(.horizontal, RankdSpacing.lg)
+                    .frame(height: 48)
+                    .background(RankdColors.accent)
+                    .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
             }
-            .buttonStyle(.borderedProminent)
+            .padding(.top, RankdSpacing.xs)
         }
-        .padding()
+        .padding(RankdSpacing.lg)
     }
     
     // MARK: - Data Loading
@@ -328,7 +418,6 @@ struct DiscoverView: View {
         isLoading = error != nil
         error = nil
         
-        // Load generic content first (fast), then personalized in parallel
         async let genericTask: () = loadGenericContent()
         async let personalizedTask: () = loadPersonalizedContent()
         
@@ -375,10 +464,8 @@ struct DiscoverView: View {
         
         isPersonalizedLoading = true
         
-        // Capture excluded IDs snapshot to filter results
         let excluded = excludedIds
         
-        // Run all personalized fetches in parallel
         async let lovedTask = loadBecauseYouLoved(excluded: excluded)
         async let genreTask = loadGenreRecommendations(excluded: excluded)
         
@@ -387,7 +474,6 @@ struct DiscoverView: View {
         becauseYouLoved = lovedSections
         genreRecommendations = genreSections
         
-        // Build "Hidden Gems" from all recommendation results
         buildHiddenGems(from: lovedSections, genres: genreSections, excluded: excluded)
         
         isPersonalizedLoading = false
@@ -396,7 +482,6 @@ struct DiscoverView: View {
     // MARK: - "Because you loved [Title]"
     
     private func loadBecauseYouLoved(excluded: Set<Int>) async -> [RecommendationSection] {
-        // Pick up to 3 top green-tier items
         let topItems = Array(greenTierItems.prefix(3))
         guard !topItems.isEmpty else { return [] }
         
@@ -440,7 +525,6 @@ struct DiscoverView: View {
     // MARK: - "More [Genre] for you"
     
     private func loadGenreRecommendations(excluded: Set<Int>) async -> [GenreRecommendation] {
-        // Fetch details for top 5 ranked items to discover genre IDs
         let topRanked = Array(
             rankedItems
                 .sorted { $0.rank < $1.rank }
@@ -449,7 +533,6 @@ struct DiscoverView: View {
         
         guard !topRanked.isEmpty else { return [] }
         
-        // Aggregate genre IDs from TMDB detail endpoints
         var genreCounts: [Int: (count: Int, genre: TMDBGenre)] = [:]
         
         await withTaskGroup(of: [TMDBGenre].self) { group in
@@ -480,7 +563,6 @@ struct DiscoverView: View {
             }
         }
         
-        // Pick top 2 most frequent genres
         let topGenres = genreCounts.values
             .sorted { $0.count > $1.count }
             .prefix(2)
@@ -488,20 +570,17 @@ struct DiscoverView: View {
         
         guard !topGenres.isEmpty else { return [] }
         
-        // Fetch discover content for each top genre
         var recommendations: [GenreRecommendation] = []
         
         await withTaskGroup(of: GenreRecommendation?.self) { group in
             for genre in topGenres {
                 group.addTask {
                     do {
-                        // Fetch both movies and TV for the genre, combine
                         async let moviesTask = TMDBService.shared.discoverMovies(genreId: genre.id)
                         async let tvTask = TMDBService.shared.discoverTV(genreId: genre.id)
                         
                         let (movies, tv) = try await (moviesTask, tvTask)
                         
-                        // Interleave movies and TV, filter excluded
                         var combined: [TMDBSearchResult] = []
                         let maxCount = max(movies.count, tv.count)
                         for i in 0..<maxCount {
@@ -536,14 +615,13 @@ struct DiscoverView: View {
         return recommendations
     }
     
-    // MARK: - "You Haven't Seen These Yet"
+    // MARK: - Hidden Gems
     
     private func buildHiddenGems(
         from lovedSections: [RecommendationSection],
         genres: [GenreRecommendation],
         excluded: Set<Int>
     ) {
-        // Collect all recommendation results
         var allResults: [TMDBSearchResult] = []
         var seenIds = Set<Int>()
         
@@ -565,7 +643,6 @@ struct DiscoverView: View {
             }
         }
         
-        // Filter to highly-rated items (>7.5)
         let gems = allResults
             .filter { ($0.voteAverage ?? 0) > 7.5 }
             .sorted { ($0.voteAverage ?? 0) > ($1.voteAverage ?? 0) }
@@ -587,31 +664,41 @@ struct DiscoverView: View {
 }
 
 // MARK: - Discover Section
+
 struct DiscoverSection: View {
     let title: String
     let items: [TMDBSearchResult]
-    let itemStatus: (TMDBSearchResult) -> ItemStatus
     @State private var appeared = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.title2.bold())
-                .padding(.horizontal)
+        VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+            // Section header
+            HStack {
+                Text(title)
+                    .font(RankdTypography.headingMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
+                
+                Spacer()
+                
+                Text("See all")
+                    .font(RankdTypography.labelMedium)
+                    .foregroundStyle(RankdColors.textTertiary)
+            }
+            .padding(.horizontal, RankdSpacing.md)
             
             ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 12) {
+                LazyHStack(spacing: RankdSpacing.sm) {
                     ForEach(items) { item in
-                        DiscoverCard(item: item, status: itemStatus(item))
+                        DiscoverCard(item: item)
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, RankdSpacing.md)
             }
         }
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 12)
         .onAppear {
-            withAnimation(.easeOut(duration: 0.4)) {
+            withAnimation(RankdMotion.normal) {
                 appeared = true
             }
         }
@@ -619,88 +706,49 @@ struct DiscoverSection: View {
 }
 
 // MARK: - Discover Card
+
 struct DiscoverCard: View {
     let item: TMDBSearchResult
-    let status: ItemStatus
     
     var body: some View {
         NavigationLink(destination: MediaDetailView(tmdbId: item.id, mediaType: item.resolvedMediaType)) {
-            VStack(alignment: .leading, spacing: 6) {
-                ZStack(alignment: .topTrailing) {
-                    AsyncImage(url: item.posterURL) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        Rectangle()
-                            .fill(.quaternary)
-                            .overlay {
-                                Image(systemName: item.resolvedMediaType == .movie ? "film" : "tv")
-                                    .font(.title)
-                                    .foregroundStyle(.tertiary)
-                            }
-                    }
-                    .frame(width: 120, height: 180)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    
-                    // Status badge
-                    if status != .notAdded {
-                        statusBadge
-                            .padding(6)
-                    }
+            VStack(alignment: .leading, spacing: RankdSpacing.xs) {
+                AsyncImage(url: item.posterURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Rectangle()
+                        .fill(RankdColors.surfaceSecondary)
+                        .overlay {
+                            Image(systemName: item.resolvedMediaType == .movie ? "film" : "tv")
+                                .font(.title2)
+                                .foregroundStyle(RankdColors.textTertiary)
+                        }
                 }
+                .frame(width: RankdPoster.standardWidth, height: RankdPoster.standardHeight)
+                .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+                .shadow(color: RankdShadow.card, radius: RankdShadow.cardRadius, y: RankdShadow.cardY)
                 
                 Text(item.displayTitle)
-                    .font(.caption)
-                    .fontWeight(.medium)
+                    .font(RankdTypography.labelMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
                     .lineLimit(2)
-                    .frame(width: 120, alignment: .leading)
-                    .foregroundStyle(.primary)
+                    .frame(width: RankdPoster.standardWidth, alignment: .leading)
                 
-                HStack(spacing: 4) {
-                    if let year = item.displayYear {
-                        Text(year)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                    
-                    if let rating = item.voteAverage, rating > 0 {
-                        HStack(spacing: 2) {
-                            Image(systemName: "star.fill")
-                                .font(.caption2)
-                                .foregroundStyle(.yellow)
-                            Text(String(format: "%.1f", rating))
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
+                if let year = item.displayYear {
+                    Text(year)
+                        .font(RankdTypography.caption)
+                        .foregroundStyle(RankdColors.textTertiary)
                 }
             }
-            .opacity(status == .notAdded ? 1 : 0.7)
         }
         .buttonStyle(.plain)
-    }
-    
-    @ViewBuilder
-    private var statusBadge: some View {
-        Group {
-            switch status {
-            case .ranked:
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
-            case .watchlist:
-                Image(systemName: "bookmark.fill")
-                    .foregroundStyle(.blue)
-            case .notAdded:
-                EmptyView()
-            }
-        }
-        .font(.title3)
-        .background(Circle().fill(.ultraThinMaterial).padding(-4))
     }
 }
 
 // MARK: - Genre Grid
+
 struct GenreGrid: View {
     let genres: [TMDBGenre]
     
@@ -711,31 +759,32 @@ struct GenreGrid: View {
     ]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("🎭 Browse by Genre")
-                .font(.title2.bold())
-                .padding(.horizontal)
+        VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+            Text("Browse by Genre")
+                .font(RankdTypography.headingMedium)
+                .foregroundStyle(RankdColors.textPrimary)
+                .padding(.horizontal, RankdSpacing.md)
             
-            LazyVGrid(columns: columns, spacing: 10) {
+            LazyVGrid(columns: columns, spacing: RankdSpacing.xs) {
                 ForEach(genres) { genre in
                     NavigationLink(destination: GenreDetailView(genre: genre)) {
                         Text(genre.name)
-                            .font(.subheadline)
-                            .fontWeight(.medium)
+                            .font(RankdTypography.labelMedium)
+                            .foregroundStyle(RankdColors.textSecondary)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color.orange.opacity(0.15))
-                            .foregroundStyle(.orange)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .padding(.vertical, RankdSpacing.sm)
+                            .background(RankdColors.surfaceSecondary)
+                            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
                     }
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, RankdSpacing.md)
         }
     }
 }
 
 // MARK: - Genre Detail View
+
 struct GenreDetailView: View {
     let genre: TMDBGenre
     
@@ -748,29 +797,29 @@ struct GenreDetailView: View {
     
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 24) {
+            LazyVStack(alignment: .leading, spacing: RankdSpacing.lg) {
                 if !movies.isEmpty {
                     DiscoverSection(
                         title: "Movies",
-                        items: movies,
-                        itemStatus: itemStatus
+                        items: movies
                     )
                 }
                 
                 if !tvShows.isEmpty {
                     DiscoverSection(
                         title: "TV Shows",
-                        items: tvShows,
-                        itemStatus: itemStatus
+                        items: tvShows
                     )
                 }
             }
-            .padding(.vertical)
+            .padding(.vertical, RankdSpacing.md)
         }
+        .background(RankdColors.background)
         .navigationTitle(genre.name)
         .overlay {
             if isLoading {
                 ProgressView()
+                    .tint(RankdColors.textTertiary)
             }
         }
         .task {
@@ -790,16 +839,6 @@ struct GenreDetailView: View {
             print("Error loading genre content: \(error)")
         }
         isLoading = false
-    }
-    
-    private func itemStatus(_ result: TMDBSearchResult) -> ItemStatus {
-        if rankedItems.contains(where: { $0.tmdbId == result.id }) {
-            return .ranked
-        }
-        if watchlistItems.contains(where: { $0.tmdbId == result.id }) {
-            return .watchlist
-        }
-        return .notAdded
     }
 }
 

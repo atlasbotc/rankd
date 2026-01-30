@@ -45,7 +45,24 @@ struct ContentView: View {
                 }
                 .tag(4)
         }
-        .tint(.orange)
+        .tint(RankdColors.accent)
+        .preferredColorScheme(.dark)
+        .onAppear {
+            let tabBarAppearance = UITabBarAppearance()
+            tabBarAppearance.configureWithOpaqueBackground()
+            tabBarAppearance.backgroundColor = UIColor(RankdColors.background)
+            
+            let normalColor = UIColor(RankdColors.textTertiary)
+            let selectedColor = UIColor(RankdColors.accent)
+            
+            tabBarAppearance.stackedLayoutAppearance.normal.iconColor = normalColor
+            tabBarAppearance.stackedLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: normalColor]
+            tabBarAppearance.stackedLayoutAppearance.selected.iconColor = selectedColor
+            tabBarAppearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: selectedColor]
+            
+            UITabBar.appearance().standardAppearance = tabBarAppearance
+            UITabBar.appearance().scrollEdgeAppearance = tabBarAppearance
+        }
     }
 }
 

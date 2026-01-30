@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct CompareView: View {
     @Environment(\.modelContext) private var modelContext
@@ -24,35 +25,13 @@ struct CompareView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Media type picker
-                HStack(spacing: 0) {
-                    ForEach([MediaType.movie, MediaType.tv], id: \.self) { type in
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                selectedMediaType = type
-                                selectedTier = nil
-                                findNewPair()
-                            }
-                        } label: {
-                            Text(type == .movie ? "Movies" : "TV Shows")
-                                .font(.subheadline.weight(.semibold))
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 10)
-                                .background(selectedMediaType == type ? Color.orange : Color.clear)
-                                .foregroundStyle(selectedMediaType == type ? .white : .secondary)
-                                .clipShape(Capsule())
-                        }
-                    }
-                }
-                .padding(4)
-                .background(Color(.secondarySystemBackground))
-                .clipShape(Capsule())
-                .padding(.horizontal)
-                .padding(.top, 8)
+                pillPicker
+                    .padding(.top, RankdSpacing.xs)
                 
-                // Tier selector
+                // Tier filter chips
                 if !availableTiers.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
+                        HStack(spacing: RankdSpacing.xs) {
                             FilterChip(title: "Any", isSelected: selectedTier == nil) {
                                 selectedTier = nil
                                 findNewPair()
@@ -60,7 +39,8 @@ struct CompareView: View {
                             
                             ForEach(availableTiers, id: \.self) { tier in
                                 FilterChip(
-                                    title: "\(tier.emoji) \(tier.rawValue)",
+                                    title: tier.rawValue,
+                                    tierColor: RankdColors.tierColor(tier),
                                     isSelected: selectedTier == tier
                                 ) {
                                     selectedTier = tier
@@ -68,104 +48,154 @@ struct CompareView: View {
                                 }
                             }
                         }
-                        .padding(.horizontal)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, RankdSpacing.md)
+                        .padding(.vertical, RankdSpacing.sm)
                     }
-                    .background(.ultraThinMaterial)
                 }
                 
                 if filteredItems.count < 2 {
                     // Not enough items
                     Spacer()
-                    VStack(spacing: 16) {
-                        Image(systemName: "arrow.left.arrow.right")
-                            .font(.system(size: 50))
-                            .foregroundStyle(.secondary)
-                        Text("Need at least 2 items")
-                            .font(.title3)
-                            .foregroundStyle(.secondary)
-                        Text("Add more movies or TV shows to compare")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                    }
+                    emptyState(
+                        icon: "arrow.left.arrow.right",
+                        title: "Need at least 2 items",
+                        subtitle: "Add more \(selectedMediaType == .movie ? "movies" : "TV shows") to compare"
+                    )
                     Spacer()
                 } else if let pair = currentPair {
                     // Comparison view
-                    VStack(spacing: 20) {
+                    VStack(spacing: RankdSpacing.lg) {
                         Text("Which is better?")
-                            .font(.title2.bold())
-                            .padding(.top)
+                            .font(RankdTypography.headingLarge)
+                            .foregroundStyle(RankdColors.textPrimary)
+                            .padding(.top, RankdSpacing.lg)
                         
-                        HStack(spacing: 16) {
-                            CompareCard(item: pair.0, isChosen: chosenItem?.id == pair.0.id) {
+                        HStack(spacing: RankdSpacing.md) {
+                            CompareItemCard(
+                                item: pair.0,
+                                isChosen: chosenItem?.id == pair.0.id
+                            ) {
                                 selectWinner(pair.0, loser: pair.1)
                             }
                             
-                            Text("vs")
-                                .font(.title2)
-                                .foregroundStyle(.secondary)
-                            
-                            CompareCard(item: pair.1, isChosen: chosenItem?.id == pair.1.id) {
+                            CompareItemCard(
+                                item: pair.1,
+                                isChosen: chosenItem?.id == pair.1.id
+                            ) {
                                 selectWinner(pair.1, loser: pair.0)
                             }
                         }
-                        .padding(.horizontal)
+                        .padding(.horizontal, RankdSpacing.md)
                         
                         // Skip button
                         Button {
                             findNewPair()
                         } label: {
-                            Label("Skip", systemImage: "forward.fill")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                            Text("Skip")
+                                .font(RankdTypography.labelMedium)
+                                .foregroundStyle(RankdColors.textTertiary)
                         }
-                        .padding(.top, 8)
+                        .padding(.top, RankdSpacing.xs)
                         
                         Spacer()
                         
                         // Stats
-                        VStack(spacing: 4) {
+                        VStack(spacing: RankdSpacing.xxs) {
                             Text("Comparisons help refine your rankings")
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
-                            
-                            let totalComparisons = filteredItems.reduce(0) { $0 + $1.comparisonCount } / 2
-                            Text("\(totalComparisons) comparisons made")
-                                .font(.caption2)
-                                .foregroundStyle(.quaternary)
+                                .font(RankdTypography.caption)
+                                .foregroundStyle(RankdColors.textTertiary)
                         }
-                        .padding(.bottom)
+                        .padding(.bottom, RankdSpacing.lg)
                     }
                 } else {
-                    // No pairs available for selected tier
+                    // All caught up
                     Spacer()
-                    VStack(spacing: 16) {
-                        Image(systemName: "checkmark.circle")
-                            .font(.system(size: 50))
-                            .foregroundStyle(.green)
-                        Text("All caught up!")
-                            .font(.title3)
-                            .foregroundStyle(.secondary)
-                        Text("Add more items or select a different tier")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                        
-                        Button("Find More") {
-                            selectedTier = nil
-                            findNewPair()
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.orange)
+                    emptyState(
+                        icon: "checkmark.circle",
+                        title: "All caught up",
+                        subtitle: "Add more items or select a different tier"
+                    )
+                    
+                    Button {
+                        selectedTier = nil
+                        findNewPair()
+                    } label: {
+                        Text("Find More")
+                            .font(RankdTypography.headingSmall)
+                            .padding(.horizontal, RankdSpacing.lg)
+                            .padding(.vertical, RankdSpacing.sm)
+                            .background(RankdColors.accent)
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
                     }
+                    .padding(.top, RankdSpacing.md)
+                    
                     Spacer()
                 }
             }
+            .background(RankdColors.background)
             .navigationTitle("Compare")
             .onAppear {
                 findNewPair()
             }
         }
     }
+    
+    // MARK: - Pill Picker
+    
+    private var pillPicker: some View {
+        HStack(spacing: 0) {
+            ForEach([MediaType.movie, MediaType.tv], id: \.self) { type in
+                Button {
+                    withAnimation(RankdMotion.fast) {
+                        selectedMediaType = type
+                        selectedTier = nil
+                        findNewPair()
+                    }
+                } label: {
+                    Text(type == .movie ? "Movies" : "TV Shows")
+                        .font(RankdTypography.labelLarge)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, RankdSpacing.sm)
+                        .background(
+                            selectedMediaType == type
+                                ? RankdColors.accent
+                                : Color.clear
+                        )
+                        .foregroundStyle(
+                            selectedMediaType == type
+                                ? Color.white
+                                : RankdColors.textTertiary
+                        )
+                        .clipShape(Capsule())
+                }
+            }
+        }
+        .padding(RankdSpacing.xxs)
+        .background(RankdColors.surfaceSecondary)
+        .clipShape(Capsule())
+        .padding(.horizontal, RankdSpacing.md)
+    }
+    
+    // MARK: - Empty/Done State
+    
+    private func emptyState(icon: String, title: String, subtitle: String) -> some View {
+        VStack(spacing: RankdSpacing.md) {
+            Image(systemName: icon)
+                .font(.system(size: 40))
+                .foregroundStyle(RankdColors.textQuaternary)
+            
+            Text(title)
+                .font(RankdTypography.headingMedium)
+                .foregroundStyle(RankdColors.textPrimary)
+            
+            Text(subtitle)
+                .font(RankdTypography.bodyMedium)
+                .foregroundStyle(RankdColors.textSecondary)
+        }
+    }
+    
+    // MARK: - Actions
     
     private func findNewPair() {
         if let tier = selectedTier {
@@ -180,7 +210,6 @@ struct CompareView: View {
         chosenItem = winner
         HapticManager.impact(.light)
         
-        // Brief animation before moving to next
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             viewModel.processComparison(winner: winner, loser: loser, context: modelContext)
             findNewPair()
@@ -188,15 +217,16 @@ struct CompareView: View {
     }
 }
 
-// MARK: - Compare Card
-struct CompareCard: View {
+// MARK: - Compare Item Card
+
+struct CompareItemCard: View {
     let item: RankedItem
     let isChosen: Bool
     let onTap: () -> Void
     
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 12) {
+            VStack(spacing: RankdSpacing.sm) {
                 // Poster
                 AsyncImage(url: item.posterURL) { image in
                     image
@@ -204,83 +234,73 @@ struct CompareCard: View {
                         .aspectRatio(contentMode: .fill)
                 } placeholder: {
                     Rectangle()
-                        .fill(.quaternary)
+                        .fill(RankdColors.surfaceSecondary)
                         .overlay {
                             Image(systemName: item.mediaType == .movie ? "film" : "tv")
-                                .font(.largeTitle)
-                                .foregroundStyle(.tertiary)
+                                .font(.title)
+                                .foregroundStyle(RankdColors.textQuaternary)
                         }
                 }
-                .frame(width: 140, height: 210)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .overlay {
-                    if isChosen {
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.green, lineWidth: 4)
-                    }
-                }
-                .overlay(alignment: .topTrailing) {
-                    if isChosen {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.title)
-                            .foregroundStyle(.green)
-                            .background(Circle().fill(.white))
-                            .offset(x: 8, y: -8)
-                    }
-                }
+                .frame(width: RankdPoster.largeWidth, height: RankdPoster.largeHeight)
+                .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+                .overlay(
+                    RoundedRectangle(cornerRadius: RankdPoster.cornerRadius)
+                        .stroke(
+                            isChosen ? RankdColors.surfaceTertiary : Color.clear,
+                            lineWidth: 2
+                        )
+                )
                 
                 // Title
                 Text(item.title)
-                    .font(.subheadline.bold())
+                    .font(RankdTypography.labelMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
-                    .frame(height: 40)
+                    .frame(width: RankdPoster.largeWidth)
+                    .frame(minHeight: 32)
                 
-                // Year and type
-                HStack(spacing: 4) {
-                    if let year = item.year {
-                        Text(year)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    
-                    Text("•")
-                        .foregroundStyle(.tertiary)
-                    
-                    Text(item.mediaType == .movie ? "Movie" : "TV")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                // Year
+                if let year = item.year {
+                    Text(year)
+                        .font(RankdTypography.caption)
+                        .foregroundStyle(RankdColors.textTertiary)
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(isChosen ? Color.green.opacity(0.1) : Color.secondary.opacity(0.1))
-            )
         }
         .buttonStyle(.plain)
         .scaleEffect(isChosen ? 1.02 : 1.0)
-        .animation(.spring(response: 0.3), value: isChosen)
+        .animation(RankdMotion.fast, value: isChosen)
     }
 }
 
 // MARK: - Filter Chip
+
 struct FilterChip: View {
     let title: String
+    var tierColor: Color? = nil
     let isSelected: Bool
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(isSelected ? .semibold : .regular)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(isSelected ? Color.accentColor : Color.secondary.opacity(0.15))
-                .foregroundStyle(isSelected ? .white : .primary)
-                .clipShape(Capsule())
+            HStack(spacing: RankdSpacing.xs) {
+                if let tierColor = tierColor {
+                    Circle()
+                        .fill(tierColor)
+                        .frame(width: 6, height: 6)
+                }
+                
+                Text(title)
+                    .font(RankdTypography.labelMedium)
+            }
+            .padding(.horizontal, RankdSpacing.sm)
+            .padding(.vertical, RankdSpacing.xs)
+            .frame(minHeight: 44)
+            .background(isSelected ? RankdColors.accent : RankdColors.surfaceSecondary)
+            .foregroundStyle(isSelected ? .white : RankdColors.textSecondary)
+            .clipShape(Capsule())
         }
         .buttonStyle(.plain)
     }

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 /// Handles the comparison-based ranking flow when adding a new item
 struct ComparisonFlowView: View {
@@ -18,6 +19,7 @@ struct ComparisonFlowView: View {
     @State private var tier: Tier = .good
     @State private var hasStarted = false
     @State private var showSavedCheck = false
+    @State private var comparisonsMade: Int = 0
     
     /// All items of the same media type, sorted by rank
     private var existingItems: [RankedItem] {
@@ -26,41 +28,40 @@ struct ComparisonFlowView: View {
             .sorted { $0.rank < $1.rank }
     }
     
+    private var totalComparisons: Int {
+        Int(log2(Double(max(existingItems.count, 1)))) + 1
+    }
+    
     var body: some View {
         NavigationStack {
             ZStack {
+                RankdColors.background.ignoresSafeArea()
+                
                 if !tierSelected {
                     tierSelectionStep
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .trailing).combined(with: .opacity),
-                            removal: .move(edge: .leading).combined(with: .opacity)
-                        ))
+                        .transition(.opacity)
                 } else if showReviewStep {
                     if showSavedCheck {
                         savedCheckmark
-                            .transition(.scale.combined(with: .opacity))
+                            .transition(.opacity)
                     } else {
                         reviewStep
-                            .transition(.asymmetric(
-                                insertion: .move(edge: .trailing).combined(with: .opacity),
-                                removal: .opacity
-                            ))
+                            .transition(.opacity)
                     }
                 } else if let comparison = currentComparison {
                     comparisonStep(comparison)
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .trailing).combined(with: .opacity),
-                            removal: .move(edge: .leading).combined(with: .opacity)
-                        ))
+                        .transition(.opacity)
                 } else if finalRank != nil {
                     ProgressView()
+                        .tint(RankdColors.textTertiary)
                         .onAppear {
-                            withAnimation(.easeInOut(duration: 0.3)) {
+                            withAnimation(RankdMotion.normal) {
                                 showReviewStep = true
                             }
                         }
                 } else {
                     ProgressView()
+                        .tint(RankdColors.textTertiary)
                         .onAppear {
                             guard !hasStarted else { return }
                             hasStarted = true
@@ -68,85 +69,101 @@ struct ComparisonFlowView: View {
                         }
                 }
             }
-            .animation(.easeInOut(duration: 0.35), value: tierSelected)
-            .animation(.easeInOut(duration: 0.35), value: showReviewStep)
-            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showSavedCheck)
+            .animation(RankdMotion.normal, value: tierSelected)
+            .animation(RankdMotion.normal, value: showReviewStep)
+            .animation(RankdMotion.normal, value: showSavedCheck)
             .navigationTitle("Add to Rankings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
+                        .font(RankdTypography.labelLarge)
+                        .foregroundStyle(RankdColors.textSecondary)
                 }
             }
         }
     }
     
     // MARK: - Saved Checkmark
+    
     private var savedCheckmark: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: RankdSpacing.lg) {
             Spacer()
+            
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 72))
-                .foregroundStyle(.green)
-                .symbolEffect(.bounce, value: showSavedCheck)
-            Text("Saved!")
-                .font(.title.bold())
+                .font(.system(size: 64))
+                .foregroundStyle(RankdColors.success)
+            
+            Text("Saved")
+                .font(RankdTypography.headingLarge)
+                .foregroundStyle(RankdColors.textPrimary)
+            
             if let rank = finalRank {
-                Text("Ranked #\(rank)")
-                    .font(.headline)
-                    .foregroundStyle(.orange)
+                Text("#\(rank) in \(newItem.resolvedMediaType == .movie ? "Movies" : "TV Shows")")
+                    .font(RankdTypography.headingMedium)
+                    .foregroundStyle(RankdColors.accent)
             }
+            
             Spacer()
         }
     }
     
-    // MARK: - Tier Selection Step (always shown first)
+    // MARK: - Tier Selection Step
+    
     private var tierSelectionStep: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: RankdSpacing.lg) {
             itemHeader
             
             Text("How was it?")
-                .font(.title2.bold())
+                .font(RankdTypography.displayMedium)
+                .foregroundStyle(RankdColors.textPrimary)
             
-            Text("Pick a tier:")
-                .foregroundStyle(.secondary)
-            
-            VStack(spacing: 12) {
+            VStack(spacing: RankdSpacing.sm) {
                 ForEach(Tier.allCases, id: \.self) { t in
                     Button {
                         tier = t
                         HapticManager.impact(.medium)
-                        withAnimation {
+                        withAnimation(RankdMotion.normal) {
                             tierSelected = true
                         }
                     } label: {
-                        HStack {
-                            Text(t.emoji)
+                        HStack(spacing: RankdSpacing.sm) {
+                            Circle()
+                                .fill(RankdColors.tierColor(t))
+                                .frame(width: 12, height: 12)
+                            
                             Text(t.rawValue)
-                                .fontWeight(.semibold)
+                                .font(RankdTypography.headingSmall)
+                                .foregroundStyle(RankdColors.textPrimary)
+                            
+                            Spacer()
                         }
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(tierColor(t).opacity(0.2))
-                        .foregroundStyle(tierColor(t))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .frame(minHeight: 48)
+                        .padding(.horizontal, RankdSpacing.md)
+                        .background(RankdColors.surfaceSecondary)
+                        .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
                     }
+                    .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, RankdSpacing.xl)
             
             Spacer()
         }
-        .padding(.top, 32)
+        .padding(.top, RankdSpacing.xl)
     }
     
     // MARK: - Comparison Step
+    
     private func comparisonStep(_ comparison: RankedItem) -> some View {
-        VStack(spacing: 24) {
+        VStack(spacing: RankdSpacing.lg) {
             Text("Which is better?")
-                .font(.title2.bold())
+                .font(RankdTypography.headingLarge)
+                .foregroundStyle(RankdColors.textPrimary)
+                .padding(.top, RankdSpacing.xl)
             
-            HStack(spacing: 20) {
+            HStack(spacing: RankdSpacing.md) {
                 // New item
                 ComparisonCard(
                     title: newItem.displayTitle,
@@ -157,10 +174,6 @@ struct ComparisonFlowView: View {
                     HapticManager.impact(.light)
                     handleChoice(newIsBetter: true)
                 }
-                
-                Text("vs")
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
                 
                 // Existing item
                 ComparisonCard(
@@ -173,116 +186,128 @@ struct ComparisonFlowView: View {
                     handleChoice(newIsBetter: false)
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, RankdSpacing.md)
             
-            // Progress indicator
-            let total = Int(log2(Double(max(existingItems.count, 1)))) + 1
-            let remaining = Int(log2(Double(max(searchRange.count, 1)))) + 1
-            let progress = total - remaining
-            
-            VStack(spacing: 8) {
-                ProgressView(value: Double(progress), total: Double(total))
-                    .tint(.orange)
-                Text("\(progress)/\(total) comparisons")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            // Progress bar
+            VStack(spacing: RankdSpacing.xs) {
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(RankdColors.surfaceSecondary)
+                            .frame(height: 4)
+                        
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(RankdColors.accent)
+                            .frame(
+                                width: geo.size.width * CGFloat(comparisonsMade) / CGFloat(max(totalComparisons, 1)),
+                                height: 4
+                            )
+                            .animation(RankdMotion.fast, value: comparisonsMade)
+                    }
+                }
+                .frame(height: 4)
+                
+                Text("\(comparisonsMade) of \(totalComparisons)")
+                    .font(RankdTypography.caption)
+                    .foregroundStyle(RankdColors.textTertiary)
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, RankdSpacing.xl)
             
             Spacer()
         }
-        .padding(.top, 32)
     }
     
     // MARK: - Review Step
+    
     private var reviewStep: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: RankdSpacing.lg) {
                 itemHeader
                 
-                // Show selected tier + rank
-                HStack(spacing: 12) {
-                    Text(tier.emoji)
-                        .font(.title)
+                // Tier + rank
+                HStack(spacing: RankdSpacing.sm) {
+                    Circle()
+                        .fill(RankdColors.tierColor(tier))
+                        .frame(width: 8, height: 8)
+                    
                     Text(tier.rawValue)
-                        .font(.headline)
+                        .font(RankdTypography.labelMedium)
+                        .foregroundStyle(RankdColors.textSecondary)
                     
                     if let rank = finalRank {
-                        Text("•")
-                            .foregroundStyle(.secondary)
                         Text("#\(rank) in \(newItem.resolvedMediaType == .movie ? "Movies" : "TV Shows")")
-                            .font(.headline)
-                            .foregroundStyle(.orange)
+                            .font(RankdTypography.headingMedium)
+                            .foregroundStyle(RankdColors.accent)
                     }
                 }
                 
                 // Review
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: RankdSpacing.sm) {
                     Text("Review (optional)")
-                        .font(.headline)
+                        .font(RankdTypography.headingSmall)
+                        .foregroundStyle(RankdColors.textPrimary)
                     
                     TextEditor(text: $review)
+                        .font(RankdTypography.bodyMedium)
                         .frame(minHeight: 100)
-                        .padding(8)
-                        .background(Color(.systemGray6))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .padding(RankdSpacing.xs)
+                        .scrollContentBackground(.hidden)
+                        .background(RankdColors.surfaceSecondary)
+                        .foregroundStyle(RankdColors.textPrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, RankdSpacing.md)
                 
                 // Save button
                 Button {
                     saveItem()
                 } label: {
                     Text("Save to Rankings")
-                        .fontWeight(.semibold)
+                        .font(RankdTypography.headingSmall)
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(.orange)
+                        .frame(height: 48)
+                        .background(RankdColors.accent)
                         .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
                 }
-                .padding(.horizontal)
-                .padding(.top, 8)
+                .padding(.horizontal, RankdSpacing.md)
+                .padding(.top, RankdSpacing.xs)
             }
-            .padding(.vertical)
+            .padding(.vertical, RankdSpacing.md)
         }
     }
     
     // MARK: - Item Header
+    
     private var itemHeader: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: RankdSpacing.md) {
             AsyncImage(url: newItem.posterURL) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)
             } placeholder: {
                 Rectangle()
-                    .fill(.quaternary)
+                    .fill(RankdColors.surfaceSecondary)
             }
             .frame(width: 80, height: 120)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
                 Text(newItem.displayTitle)
-                    .font(.title3.bold())
+                    .font(RankdTypography.headingLarge)
+                    .foregroundStyle(RankdColors.textPrimary)
                     .lineLimit(2)
                 
                 if let year = newItem.displayYear {
                     Text(year)
-                        .foregroundStyle(.secondary)
+                        .font(RankdTypography.bodySmall)
+                        .foregroundStyle(RankdColors.textSecondary)
                 }
-                
-                Text(newItem.resolvedMediaType == .movie ? "Movie" : "TV Show")
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(.quaternary)
-                    .clipShape(Capsule())
             }
             
             Spacer()
         }
-        .padding(.horizontal)
+        .padding(.horizontal, RankdSpacing.md)
     }
     
     // MARK: - Logic
@@ -299,7 +324,6 @@ struct ComparisonFlowView: View {
     
     private func pickNextComparison() {
         guard searchRange.count > 0 else {
-            // Found position — clear comparison so view transitions
             currentComparison = nil
             finalRank = searchRange.lowerBound + 1
             return
@@ -315,13 +339,14 @@ struct ComparisonFlowView: View {
             return
         }
         
+        comparisonsMade += 1
+        
         if newIsBetter {
             searchRange = searchRange.lowerBound..<comparisonIndex
         } else {
             searchRange = (comparisonIndex + 1)..<searchRange.upperBound
         }
         
-        // Directly pick next comparison (no nil intermediate state)
         pickNextComparison()
     }
     
@@ -358,7 +383,7 @@ struct ComparisonFlowView: View {
         
         HapticManager.notification(.success)
         
-        // Backfill genre and runtime data asynchronously (don't block UI)
+        // Backfill genre and runtime data
         let itemTmdbId = newItem.id
         let itemMediaType = newItem.resolvedMediaType
         Task {
@@ -380,24 +405,17 @@ struct ComparisonFlowView: View {
         }
         
         // Show saved animation then dismiss
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+        withAnimation(RankdMotion.normal) {
             showSavedCheck = true
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             dismiss()
-        }
-    }
-    
-    private func tierColor(_ tier: Tier) -> Color {
-        switch tier {
-        case .good: return .green
-        case .medium: return .yellow
-        case .bad: return .red
         }
     }
 }
 
 // MARK: - Comparison Card
+
 struct ComparisonCard: View {
     let title: String
     let year: String?
@@ -407,41 +425,47 @@ struct ComparisonCard: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 12) {
+            VStack(spacing: RankdSpacing.sm) {
                 AsyncImage(url: posterURL) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                 } placeholder: {
                     Rectangle()
-                        .fill(.quaternary)
+                        .fill(RankdColors.surfaceSecondary)
                         .overlay {
                             Image(systemName: "film")
                                 .font(.title)
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(RankdColors.textQuaternary)
                         }
                 }
-                .frame(width: 120, height: 180)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .frame(width: RankdPoster.largeWidth, height: RankdPoster.largeHeight)
+                .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(isHighlighted ? Color.orange : Color.clear, lineWidth: 3)
+                    RoundedRectangle(cornerRadius: RankdPoster.cornerRadius)
+                        .stroke(
+                            isHighlighted ? RankdColors.surfaceTertiary : Color.clear,
+                            lineWidth: 2
+                        )
                 )
                 
                 Text(title)
-                    .font(.subheadline.bold())
+                    .font(RankdTypography.labelMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
-                    .frame(width: 120)
+                    .frame(width: RankdPoster.largeWidth)
                 
                 if let year = year {
                     Text(year)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(RankdTypography.caption)
+                        .foregroundStyle(RankdColors.textTertiary)
                 }
             }
         }
         .buttonStyle(.plain)
+        .scaleEffect(isHighlighted ? 1.02 : 1.0)
+        .animation(RankdMotion.fast, value: isHighlighted)
     }
 }
 
