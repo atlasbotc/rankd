@@ -12,6 +12,7 @@
 		A1000001234567890000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000013 /* Assets.xcassets */; };
 		A1000001234567890000004 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000014 /* Preview Assets.xcassets */; };
 		A1000001234567890000005 /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000015 /* Config.swift */; };
+		A1000001234567890000098 /* TastePersonality.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000099 /* TastePersonality.swift */; };
 		A1000001234567890000006 /* RankedItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000016 /* RankedItem.swift */; };
 		A1000001234567890000007 /* TMDBModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000017 /* TMDBModels.swift */; };
 		A1000001234567890000008 /* TMDBService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000018 /* TMDBService.swift */; };
@@ -56,6 +57,7 @@
 		A1000001234567890000013 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A1000001234567890000014 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		A1000001234567890000015 /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		A1000001234567890000099 /* TastePersonality.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TastePersonality.swift; sourceTree = "<group>"; };
 		A1000001234567890000016 /* RankedItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankedItem.swift; sourceTree = "<group>"; };
 		A1000001234567890000017 /* TMDBModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TMDBModels.swift; sourceTree = "<group>"; };
 		A1000001234567890000018 /* TMDBService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TMDBService.swift; sourceTree = "<group>"; };
@@ -134,6 +136,7 @@
 			isa = PBXGroup;
 			children = (
 				A1000001234567890000016 /* RankedItem.swift */,
+				A1000001234567890000099 /* TastePersonality.swift */,
 				A1000001234567890000017 /* TMDBModels.swift */,
 				A100000123456789000001D /* WatchlistItem.swift */,
 				A1000001234567890000610 /* CustomList.swift */,
@@ -297,6 +300,7 @@
 				A1000001234567890000001 /* RankdApp.swift in Sources */,
 				A1000001234567890000005 /* Config.swift in Sources */,
 				A1000001234567890000006 /* RankedItem.swift in Sources */,
+				A1000001234567890000098 /* TastePersonality.swift in Sources */,
 				A1000001234567890000007 /* TMDBModels.swift in Sources */,
 				A1000001234567890000008 /* TMDBService.swift in Sources */,
 				A1000001234567890000009 /* RankingViewModel.swift in Sources */,

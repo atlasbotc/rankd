@@ -5,15 +5,19 @@ struct ProfileView: View {
     @Query(sort: \RankedItem.rank) private var rankedItems: [RankedItem]
     @Query private var watchlistItems: [WatchlistItem]
     @Query(sort: \CustomList.dateModified, order: .reverse) private var customLists: [CustomList]
+    @Environment(\.modelContext) private var modelContext
+    
+    @AppStorage("displayName") private var displayName: String = ""
+    @AppStorage("memberSinceDate") private var memberSinceDateString: String = ""
+    @AppStorage("streakDates") private var streakDatesString: String = ""
     
     @State private var showCompareView = false
     @State private var showLetterboxdImport = false
     @State private var showShareSheet = false
     @State private var showCreateListSheet = false
+    @State private var showResetConfirmation = false
+    @State private var showAbout = false
     @State private var suggestedListToCreate: SuggestedList?
-    
-    @AppStorage("cachedArchetype") private var cachedArchetype: String = ""
-    @State private var personalityResult: TastePersonality.Result?
     
     private var movieItems: [RankedItem] {
         rankedItems.filter { $0.mediaType == .movie }.sorted { $0.rank < $1.rank }
@@ -27,6 +31,102 @@ struct ProfileView: View {
         Array(rankedItems.sorted { $0.dateAdded > $1.dateAdded }
             .sorted { $0.rank < $1.rank }
             .prefix(4))
+    }
+    
+    private var memberSinceDate: Date {
+        if let date = ISO8601DateFormatter().date(from: memberSinceDateString) {
+            return date
+        }
+        let now = Date()
+        memberSinceDateString = ISO8601DateFormatter().string(from: now)
+        return now
+    }
+    
+    private var memberSinceFormatted: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM yyyy"
+        return formatter.string(from: memberSinceDate)
+    }
+    
+    private var averageScore: String {
+        guard !rankedItems.isEmpty else { return "—" }
+        let total = rankedItems.reduce(0.0) { sum, item in
+            sum + RankedItem.calculateScore(for: item, allItems: Array(rankedItems))
+        }
+        let avg = total / Double(rankedItems.count)
+        return String(format: "%.1f", avg)
+    }
+    
+    private var topGenre: String {
+        let allGenres = rankedItems.flatMap { $0.genreNames }
+        guard !allGenres.isEmpty else { return "—" }
+        let counts = Dictionary(grouping: allGenres, by: { $0 }).mapValues { $0.count }
+        return counts.max(by: { $0.value < $1.value })?.key ?? "—"
+    }
+    
+    private var movieTVRatio: String {
+        let m = movieItems.count
+        let t = tvItems.count
+        guard m + t > 0 else { return "—" }
+        let pct = Int(round(Double(m) / Double(m + t) * 100))
+        return "\(pct)/\(100 - pct)"
+    }
+    
+    // MARK: - Streak Calculation
+    
+    private var currentStreak: Int {
+        recordTodayIfNeeded()
+        let dates = parsedStreakDates
+        guard !dates.isEmpty else { return 0 }
+        
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        var streak = 0
+        var checkDate = today
+        
+        while dates.contains(checkDate) {
+            streak += 1
+            guard let prev = calendar.date(byAdding: .day, value: -1, to: checkDate) else { break }
+            checkDate = prev
+        }
+        return streak
+    }
+    
+    private var parsedStreakDates: Set<Date> {
+        let calendar = Calendar.current
+        let formatter = ISO8601DateFormatter()
+        return Set(
+            streakDatesString
+                .split(separator: ",")
+                .compactMap { formatter.date(from: String($0)) }
+                .map { calendar.startOfDay(for: $0) }
+        )
+    }
+    
+    private func recordTodayIfNeeded() {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let todayHasRanking = rankedItems.contains { calendar.isDate($0.dateAdded, inSameDayAs: today) }
+        guard todayHasRanking else { return }
+        
+        let formatter = ISO8601DateFormatter()
+        let todayStr = formatter.string(from: today)
+        if !streakDatesString.contains(todayStr) {
+            if streakDatesString.isEmpty {
+                streakDatesString = todayStr
+            } else {
+                streakDatesString += ",\(todayStr)"
+            }
+            // Trim to last 90 days
+            let cutoff = calendar.date(byAdding: .day, value: -90, to: today) ?? today
+            let dates = streakDatesString.split(separator: ",").filter {
+                if let d = formatter.date(from: String($0)) {
+                    return d >= cutoff
+                }
+                return false
+            }
+            streakDatesString = dates.joined(separator: ",")
+        }
     }
     
     private func buildShareCardData() -> ShareCardData {
@@ -43,17 +143,21 @@ struct ProfileView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: RankdSpacing.lg) {
-                    topFourSection
-                    statsGrid
+                    profileHeader
+                    quickStatsRow
                     
-                    if !rankedItems.isEmpty {
-                        personalityCard
+                    if currentStreak > 0 {
+                        streakBadge
                     }
                     
-                    // My Lists section
+                    topFourSection
+                    
+                    if !rankedItems.isEmpty {
+                        tasteSection
+                    }
+                    
                     myListsSection
                     
-                    // Navigation cards
                     VStack(spacing: RankdSpacing.sm) {
                         statisticsCard
                         journalCard
@@ -98,7 +202,140 @@ struct ProfileView: View {
                         }
                 }
             }
+            .alert("About Rankd", isPresented: $showAbout) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+                let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+                Text("Version \(version) (\(build))\n\nYour personal movie & TV ranking companion.\n\nMade with care.")
+            }
+            .alert("Reset All Data?", isPresented: $showResetConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Reset", role: .destructive) {
+                    resetAllData()
+                }
+            } message: {
+                Text("This will permanently delete all your rankings, watchlist, and lists. This cannot be undone.")
+            }
         }
+    }
+    
+    // MARK: - Profile Header
+    
+    private var profileHeader: some View {
+        VStack(spacing: RankdSpacing.sm) {
+            // Avatar circle with initials
+            ZStack {
+                Circle()
+                    .fill(RankdColors.brandSubtle)
+                    .frame(width: 72, height: 72)
+                
+                Text(avatarInitials)
+                    .font(RankdTypography.displayMedium)
+                    .foregroundStyle(RankdColors.brand)
+            }
+            
+            VStack(spacing: RankdSpacing.xxs) {
+                Text(displayName.isEmpty ? "Your Profile" : displayName)
+                    .font(RankdTypography.displayMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
+                
+                HStack(spacing: RankdSpacing.xs) {
+                    Image(systemName: "calendar")
+                        .font(RankdTypography.caption)
+                    Text("Member since \(memberSinceFormatted)")
+                    Text("·")
+                    Text("\(rankedItems.count) ranked")
+                }
+                .font(RankdTypography.bodySmall)
+                .foregroundStyle(RankdColors.textSecondary)
+            }
+            
+            // Taste archetype badge
+            if !rankedItems.isEmpty {
+                HStack(spacing: RankdSpacing.xs) {
+                    Image(systemName: tasteIcon)
+                        .font(RankdTypography.labelSmall)
+                    Text(tastePersonality)
+                        .font(RankdTypography.labelMedium)
+                }
+                .foregroundStyle(RankdColors.brand)
+                .padding(.horizontal, RankdSpacing.sm)
+                .padding(.vertical, RankdSpacing.xs)
+                .background(
+                    Capsule()
+                        .fill(RankdColors.brandSubtle)
+                )
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, RankdSpacing.lg)
+        .padding(.horizontal, RankdSpacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: RankdRadius.lg)
+                .fill(RankdColors.surfacePrimary)
+        )
+        .padding(.horizontal, RankdSpacing.md)
+    }
+    
+    private var avatarInitials: String {
+        let name = displayName.isEmpty ? "R" : displayName
+        let parts = name.split(separator: " ")
+        if parts.count >= 2 {
+            return String(parts[0].prefix(1) + parts[1].prefix(1)).uppercased()
+        }
+        return String(name.prefix(1)).uppercased()
+    }
+    
+    private var tasteIcon: String {
+        switch tastePersonality {
+        case "Film Purist": return "film"
+        case "Binge Watcher": return "play.rectangle.on.rectangle"
+        case "Movie Buff": return "popcorn"
+        case "Series Devotee": return "tv"
+        case "The Optimist": return "hand.thumbsup"
+        case "Tough Critic": return "eye"
+        case "Getting Started": return "sparkles"
+        default: return "star"
+        }
+    }
+    
+    // MARK: - Quick Stats Row
+    
+    private var quickStatsRow: some View {
+        HStack(spacing: RankdSpacing.sm) {
+            QuickStatCard(icon: "number", value: "\(rankedItems.count)", label: "Ranked")
+            QuickStatCard(icon: "chart.bar", value: averageScore, label: "Avg Score")
+            QuickStatCard(icon: "tag", value: topGenre, label: "Top Genre")
+            QuickStatCard(icon: "film", value: movieTVRatio, label: "Film/TV")
+        }
+        .padding(.horizontal, RankdSpacing.md)
+    }
+    
+    // MARK: - Streak Badge
+    
+    private var streakBadge: some View {
+        HStack(spacing: RankdSpacing.xs) {
+            Image(systemName: "flame.fill")
+                .font(RankdTypography.headingSmall)
+                .foregroundStyle(RankdColors.warning)
+            
+            Text("\(currentStreak) day streak")
+                .font(RankdTypography.labelLarge)
+                .foregroundStyle(RankdColors.textPrimary)
+            
+            Spacer()
+            
+            Text("Keep ranking!")
+                .font(RankdTypography.bodySmall)
+                .foregroundStyle(RankdColors.textTertiary)
+        }
+        .padding(RankdSpacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: RankdRadius.lg)
+                .fill(RankdColors.surfacePrimary)
+        )
+        .padding(.horizontal, RankdSpacing.md)
     }
     
     // MARK: - Top 4 Showcase
@@ -117,6 +354,26 @@ struct ProfileView: View {
                 emptyTopFour
             } else {
                 topFourGrid
+                
+                // Share Top 4 button
+                Button {
+                    showShareSheet = true
+                } label: {
+                    HStack(spacing: RankdSpacing.xs) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(RankdTypography.labelMedium)
+                        Text("Share Top 4")
+                            .font(RankdTypography.labelMedium)
+                    }
+                    .foregroundStyle(RankdColors.brand)
+                    .padding(.horizontal, RankdSpacing.md)
+                    .padding(.vertical, RankdSpacing.xs)
+                    .background(
+                        Capsule()
+                            .fill(RankdColors.brandSubtle)
+                    )
+                }
+                .buttonStyle(RankdPressStyle())
             }
         }
     }
@@ -154,79 +411,23 @@ struct ProfileView: View {
             }
     }
     
-    // MARK: - Stats Grid
+    // MARK: - Stats Grid (removed — replaced by quickStatsRow)
     
-    private var statsGrid: some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible()),
-            GridItem(.flexible()),
-            GridItem(.flexible())
-        ], spacing: RankdSpacing.sm) {
-            StatCard(value: "\(movieItems.count)", label: "Movies", icon: "film")
-            StatCard(value: "\(tvItems.count)", label: "TV Shows", icon: "tv")
-            StatCard(value: "\(watchlistItems.count)", label: "Watchlist", icon: "bookmark")
-        }
-        .padding(.horizontal, RankdSpacing.md)
-    }
+    // MARK: - Taste Personality
     
-    // MARK: - Taste Personality Card
-    
-    private var currentPersonality: TastePersonality.Result {
-        if let cached = personalityResult { return cached }
-        return TastePersonality.analyze(items: Array(rankedItems))
-    }
-    
-    private var tastePersonality: String {
-        currentPersonality.archetype.rawValue
-    }
-    
-    private var personalityCard: some View {
-        VStack(alignment: .leading, spacing: RankdSpacing.sm) {
-            // Header row with icon
-            HStack(spacing: RankdSpacing.xs) {
-                Image(systemName: currentPersonality.archetype.icon)
-                    .font(RankdTypography.headingLarge)
-                    .foregroundStyle(RankdColors.brand)
-                
-                VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
-                    Text("Taste Profile")
-                        .font(RankdTypography.labelMedium)
-                        .foregroundStyle(RankdColors.textTertiary)
-                    
-                    Text(currentPersonality.archetype.rawValue)
-                        .font(RankdTypography.headingMedium)
-                        .foregroundStyle(RankdColors.textPrimary)
-                }
-                
-                Spacer()
-            }
+    private var tasteSection: some View {
+        VStack(alignment: .leading, spacing: RankdSpacing.xs) {
+            Text("Taste Profile")
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(RankdColors.textTertiary)
             
-            // Description
-            Text(currentPersonality.archetype.description)
+            Text(tastePersonality)
+                .font(RankdTypography.headingMedium)
+                .foregroundStyle(RankdColors.brand)
+            
+            Text(tasteDescription)
                 .font(RankdTypography.bodySmall)
                 .foregroundStyle(RankdColors.textSecondary)
-                .lineSpacing(3)
-            
-            // Data points
-            if !currentPersonality.dataPoints.isEmpty {
-                Rectangle()
-                    .fill(RankdColors.divider)
-                    .frame(height: 1)
-                
-                VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
-                    ForEach(currentPersonality.dataPoints, id: \.self) { point in
-                        HStack(spacing: RankdSpacing.xs) {
-                            Circle()
-                                .fill(RankdColors.brand)
-                                .frame(width: 5, height: 5)
-                            
-                            Text(point)
-                                .font(RankdTypography.labelMedium)
-                                .foregroundStyle(RankdColors.textSecondary)
-                        }
-                    }
-                }
-            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(RankdSpacing.md)
@@ -235,18 +436,48 @@ struct ProfileView: View {
                 .fill(RankdColors.surfacePrimary)
         )
         .padding(.horizontal, RankdSpacing.md)
-        .onAppear {
-            recalculatePersonality()
-        }
-        .onChange(of: rankedItems.count) { _, _ in
-            recalculatePersonality()
-        }
     }
     
-    private func recalculatePersonality() {
-        let result = TastePersonality.analyze(items: Array(rankedItems))
-        personalityResult = result
-        cachedArchetype = result.archetype.rawValue
+    private var tastePersonality: String {
+        let total = rankedItems.count
+        let movies = movieItems.count
+        let tv = tvItems.count
+        
+        if total < 5 { return "Getting Started" }
+        
+        if movies > 0 && tv == 0 { return "Film Purist" }
+        if tv > 0 && movies == 0 { return "Binge Watcher" }
+        if Double(movies) / Double(total) > 0.75 { return "Movie Buff" }
+        if Double(tv) / Double(total) > 0.75 { return "Series Devotee" }
+        
+        let goodCount = rankedItems.filter { $0.tier == .good }.count
+        let badCount = rankedItems.filter { $0.tier == .bad }.count
+        
+        if Double(goodCount) / Double(total) > 0.7 { return "The Optimist" }
+        if Double(badCount) / Double(total) > 0.4 { return "Tough Critic" }
+        
+        return "Well-Rounded Viewer"
+    }
+    
+    private var tasteDescription: String {
+        switch tastePersonality {
+        case "Getting Started":
+            return "Rank more titles to unlock your taste profile."
+        case "Film Purist":
+            return "You're all about the big screen. Cinema is your thing."
+        case "Binge Watcher":
+            return "Episodes over end credits. You love a good series."
+        case "Movie Buff":
+            return "Mostly movies with the occasional show. Classic taste."
+        case "Series Devotee":
+            return "You prefer the long game. Character development is key."
+        case "The Optimist":
+            return "You tend to love what you watch. Glass half full."
+        case "Tough Critic":
+            return "High standards. Not everything makes the cut."
+        default:
+            return "A healthy mix of movies and TV. You appreciate it all."
+        }
     }
     
     // MARK: - Navigation Cards
@@ -281,7 +512,6 @@ struct ProfileView: View {
     
     private var myListsSection: some View {
         VStack(alignment: .leading, spacing: RankdSpacing.sm) {
-            // Header with "See All" link
             HStack {
                 Text("My Lists")
                     .font(RankdTypography.headingLarge)
@@ -312,10 +542,8 @@ struct ProfileView: View {
     
     private var myListsEmptyState: some View {
         VStack(spacing: RankdSpacing.sm) {
-            // Template suggestion cards in horizontal scroll
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: RankdSpacing.sm) {
-                    // "Create New" card
                     Button {
                         suggestedListToCreate = nil
                         showCreateListSheet = true
@@ -345,7 +573,6 @@ struct ProfileView: View {
                     }
                     .buttonStyle(RankdPressStyle())
                     
-                    // Template cards
                     ForEach(Array(SuggestedList.allSuggestions.prefix(4))) { suggestion in
                         Button {
                             suggestedListToCreate = suggestion
@@ -396,7 +623,6 @@ struct ProfileView: View {
                     .buttonStyle(RankdPressStyle())
                 }
                 
-                // "New List" button at end
                 Button {
                     suggestedListToCreate = nil
                     showCreateListSheet = true
@@ -448,44 +674,134 @@ struct ProfileView: View {
         VStack(spacing: RankdSpacing.sm) {
             HStack {
                 Text("Settings")
-                    .font(RankdTypography.headingSmall)
+                    .font(RankdTypography.headingLarge)
                     .foregroundStyle(RankdColors.textPrimary)
                 Spacer()
             }
+            .padding(.horizontal, RankdSpacing.md)
             
-            Button {
-                showLetterboxdImport = true
-            } label: {
-                HStack(spacing: RankdSpacing.sm) {
-                    Image(systemName: "square.and.arrow.down.fill")
-                        .font(RankdTypography.headingSmall)
-                        .foregroundStyle(RankdColors.textSecondary)
-                        .frame(width: 32)
-                    
-                    VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
-                        Text("Import from Letterboxd")
-                            .font(RankdTypography.headingSmall)
-                            .foregroundStyle(RankdColors.textPrimary)
-                        Text("Bring in your ratings and watched films")
-                            .font(RankdTypography.bodySmall)
-                            .foregroundStyle(RankdColors.textTertiary)
-                    }
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .font(RankdTypography.caption)
-                        .foregroundStyle(RankdColors.textQuaternary)
-                }
-                .padding(RankdSpacing.md)
-                .background(
-                    RoundedRectangle(cornerRadius: RankdRadius.lg)
-                        .fill(RankdColors.surfacePrimary)
+            VStack(spacing: 1) {
+                // Display Name
+                settingsRow(
+                    icon: "person.fill",
+                    title: "Display Name",
+                    subtitle: displayName.isEmpty ? "Set your name" : displayName,
+                    destination: AnyView(displayNameEditor)
                 )
+                
+                // Import from Letterboxd
+                Button {
+                    showLetterboxdImport = true
+                } label: {
+                    settingsRowContent(
+                        icon: "square.and.arrow.down.fill",
+                        title: "Import from Letterboxd",
+                        subtitle: "Bring in your ratings and watched films"
+                    )
+                }
+                .buttonStyle(RankdPressStyle())
+                
+                // About
+                Button {
+                    showAbout = true
+                } label: {
+                    settingsRowContent(
+                        icon: "info.circle.fill",
+                        title: "About Rankd",
+                        subtitle: "Version & credits"
+                    )
+                }
+                .buttonStyle(RankdPressStyle())
+                
+                // Reset
+                Button {
+                    showResetConfirmation = true
+                } label: {
+                    HStack(spacing: RankdSpacing.sm) {
+                        Image(systemName: "arrow.counterclockwise")
+                            .font(RankdTypography.headingSmall)
+                            .foregroundStyle(RankdColors.error)
+                            .frame(width: 32)
+                        
+                        VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
+                            Text("Reset Data")
+                                .font(RankdTypography.headingSmall)
+                                .foregroundStyle(RankdColors.error)
+                            Text("Delete all rankings, watchlist, and lists")
+                                .font(RankdTypography.bodySmall)
+                                .foregroundStyle(RankdColors.textTertiary)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .font(RankdTypography.caption)
+                            .foregroundStyle(RankdColors.textQuaternary)
+                    }
+                    .padding(RankdSpacing.md)
+                    .background(RankdColors.surfacePrimary)
+                }
+                .buttonStyle(RankdPressStyle())
             }
-            .buttonStyle(RankdPressStyle())
+            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.lg))
+            .padding(.horizontal, RankdSpacing.md)
         }
-        .padding(.horizontal, RankdSpacing.md)
+    }
+    
+    private func settingsRow(icon: String, title: String, subtitle: String, destination: AnyView) -> some View {
+        NavigationLink {
+            destination
+        } label: {
+            settingsRowContent(icon: icon, title: title, subtitle: subtitle)
+        }
+        .buttonStyle(RankdPressStyle())
+    }
+    
+    private func settingsRowContent(icon: String, title: String, subtitle: String) -> some View {
+        HStack(spacing: RankdSpacing.sm) {
+            Image(systemName: icon)
+                .font(RankdTypography.headingSmall)
+                .foregroundStyle(RankdColors.textSecondary)
+                .frame(width: 32)
+            
+            VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
+                Text(title)
+                    .font(RankdTypography.headingSmall)
+                    .foregroundStyle(RankdColors.textPrimary)
+                Text(subtitle)
+                    .font(RankdTypography.bodySmall)
+                    .foregroundStyle(RankdColors.textTertiary)
+            }
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .font(RankdTypography.caption)
+                .foregroundStyle(RankdColors.textQuaternary)
+        }
+        .padding(RankdSpacing.md)
+        .background(RankdColors.surfacePrimary)
+    }
+    
+    private var displayNameEditor: some View {
+        Form {
+            Section {
+                TextField("Display Name", text: $displayName)
+                    .font(RankdTypography.bodyLarge)
+            } header: {
+                Text("Your name appears at the top of your profile.")
+            }
+        }
+        .navigationTitle("Display Name")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+    
+    private func resetAllData() {
+        for item in rankedItems { modelContext.delete(item) }
+        for item in watchlistItems { modelContext.delete(item) }
+        for list in customLists { modelContext.delete(list) }
+        streakDatesString = ""
+        HapticManager.notification(.success)
     }
     
     // MARK: - Tier Breakdown
@@ -515,6 +831,38 @@ struct ProfileView: View {
     }
 }
 
+// MARK: - Quick Stat Card
+
+private struct QuickStatCard: View {
+    let icon: String
+    let value: String
+    let label: String
+    
+    var body: some View {
+        VStack(spacing: RankdSpacing.xxs) {
+            Image(systemName: icon)
+                .font(RankdTypography.labelSmall)
+                .foregroundStyle(RankdColors.textTertiary)
+            
+            Text(value)
+                .font(RankdTypography.headingMedium)
+                .foregroundStyle(RankdColors.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            
+            Text(label)
+                .font(RankdTypography.caption)
+                .foregroundStyle(RankdColors.textTertiary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, RankdSpacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: RankdRadius.md)
+                .fill(RankdColors.surfacePrimary)
+        )
+    }
+}
+
 // MARK: - List Preview Card
 
 struct ListPreviewCard: View {
@@ -526,10 +874,8 @@ struct ListPreviewCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: RankdSpacing.sm) {
-            // Poster collage
             posterCollage
             
-            // List info
             VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
                 HStack(spacing: RankdSpacing.xxs) {
                     Text(list.emoji)
@@ -697,35 +1043,40 @@ private struct TopFourCard: View {
                 }
                 .aspectRatio(2/3, contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+                .overlay(alignment: .bottomTrailing) {
+                    // Score badge overlay
+                    if !allItems.isEmpty {
+                        Text(String(format: "%.1f", score))
+                            .font(RankdTypography.labelSmall)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, RankdSpacing.xs)
+                            .padding(.vertical, RankdSpacing.xxs)
+                            .background(
+                                Capsule()
+                                    .fill(RankdColors.tierColor(item.tier))
+                            )
+                            .padding(RankdSpacing.xs)
+                    }
+                }
                 
-                // Rank badge
-                Text("#\(rank)")
-                    .font(RankdTypography.labelSmall)
-                    .foregroundStyle(RankdColors.textSecondary)
-                    .padding(.horizontal, RankdSpacing.xs)
-                    .padding(.vertical, RankdSpacing.xxs)
-                    .background(
-                        Capsule()
-                            .fill(RankdColors.surfaceTertiary)
-                    )
-                    .padding(RankdSpacing.xs)
+                // Rank number overlay
+                Text("\(rank)")
+                    .font(RankdTypography.displayMedium)
+                    .foregroundStyle(.white)
+                    .shadow(color: .black.opacity(0.5), radius: 4, y: 2)
+                    .padding(.leading, RankdSpacing.xs)
+                    .padding(.top, RankdSpacing.xs)
             }
             
-            VStack(spacing: RankdSpacing.xxs) {
-                Text(item.title)
-                    .font(RankdTypography.labelSmall)
-                    .foregroundStyle(RankdColors.textPrimary)
-                    .lineLimit(1)
-                
-                if !allItems.isEmpty {
-                    ScoreBadge(score: score, tier: item.tier, compact: true)
-                }
-            }
+            Text(item.title)
+                .font(RankdTypography.labelSmall)
+                .foregroundStyle(RankdColors.textPrimary)
+                .lineLimit(1)
         }
     }
 }
 
-// MARK: - Stat Card
+// MARK: - Stat Card (legacy — kept for compatibility)
 
 private struct StatCard: View {
     let value: String
