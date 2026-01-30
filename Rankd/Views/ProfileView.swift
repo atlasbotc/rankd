@@ -245,7 +245,7 @@ struct ProfileView: View {
                 subtitle: "See your watching patterns, genres, and insights"
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(RankdPressStyle())
     }
     
     private var journalCard: some View {
@@ -258,7 +258,7 @@ struct ProfileView: View {
                 subtitle: "Your ranking diary — \(rankedItems.count) \(rankedItems.count == 1 ? "entry" : "entries")"
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(RankdPressStyle())
     }
     
     // MARK: - My Lists Section
@@ -327,7 +327,7 @@ struct ProfileView: View {
                                 .fill(RankdColors.surfacePrimary)
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(RankdPressStyle())
                     
                     // Template cards
                     ForEach(Array(SuggestedList.allSuggestions.prefix(4))) { suggestion in
@@ -359,7 +359,7 @@ struct ProfileView: View {
                                     .fill(RankdColors.surfacePrimary)
                             )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(RankdPressStyle())
                     }
                 }
                 .padding(.horizontal, RankdSpacing.md)
@@ -377,7 +377,7 @@ struct ProfileView: View {
                     NavigationLink(destination: ListDetailView(list: list)) {
                         ListPreviewCard(list: list)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(RankdPressStyle())
                 }
                 
                 // "New List" button at end
@@ -404,7 +404,7 @@ struct ProfileView: View {
                             .fill(RankdColors.surfacePrimary)
                     )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(RankdPressStyle())
             }
             .padding(.horizontal, RankdSpacing.md)
         }
@@ -423,7 +423,7 @@ struct ProfileView: View {
                 subtitle: "Refine your rankings with head-to-head picks"
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(RankdPressStyle())
     }
     
     // MARK: - Settings Section
@@ -467,7 +467,7 @@ struct ProfileView: View {
                         .fill(RankdColors.surfacePrimary)
                 )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(RankdPressStyle())
         }
         .padding(.horizontal, RankdSpacing.md)
     }
@@ -496,6 +496,121 @@ struct ProfileView: View {
                 .fill(RankdColors.surfacePrimary)
         )
         .padding(.horizontal, RankdSpacing.md)
+    }
+}
+
+// MARK: - List Preview Card
+
+struct ListPreviewCard: View {
+    let list: CustomList
+    
+    private var previewItems: [CustomListItem] {
+        Array(list.sortedItems.prefix(4))
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+            // Poster collage
+            posterCollage
+            
+            // List info
+            VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
+                HStack(spacing: RankdSpacing.xxs) {
+                    Text(list.emoji)
+                        .font(RankdTypography.bodyMedium)
+                    Text(list.name)
+                        .font(RankdTypography.headingSmall)
+                        .foregroundStyle(RankdColors.textPrimary)
+                        .lineLimit(1)
+                }
+                
+                Text("\(list.items.count) item\(list.items.count == 1 ? "" : "s")")
+                    .font(RankdTypography.caption)
+                    .foregroundStyle(RankdColors.textTertiary)
+            }
+            .padding(.horizontal, RankdSpacing.xs)
+            .padding(.bottom, RankdSpacing.xs)
+        }
+        .frame(width: 160)
+        .background(
+            RoundedRectangle(cornerRadius: RankdRadius.lg)
+                .fill(RankdColors.surfacePrimary)
+        )
+    }
+    
+    private var posterCollage: some View {
+        let size: CGFloat = 160
+        let items = previewItems
+        
+        return ZStack {
+            RoundedRectangle(cornerRadius: RankdRadius.md)
+                .fill(RankdColors.surfaceSecondary)
+            
+            if items.isEmpty {
+                Image(systemName: "film.stack")
+                    .font(RankdTypography.headingLarge)
+                    .foregroundStyle(RankdColors.textQuaternary)
+            } else if items.count == 1 {
+                posterImage(for: items[0])
+            } else {
+                let cellSize = (size - 2) / 2
+                VStack(spacing: 1) {
+                    HStack(spacing: 1) {
+                        posterImage(for: items[0])
+                            .frame(width: cellSize, height: cellSize)
+                            .clipped()
+                        if items.count > 1 {
+                            posterImage(for: items[1])
+                                .frame(width: cellSize, height: cellSize)
+                                .clipped()
+                        } else {
+                            Rectangle().fill(RankdColors.surfaceTertiary)
+                                .frame(width: cellSize, height: cellSize)
+                        }
+                    }
+                    HStack(spacing: 1) {
+                        if items.count > 2 {
+                            posterImage(for: items[2])
+                                .frame(width: cellSize, height: cellSize)
+                                .clipped()
+                        } else {
+                            Rectangle().fill(RankdColors.surfaceTertiary)
+                                .frame(width: cellSize, height: cellSize)
+                        }
+                        if items.count > 3 {
+                            posterImage(for: items[3])
+                                .frame(width: cellSize, height: cellSize)
+                                .clipped()
+                        } else {
+                            Rectangle().fill(RankdColors.surfaceTertiary)
+                                .frame(width: cellSize, height: cellSize)
+                        }
+                    }
+                }
+            }
+        }
+        .frame(width: size, height: size * 0.65)
+        .clipShape(
+            UnevenRoundedRectangle(
+                topLeadingRadius: RankdRadius.lg,
+                bottomLeadingRadius: 0,
+                bottomTrailingRadius: 0,
+                topTrailingRadius: RankdRadius.lg
+            )
+        )
+    }
+    
+    @ViewBuilder
+    private func posterImage(for item: CustomListItem) -> some View {
+        if let url = item.posterURL {
+            AsyncImage(url: url) { image in
+                image.resizable().aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Rectangle().fill(RankdColors.surfaceTertiary)
+            }
+        } else {
+            Rectangle().fill(RankdColors.surfaceTertiary)
+        }
     }
 }
 

@@ -23,7 +23,9 @@ struct WatchlistView: View {
             }
             .background(RankdColors.background)
             .navigationTitle("Watchlist")
-            .refreshable {}
+            .refreshable {
+                HapticManager.impact(.light)
+            }
             .alert("Remove from Watchlist?", isPresented: $showDeleteConfirmation) {
                 Button("Cancel", role: .cancel) {}
                 Button("Remove", role: .destructive) {

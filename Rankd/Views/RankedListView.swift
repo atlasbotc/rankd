@@ -77,6 +77,7 @@ struct RankedListView: View {
                                             isReorderMode ? RankdColors.surfaceSecondary : RankdColors.background
                                         )
                                         .contentShape(Rectangle())
+                                        .animation(RankdMotion.normal, value: item.rank)
                                         .onTapGesture {
                                             selectedItem = item
                                             showDetailSheet = true
@@ -470,7 +471,7 @@ private struct TopRankedCard: View {
                 }
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(RankdPressStyle())
         .contextMenu {
             if let onReRank = onReRank {
                 Button {

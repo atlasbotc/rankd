@@ -45,6 +45,7 @@ struct ContentView: View {
                 }
                 .tag(4)
         }
+        .animation(RankdMotion.normal, value: selectedTab)
         .tint(RankdColors.brand)
         .onAppear {
             let tabBarAppearance = UITabBarAppearance()

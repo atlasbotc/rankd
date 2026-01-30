@@ -20,6 +20,11 @@ struct ComparisonFlowView: View {
     @State private var hasStarted = false
     @State private var showSavedCheck = false
     @State private var comparisonsMade: Int = 0
+    @State private var chosenSide: ChoiceSide? = nil
+    
+    private enum ChoiceSide {
+        case left, right
+    }
     
     /// All items of the same media type, sorted by rank
     private var existingItems: [RankedItem] {
@@ -171,9 +176,10 @@ struct ComparisonFlowView: View {
                     posterURL: newItem.posterURL,
                     isHighlighted: false
                 ) {
-                    HapticManager.impact(.light)
-                    handleChoice(newIsBetter: true)
+                    animateChoice(side: .left, newIsBetter: true)
                 }
+                .scaleEffect(chosenSide == .left ? 1.05 : (chosenSide == .right ? 0.97 : 1.0))
+                .opacity(chosenSide == .right ? 0.3 : 1.0)
                 
                 // Existing item
                 ComparisonCard(
@@ -182,10 +188,12 @@ struct ComparisonFlowView: View {
                     posterURL: comparison.posterURL,
                     isHighlighted: false
                 ) {
-                    HapticManager.impact(.light)
-                    handleChoice(newIsBetter: false)
+                    animateChoice(side: .right, newIsBetter: false)
                 }
+                .scaleEffect(chosenSide == .right ? 1.05 : (chosenSide == .left ? 0.97 : 1.0))
+                .opacity(chosenSide == .left ? 0.3 : 1.0)
             }
+            .animation(RankdMotion.normal, value: chosenSide)
             .padding(.horizontal, RankdSpacing.md)
             
             // Progress bar
@@ -333,6 +341,15 @@ struct ComparisonFlowView: View {
         currentComparison = existingItems[midIndex]
     }
     
+    private func animateChoice(side: ChoiceSide, newIsBetter: Bool) {
+        HapticManager.impact(.light)
+        chosenSide = side
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            chosenSide = nil
+            handleChoice(newIsBetter: newIsBetter)
+        }
+    }
+    
     private func handleChoice(newIsBetter: Bool) {
         guard let comparison = currentComparison,
               let comparisonIndex = existingItems.firstIndex(where: { $0.id == comparison.id }) else {
@@ -463,7 +480,7 @@ struct ComparisonCard: View {
                 }
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(RankdPressStyle())
         .scaleEffect(isHighlighted ? 1.02 : 1.0)
         .animation(RankdMotion.fast, value: isHighlighted)
     }
