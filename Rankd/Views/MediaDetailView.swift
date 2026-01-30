@@ -14,6 +14,7 @@ struct MediaDetailView: View {
     @State private var tvDetail: TMDBTVDetail?
     @State private var isLoading = true
     @State private var error: String?
+    @State private var synopsisExpanded = false
     
     @State private var showComparisonFlow = false
     @State private var showAddToList = false
@@ -42,7 +43,10 @@ struct MediaDetailView: View {
                 tvContent(detail)
             }
         }
+        .background(RankdColors.background)
+        .scrollIndicators(.hidden)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .task {
             await loadDetails()
         }
@@ -68,134 +72,84 @@ struct MediaDetailView: View {
     
     private func movieContent(_ detail: TMDBMovieDetail) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Backdrop
-            if let backdropURL = detail.backdropURL {
-                AsyncImage(url: backdropURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle().fill(.quaternary)
-                }
-                .frame(height: 200)
-                .clipped()
-            }
+            // Backdrop hero
+            backdropHero(
+                backdropURL: detail.backdropURL,
+                posterURL: detail.posterURL
+            )
             
-            VStack(alignment: .leading, spacing: 20) {
-                // Header
-                HStack(alignment: .top, spacing: 16) {
+            // Poster overlay + title area
+            VStack(alignment: .leading, spacing: RankdSpacing.md) {
+                // Poster overlay
+                HStack(alignment: .bottom, spacing: RankdSpacing.md) {
                     AsyncImage(url: detail.posterURL) { image in
                         image.resizable().aspectRatio(contentMode: .fill)
                     } placeholder: {
-                        Rectangle().fill(.quaternary)
+                        RoundedRectangle(cornerRadius: RankdPoster.cornerRadius)
+                            .fill(RankdColors.surfaceSecondary)
                     }
-                    .frame(width: 100, height: 150)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .shadow(radius: 4)
+                    .frame(width: 80, height: 120)
+                    .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+                    .shadow(color: RankdShadow.elevated, radius: RankdShadow.elevatedRadius, y: RankdShadow.elevatedY)
                     .offset(y: -40)
                     
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(detail.title)
-                            .font(.title2.bold())
-                        
-                        // Quick info
-                        HStack(spacing: 12) {
-                            if let year = detail.year {
-                                Label(year, systemImage: "calendar")
-                            }
-                            if let runtime = detail.runtimeFormatted {
-                                Label(runtime, systemImage: "clock")
-                            }
-                        }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        
-                        // Rating
-                        if let rating = detail.voteAverage, rating > 0 {
-                            HStack(spacing: 4) {
-                                Image(systemName: "star.fill")
-                                    .foregroundStyle(.yellow)
-                                Text(String(format: "%.1f", rating))
-                                    .fontWeight(.semibold)
-                                if let count = detail.voteCount {
-                                    Text("(\(count.formatted()))")
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            .font(.subheadline)
-                        }
-                        
-                        // User's ranking
-                        if let ranked = rankedItem {
-                            HStack {
-                                Text(ranked.tier.emoji)
-                                Text("#\(ranked.rank)")
-                                    .fontWeight(.semibold)
-                            }
-                            .font(.subheadline)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(.orange.opacity(0.2))
-                            .clipShape(Capsule())
-                        }
-                    }
-                    .padding(.top, 8)
+                    Spacer()
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, RankdSpacing.md)
+                
+                // Title
+                Text(detail.title)
+                    .font(RankdTypography.displayMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
+                    .padding(.horizontal, RankdSpacing.md)
+                    .offset(y: -24)
+                
+                // Metadata row
+                metadataRow(
+                    year: detail.year,
+                    runtime: detail.runtimeFormatted,
+                    rating: detail.voteAverage
+                )
+                .offset(y: -16)
+                
+                // User rank badge
+                if let ranked = rankedItem {
+                    rankBadge(ranked)
+                        .padding(.horizontal, RankdSpacing.md)
+                        .offset(y: -8)
+                }
                 
                 // Action buttons
-                if !isRanked {
-                    actionButtons
-                } else {
-                    addToListOnlyButton
-                }
-                
-                // Director
-                if let director = detail.director {
-                    InfoRow(label: "Directed by", value: director.name)
-                }
+                actionButtonsSection
+                    .padding(.horizontal, RankdSpacing.md)
                 
                 // Genres
                 if !detail.genres.isEmpty {
-                    GenreTagsView(genres: detail.genres)
+                    genrePills(detail.genres)
+                        .padding(.top, RankdSpacing.xs)
                 }
                 
-                // Tagline
-                if let tagline = detail.tagline, !tagline.isEmpty {
-                    Text("\"\(tagline)\"")
-                        .font(.subheadline)
-                        .italic()
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal)
-                }
-                
-                // Overview
+                // Synopsis
                 if let overview = detail.overview, !overview.isEmpty {
-                    SectionView(title: "Synopsis") {
-                        Text(overview)
-                            .foregroundStyle(.secondary)
-                    }
+                    synopsisSection(overview)
                 }
                 
                 // Cast
                 if let credits = detail.credits, !credits.cast.isEmpty {
-                    CastSection(cast: Array(credits.cast.prefix(10)))
+                    castSection(Array(credits.cast.prefix(10)))
                 }
                 
                 // Crew
                 if let credits = detail.credits {
-                    let keyCrews = credits.crew.filter { 
+                    let keyCrews = credits.crew.filter {
                         ["Director", "Writer", "Screenplay", "Producer", "Director of Photography", "Composer"].contains($0.job ?? "")
                     }
                     if !keyCrews.isEmpty {
-                        CrewSection(crew: Array(keyCrews.prefix(8)))
+                        crewSection(Array(keyCrews.prefix(8)))
                     }
                 }
-                
-                // Additional info
-                AdditionalInfoSection(items: movieInfoItems(detail))
             }
-            .padding(.bottom, 32)
+            .padding(.bottom, RankdSpacing.xxl)
         }
     }
     
@@ -203,146 +157,186 @@ struct MediaDetailView: View {
     
     private func tvContent(_ detail: TMDBTVDetail) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Backdrop
-            if let backdropURL = detail.backdropURL {
+            // Backdrop hero
+            backdropHero(
+                backdropURL: detail.backdropURL,
+                posterURL: detail.posterURL
+            )
+            
+            // Poster overlay + title area
+            VStack(alignment: .leading, spacing: RankdSpacing.md) {
+                // Poster overlay
+                HStack(alignment: .bottom, spacing: RankdSpacing.md) {
+                    AsyncImage(url: detail.posterURL) { image in
+                        image.resizable().aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        RoundedRectangle(cornerRadius: RankdPoster.cornerRadius)
+                            .fill(RankdColors.surfaceSecondary)
+                    }
+                    .frame(width: 80, height: 120)
+                    .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+                    .shadow(color: RankdShadow.elevated, radius: RankdShadow.elevatedRadius, y: RankdShadow.elevatedY)
+                    .offset(y: -40)
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, RankdSpacing.md)
+                
+                // Title
+                Text(detail.name)
+                    .font(RankdTypography.displayMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
+                    .padding(.horizontal, RankdSpacing.md)
+                    .offset(y: -24)
+                
+                // Metadata row
+                tvMetadataRow(detail)
+                    .offset(y: -16)
+                
+                // User rank badge
+                if let ranked = rankedItem {
+                    rankBadge(ranked)
+                        .padding(.horizontal, RankdSpacing.md)
+                        .offset(y: -8)
+                }
+                
+                // Action buttons
+                actionButtonsSection
+                    .padding(.horizontal, RankdSpacing.md)
+                
+                // Genres
+                if !detail.genres.isEmpty {
+                    genrePills(detail.genres)
+                        .padding(.top, RankdSpacing.xs)
+                }
+                
+                // Synopsis
+                if let overview = detail.overview, !overview.isEmpty {
+                    synopsisSection(overview)
+                }
+                
+                // Cast
+                if let credits = detail.credits, !credits.cast.isEmpty {
+                    castSection(Array(credits.cast.prefix(10)))
+                }
+            }
+            .padding(.bottom, RankdSpacing.xxl)
+        }
+    }
+    
+    // MARK: - Shared Components
+    
+    private func backdropHero(backdropURL: URL?, posterURL: URL?) -> some View {
+        ZStack(alignment: .bottom) {
+            if let backdropURL = backdropURL {
                 AsyncImage(url: backdropURL) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                 } placeholder: {
-                    Rectangle().fill(.quaternary)
+                    Rectangle()
+                        .fill(RankdColors.surfacePrimary)
+                        .shimmer()
                 }
-                .frame(height: 200)
+                .frame(height: 300)
                 .clipped()
+            } else if let posterURL = posterURL {
+                AsyncImage(url: posterURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .blur(radius: 30)
+                } placeholder: {
+                    Rectangle()
+                        .fill(RankdColors.surfacePrimary)
+                        .shimmer()
+                }
+                .frame(height: 300)
+                .clipped()
+            } else {
+                Rectangle()
+                    .fill(RankdColors.surfacePrimary)
+                    .frame(height: 300)
             }
             
-            VStack(alignment: .leading, spacing: 20) {
-                // Header
-                HStack(alignment: .top, spacing: 16) {
-                    AsyncImage(url: detail.posterURL) { image in
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        Rectangle().fill(.quaternary)
-                    }
-                    .frame(width: 100, height: 150)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .shadow(radius: 4)
-                    .offset(y: -40)
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(detail.name)
-                            .font(.title2.bold())
-                        
-                        // Quick info
-                        HStack(spacing: 12) {
-                            if let yearRange = detail.yearRange {
-                                Label(yearRange, systemImage: "calendar")
-                            }
-                            if let seasons = detail.numberOfSeasons {
-                                Label("\(seasons) season\(seasons == 1 ? "" : "s")", systemImage: "tv")
-                            }
-                        }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        
-                        // Rating
-                        if let rating = detail.voteAverage, rating > 0 {
-                            HStack(spacing: 4) {
-                                Image(systemName: "star.fill")
-                                    .foregroundStyle(.yellow)
-                                Text(String(format: "%.1f", rating))
-                                    .fontWeight(.semibold)
-                                if let count = detail.voteCount {
-                                    Text("(\(count.formatted()))")
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            .font(.subheadline)
-                        }
-                        
-                        // User's ranking
-                        if let ranked = rankedItem {
-                            HStack {
-                                Text(ranked.tier.emoji)
-                                Text("#\(ranked.rank)")
-                                    .fontWeight(.semibold)
-                            }
-                            .font(.subheadline)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(.orange.opacity(0.2))
-                            .clipShape(Capsule())
-                        }
-                    }
-                    .padding(.top, 8)
-                }
-                .padding(.horizontal)
-                
-                // Action buttons
-                if !isRanked {
-                    actionButtons
-                } else {
-                    addToListOnlyButton
-                }
-                
-                // Created by
-                if let creators = detail.createdBy, !creators.isEmpty {
-                    InfoRow(label: "Created by", value: creators.map { $0.name }.joined(separator: ", "))
-                }
-                
-                // Genres
-                if !detail.genres.isEmpty {
-                    GenreTagsView(genres: detail.genres)
-                }
-                
-                // Tagline
-                if let tagline = detail.tagline, !tagline.isEmpty {
-                    Text("\"\(tagline)\"")
-                        .font(.subheadline)
-                        .italic()
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal)
-                }
-                
-                // Overview
-                if let overview = detail.overview, !overview.isEmpty {
-                    SectionView(title: "Synopsis") {
-                        Text(overview)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                
-                // Cast
-                if let credits = detail.credits, !credits.cast.isEmpty {
-                    CastSection(cast: Array(credits.cast.prefix(10)))
-                }
-                
-                // Additional info
-                AdditionalInfoSection(items: tvInfoItems(detail))
+            // Gradient overlay
+            LinearGradient(
+                colors: [
+                    .clear,
+                    RankdColors.background.opacity(0.6),
+                    RankdColors.background
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 300)
+        }
+        .frame(height: 300)
+    }
+    
+    private func metadataRow(year: String?, runtime: String?, rating: Double?) -> some View {
+        HStack(spacing: 0) {
+            if let year = year {
+                Text(year)
             }
-            .padding(.bottom, 32)
+            if let runtime = runtime {
+                Text(" · \(runtime)")
+            }
+            if let rating = rating, rating > 0 {
+                Text(" · \(String(format: "%.1f", rating))")
+            }
+        }
+        .font(RankdTypography.bodySmall)
+        .foregroundStyle(RankdColors.textSecondary)
+        .padding(.horizontal, RankdSpacing.md)
+    }
+    
+    private func tvMetadataRow(_ detail: TMDBTVDetail) -> some View {
+        HStack(spacing: 0) {
+            if let yearRange = detail.yearRange {
+                Text(yearRange)
+            }
+            if let seasons = detail.numberOfSeasons {
+                Text(" · \(seasons) season\(seasons == 1 ? "" : "s")")
+            }
+            if let rating = detail.voteAverage, rating > 0 {
+                Text(" · \(String(format: "%.1f", rating))")
+            }
+        }
+        .font(RankdTypography.bodySmall)
+        .foregroundStyle(RankdColors.textSecondary)
+        .padding(.horizontal, RankdSpacing.md)
+    }
+    
+    private func rankBadge(_ ranked: RankedItem) -> some View {
+        HStack(spacing: RankdSpacing.xs) {
+            Circle()
+                .fill(RankdColors.tierColor(ranked.tier))
+                .frame(width: 8, height: 8)
+            
+            Text("#\(ranked.rank) in \(ranked.mediaType == .movie ? "Movies" : "TV Shows")")
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(RankdColors.textSecondary)
         }
     }
     
-    // MARK: - Components
-    
-    private var addToListOnlyButton: some View {
-        Button {
-            showAddToList = true
-        } label: {
-            Label("Add to List", systemImage: "list.bullet.rectangle.portrait")
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(Color.purple.opacity(0.15))
-                .foregroundStyle(.purple)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-        }
-        .padding(.horizontal)
-    }
-    
-    private var actionButtons: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 12) {
+    private var actionButtonsSection: some View {
+        VStack(spacing: RankdSpacing.xs) {
+            if !isRanked {
+                // Primary: Rank It
+                Button {
+                    showComparisonFlow = true
+                } label: {
+                    Text("Rank It")
+                        .font(RankdTypography.labelLarge)
+                        .foregroundStyle(RankdColors.textPrimary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 48)
+                        .background(RankdColors.accent)
+                        .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
+                }
+                
+                // Secondary: Watchlist
                 Button {
                     if isInWatchlist {
                         removeFromWatchlist()
@@ -350,51 +344,171 @@ struct MediaDetailView: View {
                         addToWatchlist()
                     }
                 } label: {
-                    Label(isInWatchlist ? "In Watchlist" : "Watchlist", systemImage: isInWatchlist ? "bookmark.fill" : "bookmark")
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(isInWatchlist ? Color.blue : Color.blue.opacity(0.15))
-                        .foregroundStyle(isInWatchlist ? .white : .blue)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
-                }
-                
-                Button {
-                    showComparisonFlow = true
-                } label: {
-                    Label("Rank It", systemImage: "list.number")
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.orange.opacity(0.15))
-                        .foregroundStyle(.orange)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                    HStack(spacing: RankdSpacing.xs) {
+                        Image(systemName: isInWatchlist ? "bookmark.fill" : "bookmark")
+                        Text(isInWatchlist ? "In Watchlist" : "Watchlist")
+                    }
+                    .font(RankdTypography.labelLarge)
+                    .foregroundStyle(RankdColors.textSecondary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(RankdColors.surfaceSecondary)
+                    .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
                 }
             }
             
+            // Tertiary: Add to List
             Button {
                 showAddToList = true
             } label: {
-                Label("Add to List", systemImage: "list.bullet.rectangle.portrait")
+                Text("Add to List")
+                    .font(RankdTypography.labelLarge)
+                    .foregroundStyle(RankdColors.textTertiary)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.purple.opacity(0.15))
-                    .foregroundStyle(.purple)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .frame(height: 48)
             }
         }
-        .padding(.horizontal)
     }
     
-    private func errorView(_ message: String) -> some View {
-        VStack(spacing: 16) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.largeTitle)
-                .foregroundStyle(.orange)
-            Text(message)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
+    private func genrePills(_ genres: [TMDBGenre]) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: RankdSpacing.xs) {
+                ForEach(genres) { genre in
+                    Text(genre.name)
+                        .font(RankdTypography.labelSmall)
+                        .foregroundStyle(RankdColors.textSecondary)
+                        .padding(.horizontal, RankdSpacing.sm)
+                        .padding(.vertical, RankdSpacing.xs)
+                        .background(RankdColors.surfaceSecondary)
+                        .clipShape(Capsule())
+                }
+            }
+            .padding(.horizontal, RankdSpacing.md)
         }
-        .padding()
-        .padding(.top, 50)
+    }
+    
+    private func synopsisSection(_ text: String) -> some View {
+        VStack(alignment: .leading, spacing: RankdSpacing.xs) {
+            Text("Synopsis")
+                .font(RankdTypography.headingSmall)
+                .foregroundStyle(RankdColors.textPrimary)
+            
+            Text(text)
+                .font(RankdTypography.bodyMedium)
+                .foregroundStyle(RankdColors.textSecondary)
+                .lineLimit(synopsisExpanded ? nil : 4)
+                .lineSpacing(4)
+            
+            if !synopsisExpanded && text.count > 200 {
+                Button {
+                    withAnimation(RankdMotion.normal) {
+                        synopsisExpanded = true
+                    }
+                } label: {
+                    Text("Read more")
+                        .font(RankdTypography.labelMedium)
+                        .foregroundStyle(RankdColors.accent)
+                }
+                .padding(.top, RankdSpacing.xxs)
+            }
+        }
+        .padding(.horizontal, RankdSpacing.md)
+        .padding(.top, RankdSpacing.lg)
+    }
+    
+    private func castSection(_ cast: [TMDBCastMember]) -> some View {
+        VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+            Text("Cast")
+                .font(RankdTypography.headingSmall)
+                .foregroundStyle(RankdColors.textPrimary)
+                .padding(.horizontal, RankdSpacing.md)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: RankdSpacing.md) {
+                    ForEach(cast) { member in
+                        VStack(spacing: RankdSpacing.xs) {
+                            AsyncImage(url: member.profileURL) { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            } placeholder: {
+                                Circle()
+                                    .fill(RankdColors.surfaceSecondary)
+                                    .overlay {
+                                        Image(systemName: "person.fill")
+                                            .font(RankdTypography.bodySmall)
+                                            .foregroundStyle(RankdColors.textTertiary)
+                                    }
+                            }
+                            .frame(width: 56, height: 56)
+                            .clipShape(Circle())
+                            
+                            Text(member.name)
+                                .font(RankdTypography.labelSmall)
+                                .foregroundStyle(RankdColors.textPrimary)
+                                .lineLimit(1)
+                            
+                            if let character = member.character {
+                                Text(character)
+                                    .font(RankdTypography.caption)
+                                    .foregroundStyle(RankdColors.textTertiary)
+                                    .lineLimit(1)
+                            }
+                        }
+                        .frame(width: 72)
+                    }
+                }
+                .padding(.horizontal, RankdSpacing.md)
+            }
+        }
+        .padding(.top, RankdSpacing.lg)
+    }
+    
+    private func crewSection(_ crew: [TMDBCrewMember]) -> some View {
+        VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+            Text("Crew")
+                .font(RankdTypography.headingSmall)
+                .foregroundStyle(RankdColors.textPrimary)
+                .padding(.horizontal, RankdSpacing.md)
+            
+            LazyVGrid(
+                columns: [GridItem(.flexible()), GridItem(.flexible())],
+                spacing: RankdSpacing.sm
+            ) {
+                ForEach(crew) { member in
+                    VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
+                        Text(member.name)
+                            .font(RankdTypography.labelMedium)
+                            .foregroundStyle(RankdColors.textPrimary)
+                        if let job = member.job {
+                            Text(job)
+                                .font(RankdTypography.caption)
+                                .foregroundStyle(RankdColors.textTertiary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(.horizontal, RankdSpacing.md)
+        }
+        .padding(.top, RankdSpacing.lg)
+    }
+    
+    // MARK: - Error View
+    
+    private func errorView(_ message: String) -> some View {
+        VStack(spacing: RankdSpacing.md) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 48))
+                .foregroundStyle(RankdColors.textTertiary)
+            
+            Text(message)
+                .font(RankdTypography.bodyMedium)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(RankdColors.textSecondary)
+        }
+        .padding(RankdSpacing.lg)
+        .padding(.top, RankdSpacing.xxl)
     }
     
     // MARK: - Data
@@ -410,7 +524,8 @@ struct MediaDetailView: View {
                 releaseDate: movie.releaseDate,
                 firstAirDate: nil,
                 mediaType: "movie",
-                voteAverage: movie.voteAverage
+                voteAverage: movie.voteAverage,
+                backdropPath: movie.backdropPath
             )
         } else if let tv = tvDetail {
             return TMDBSearchResult(
@@ -422,44 +537,11 @@ struct MediaDetailView: View {
                 releaseDate: nil,
                 firstAirDate: tv.firstAirDate,
                 mediaType: "tv",
-                voteAverage: tv.voteAverage
+                voteAverage: tv.voteAverage,
+                backdropPath: tv.backdropPath
             )
         }
         return nil
-    }
-    
-    private var itemStatus: ItemStatus {
-        if isRanked { return .ranked }
-        if isInWatchlist { return .watchlist }
-        return .notAdded
-    }
-    
-    private func movieInfoItems(_ detail: TMDBMovieDetail) -> [(String, String)] {
-        var items: [(String, String)] = []
-        if let status = detail.status {
-            items.append(("Status", status))
-        }
-        if let budget = detail.budget, budget > 0 {
-            items.append(("Budget", "$\(budget.formatted())"))
-        }
-        if let revenue = detail.revenue, revenue > 0 {
-            items.append(("Revenue", "$\(revenue.formatted())"))
-        }
-        return items
-    }
-    
-    private func tvInfoItems(_ detail: TMDBTVDetail) -> [(String, String)] {
-        var items: [(String, String)] = []
-        if let status = detail.status {
-            items.append(("Status", status))
-        }
-        if let episodes = detail.numberOfEpisodes {
-            items.append(("Episodes", "\(episodes) episodes"))
-        }
-        if let runtime = detail.episodeRuntimeFormatted {
-            items.append(("Episode Length", runtime))
-        }
-        return items
     }
     
     private func loadDetails() async {
@@ -498,215 +580,63 @@ struct MediaDetailView: View {
     }
     
     // MARK: - Skeleton Loading
+    
     private var mediaDetailSkeleton: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Backdrop placeholder
-            RoundedRectangle(cornerRadius: 0)
-                .fill(Color.secondary.opacity(0.15))
-                .frame(height: 200)
+            Rectangle()
+                .fill(RankdColors.surfacePrimary)
+                .frame(height: 300)
                 .shimmer()
             
-            VStack(alignment: .leading, spacing: 20) {
-                HStack(alignment: .top, spacing: 16) {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.secondary.opacity(0.15))
-                        .frame(width: 100, height: 150)
-                        .offset(y: -40)
-                        .shimmer()
-                    
-                    VStack(alignment: .leading, spacing: 10) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.secondary.opacity(0.15))
-                            .frame(width: 180, height: 22)
-                            .shimmer()
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.secondary.opacity(0.15))
-                            .frame(width: 120, height: 14)
-                            .shimmer()
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.secondary.opacity(0.15))
-                            .frame(width: 80, height: 14)
-                            .shimmer()
-                    }
-                    .padding(.top, 8)
-                }
-                .padding(.horizontal)
+            VStack(alignment: .leading, spacing: RankdSpacing.md) {
+                // Poster placeholder
+                RoundedRectangle(cornerRadius: RankdPoster.cornerRadius)
+                    .fill(RankdColors.surfaceSecondary)
+                    .frame(width: 80, height: 120)
+                    .offset(y: -40)
+                    .shimmer()
+                    .padding(.horizontal, RankdSpacing.md)
+                
+                // Title placeholder
+                RoundedRectangle(cornerRadius: RankdRadius.sm)
+                    .fill(RankdColors.surfaceSecondary)
+                    .frame(width: 220, height: 28)
+                    .shimmer()
+                    .padding(.horizontal, RankdSpacing.md)
+                    .offset(y: -24)
+                
+                // Metadata placeholder
+                RoundedRectangle(cornerRadius: RankdRadius.sm)
+                    .fill(RankdColors.surfaceSecondary)
+                    .frame(width: 160, height: 14)
+                    .shimmer()
+                    .padding(.horizontal, RankdSpacing.md)
+                    .offset(y: -16)
                 
                 // Synopsis placeholder
-                VStack(alignment: .leading, spacing: 8) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.secondary.opacity(0.15))
-                        .frame(height: 14)
-                        .shimmer()
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.secondary.opacity(0.15))
-                        .frame(height: 14)
-                        .shimmer()
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.secondary.opacity(0.15))
+                VStack(alignment: .leading, spacing: RankdSpacing.xs) {
+                    ForEach(0..<3, id: \.self) { _ in
+                        RoundedRectangle(cornerRadius: RankdRadius.sm)
+                            .fill(RankdColors.surfaceSecondary)
+                            .frame(height: 14)
+                            .shimmer()
+                    }
+                    RoundedRectangle(cornerRadius: RankdRadius.sm)
+                        .fill(RankdColors.surfaceSecondary)
                         .frame(width: 200, height: 14)
                         .shimmer()
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, RankdSpacing.md)
             }
-            .padding(.bottom, 32)
-        }
-    }
-}
-
-// MARK: - Supporting Views
-
-struct InfoRow: View {
-    let label: String
-    let value: String
-    
-    var body: some View {
-        HStack {
-            Text(label)
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text(value)
-                .fontWeight(.medium)
-        }
-        .font(.subheadline)
-        .padding(.horizontal)
-    }
-}
-
-struct GenreTagsView: View {
-    let genres: [TMDBGenre]
-    
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(genres) { genre in
-                    Text(genre.name)
-                        .font(.caption)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(.quaternary)
-                        .clipShape(Capsule())
-                }
-            }
-            .padding(.horizontal)
-        }
-    }
-}
-
-struct SectionView<Content: View>: View {
-    let title: String
-    @ViewBuilder let content: Content
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.headline)
-            content
-        }
-        .padding(.horizontal)
-    }
-}
-
-struct CastSection: View {
-    let cast: [TMDBCastMember]
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Cast")
-                .font(.headline)
-                .padding(.horizontal)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(cast) { member in
-                        VStack(spacing: 6) {
-                            AsyncImage(url: member.profileURL) { image in
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                            } placeholder: {
-                                Circle()
-                                    .fill(.quaternary)
-                                    .overlay {
-                                        Image(systemName: "person.fill")
-                                            .foregroundStyle(.tertiary)
-                                    }
-                            }
-                            .frame(width: 70, height: 70)
-                            .clipShape(Circle())
-                            
-                            Text(member.name)
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .lineLimit(1)
-                            
-                            if let character = member.character {
-                                Text(character)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
-                        }
-                        .frame(width: 80)
-                    }
-                }
-                .padding(.horizontal)
-            }
-        }
-    }
-}
-
-struct CrewSection: View {
-    let crew: [TMDBCrewMember]
-    
-    var body: some View {
-        SectionView(title: "Crew") {
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                ForEach(crew) { member in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(member.name)
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                            if let job = member.job {
-                                Text(job)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        Spacer()
-                    }
-                }
-            }
-        }
-    }
-}
-
-struct AdditionalInfoSection: View {
-    let items: [(String, String)]
-    
-    var body: some View {
-        if !items.isEmpty {
-            SectionView(title: "Details") {
-                VStack(spacing: 8) {
-                    ForEach(items, id: \.0) { item in
-                        HStack {
-                            Text(item.0)
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            Text(item.1)
-                        }
-                        .font(.subheadline)
-                    }
-                }
-            }
+            .padding(.bottom, RankdSpacing.xxl)
         }
     }
 }
 
 #Preview {
     NavigationStack {
-        MediaDetailView(tmdbId: 550, mediaType: .movie) // Fight Club
+        MediaDetailView(tmdbId: 550, mediaType: .movie)
     }
     .modelContainer(for: [RankedItem.self, WatchlistItem.self, CustomList.self, CustomListItem.self], inMemory: true)
 }
