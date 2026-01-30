@@ -7,6 +7,8 @@ struct RankdApp: App {
         let schema = Schema([
             RankedItem.self,
             WatchlistItem.self,
+            CustomList.self,
+            CustomListItem.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

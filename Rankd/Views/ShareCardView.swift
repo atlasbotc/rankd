@@ -6,6 +6,7 @@ import UIKit
 enum ShareCardFormat: String, CaseIterable, Identifiable {
     case top4 = "Top 4"
     case top10 = "Top 10"
+    case list = "List"
     
     var id: String { rawValue }
 }

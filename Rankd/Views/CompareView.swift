@@ -178,6 +178,7 @@ struct CompareView: View {
     
     private func selectWinner(_ winner: RankedItem, loser: RankedItem) {
         chosenItem = winner
+        HapticManager.impact(.light)
         
         // Brief animation before moving to next
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {

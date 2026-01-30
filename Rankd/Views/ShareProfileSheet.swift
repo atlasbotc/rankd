@@ -53,9 +53,12 @@ struct ShareProfileSheet: View {
     
     // MARK: - Format Picker
     
+    /// Profile share formats (excludes list, which has its own sheet)
+    private static let profileFormats: [ShareCardFormat] = [.top4, .top10]
+    
     private var formatPicker: some View {
         Picker("Format", selection: $selectedFormat) {
-            ForEach(ShareCardFormat.allCases) { format in
+            ForEach(Self.profileFormats) { format in
                 Text(format.rawValue).tag(format)
             }
         }
@@ -127,6 +130,7 @@ struct ShareProfileSheet: View {
             // Save to Photos
             Button {
                 generator.saveToPhotos()
+                HapticManager.notification(.success)
                 withAnimation {
                     savedToPhotos = true
                 }

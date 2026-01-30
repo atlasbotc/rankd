@@ -16,6 +16,7 @@ struct MediaDetailView: View {
     @State private var error: String?
     
     @State private var showComparisonFlow = false
+    @State private var showAddToList = false
     
     private var isRanked: Bool {
         rankedItems.contains { $0.tmdbId == tmdbId }
@@ -32,8 +33,7 @@ struct MediaDetailView: View {
     var body: some View {
         ScrollView {
             if isLoading {
-                ProgressView()
-                    .padding(.top, 100)
+                mediaDetailSkeleton
             } else if let error = error {
                 errorView(error)
             } else if mediaType == .movie, let detail = movieDetail {
@@ -49,6 +49,17 @@ struct MediaDetailView: View {
         .fullScreenCover(isPresented: $showComparisonFlow) {
             if let result = searchResult {
                 ComparisonFlowView(newItem: result)
+            }
+        }
+        .sheet(isPresented: $showAddToList) {
+            if let result = searchResult {
+                AddToListSheet(
+                    tmdbId: result.id,
+                    title: result.displayTitle,
+                    posterPath: result.posterPath,
+                    releaseDate: result.displayDate,
+                    mediaType: result.resolvedMediaType
+                )
             }
         }
     }
@@ -135,6 +146,8 @@ struct MediaDetailView: View {
                 // Action buttons
                 if !isRanked {
                     actionButtons
+                } else {
+                    addToListOnlyButton
                 }
                 
                 // Director
@@ -268,6 +281,8 @@ struct MediaDetailView: View {
                 // Action buttons
                 if !isRanked {
                     actionButtons
+                } else {
+                    addToListOnlyButton
                 }
                 
                 // Created by
@@ -312,30 +327,43 @@ struct MediaDetailView: View {
     // MARK: - Components
     
     private var actionButtons: some View {
-        HStack(spacing: 12) {
-            Button {
-                if isInWatchlist {
-                    removeFromWatchlist()
-                } else {
-                    addToWatchlist()
+        VStack(spacing: 8) {
+            HStack(spacing: 12) {
+                Button {
+                    if isInWatchlist {
+                        removeFromWatchlist()
+                    } else {
+                        addToWatchlist()
+                    }
+                } label: {
+                    Label(isInWatchlist ? "In Watchlist" : "Watchlist", systemImage: isInWatchlist ? "bookmark.fill" : "bookmark")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(isInWatchlist ? Color.blue : Color.blue.opacity(0.15))
+                        .foregroundStyle(isInWatchlist ? .white : .blue)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
-            } label: {
-                Label(isInWatchlist ? "In Watchlist" : "Watchlist", systemImage: isInWatchlist ? "bookmark.fill" : "bookmark")
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(isInWatchlist ? Color.blue : Color.blue.opacity(0.15))
-                    .foregroundStyle(isInWatchlist ? .white : .blue)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                
+                Button {
+                    showComparisonFlow = true
+                } label: {
+                    Label("Rank It", systemImage: "list.number")
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.orange.opacity(0.15))
+                        .foregroundStyle(.orange)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
             }
             
             Button {
-                showComparisonFlow = true
+                showAddToList = true
             } label: {
-                Label("Rank It", systemImage: "list.number")
+                Label("Add to List", systemImage: "list.bullet.rectangle.portrait")
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .background(Color.orange.opacity(0.15))
-                    .foregroundStyle(.orange)
+                    .background(Color.purple.opacity(0.15))
+                    .foregroundStyle(.purple)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
             }
         }
@@ -452,6 +480,63 @@ struct MediaDetailView: View {
         )
         modelContext.insert(item)
         try? modelContext.save()
+        HapticManager.impact(.light)
+    }
+    
+    // MARK: - Skeleton Loading
+    private var mediaDetailSkeleton: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Backdrop placeholder
+            RoundedRectangle(cornerRadius: 0)
+                .fill(Color.secondary.opacity(0.15))
+                .frame(height: 200)
+                .shimmer()
+            
+            VStack(alignment: .leading, spacing: 20) {
+                HStack(alignment: .top, spacing: 16) {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color.secondary.opacity(0.15))
+                        .frame(width: 100, height: 150)
+                        .offset(y: -40)
+                        .shimmer()
+                    
+                    VStack(alignment: .leading, spacing: 10) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.secondary.opacity(0.15))
+                            .frame(width: 180, height: 22)
+                            .shimmer()
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.secondary.opacity(0.15))
+                            .frame(width: 120, height: 14)
+                            .shimmer()
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.secondary.opacity(0.15))
+                            .frame(width: 80, height: 14)
+                            .shimmer()
+                    }
+                    .padding(.top, 8)
+                }
+                .padding(.horizontal)
+                
+                // Synopsis placeholder
+                VStack(alignment: .leading, spacing: 8) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.secondary.opacity(0.15))
+                        .frame(height: 14)
+                        .shimmer()
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.secondary.opacity(0.15))
+                        .frame(height: 14)
+                        .shimmer()
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.secondary.opacity(0.15))
+                        .frame(width: 200, height: 14)
+                        .shimmer()
+                }
+                .padding(.horizontal)
+            }
+            .padding(.bottom, 32)
+        }
     }
 }
 
@@ -609,5 +694,5 @@ struct AdditionalInfoSection: View {
     NavigationStack {
         MediaDetailView(tmdbId: 550, mediaType: .movie) // Fight Club
     }
-    .modelContainer(for: [RankedItem.self, WatchlistItem.self], inMemory: true)
+    .modelContainer(for: [RankedItem.self, WatchlistItem.self, CustomList.self, CustomListItem.self], inMemory: true)
 }

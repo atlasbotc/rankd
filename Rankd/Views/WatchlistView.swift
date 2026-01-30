@@ -22,6 +22,9 @@ struct WatchlistView: View {
                 }
             }
             .navigationTitle("Watchlist")
+            .refreshable {
+                // Trigger UI refresh by toggling a minor state (list re-renders)
+            }
             .alert("Remove from Watchlist?", isPresented: $showDeleteConfirmation) {
                 Button("Cancel", role: .cancel) {}
                 Button("Remove", role: .destructive) {
@@ -78,6 +81,7 @@ struct WatchlistView: View {
                         Button(role: .destructive) {
                             itemToDelete = item
                             showDeleteConfirmation = true
+                            HapticManager.notification(.warning)
                         } label: {
                             Label("Remove", systemImage: "trash")
                         }

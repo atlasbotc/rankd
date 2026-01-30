@@ -17,6 +17,7 @@ struct ComparisonFlowView: View {
     @State private var review: String = ""
     @State private var tier: Tier = .good
     @State private var hasStarted = false
+    @State private var showSavedCheck = false
     
     /// All items of the same media type, sorted by rank
     private var existingItems: [RankedItem] {
@@ -27,17 +28,37 @@ struct ComparisonFlowView: View {
     
     var body: some View {
         NavigationStack {
-            VStack {
+            ZStack {
                 if !tierSelected {
-                    // Step 1: Pick tier first (green/yellow/red)
                     tierSelectionStep
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal: .move(edge: .leading).combined(with: .opacity)
+                        ))
                 } else if showReviewStep {
-                    reviewStep
+                    if showSavedCheck {
+                        savedCheckmark
+                            .transition(.scale.combined(with: .opacity))
+                    } else {
+                        reviewStep
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .trailing).combined(with: .opacity),
+                                removal: .opacity
+                            ))
+                    }
                 } else if let comparison = currentComparison {
                     comparisonStep(comparison)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal: .move(edge: .leading).combined(with: .opacity)
+                        ))
                 } else if finalRank != nil {
                     ProgressView()
-                        .onAppear { showReviewStep = true }
+                        .onAppear {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                showReviewStep = true
+                            }
+                        }
                 } else {
                     ProgressView()
                         .onAppear {
@@ -47,6 +68,9 @@ struct ComparisonFlowView: View {
                         }
                 }
             }
+            .animation(.easeInOut(duration: 0.35), value: tierSelected)
+            .animation(.easeInOut(duration: 0.35), value: showReviewStep)
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showSavedCheck)
             .navigationTitle("Add to Rankings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -54,6 +78,25 @@ struct ComparisonFlowView: View {
                     Button("Cancel") { dismiss() }
                 }
             }
+        }
+    }
+    
+    // MARK: - Saved Checkmark
+    private var savedCheckmark: some View {
+        VStack(spacing: 20) {
+            Spacer()
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 72))
+                .foregroundStyle(.green)
+                .symbolEffect(.bounce, value: showSavedCheck)
+            Text("Saved!")
+                .font(.title.bold())
+            if let rank = finalRank {
+                Text("Ranked #\(rank)")
+                    .font(.headline)
+                    .foregroundStyle(.orange)
+            }
+            Spacer()
         }
     }
     
@@ -72,8 +115,10 @@ struct ComparisonFlowView: View {
                 ForEach(Tier.allCases, id: \.self) { t in
                     Button {
                         tier = t
-                        tierSelected = true
-                        // Comparisons will start via onAppear in the else branch
+                        HapticManager.impact(.medium)
+                        withAnimation {
+                            tierSelected = true
+                        }
                     } label: {
                         HStack {
                             Text(t.emoji)
@@ -109,6 +154,7 @@ struct ComparisonFlowView: View {
                     posterURL: newItem.posterURL,
                     isHighlighted: false
                 ) {
+                    HapticManager.impact(.light)
                     handleChoice(newIsBetter: true)
                 }
                 
@@ -123,6 +169,7 @@ struct ComparisonFlowView: View {
                     posterURL: comparison.posterURL,
                     isHighlighted: false
                 ) {
+                    HapticManager.impact(.light)
                     handleChoice(newIsBetter: false)
                 }
             }
@@ -309,6 +356,8 @@ struct ComparisonFlowView: View {
         modelContext.insert(item)
         try? modelContext.save()
         
+        HapticManager.notification(.success)
+        
         // Backfill genre and runtime data asynchronously (don't block UI)
         let itemTmdbId = newItem.id
         let itemMediaType = newItem.resolvedMediaType
@@ -330,7 +379,13 @@ struct ComparisonFlowView: View {
             }
         }
         
-        dismiss()
+        // Show saved animation then dismiss
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+            showSavedCheck = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            dismiss()
+        }
     }
     
     private func tierColor(_ tier: Tier) -> Color {

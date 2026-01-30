@@ -23,6 +23,9 @@ final class ShareCardGenerator: ObservableObject {
             items = data.topFourItems
         case .top10:
             items = data.topTenItems
+        case .list:
+            // List cards are generated separately via ListShareSheet
+            return nil
         }
         
         let urls = items.compactMap { $0.posterURL }
@@ -53,6 +56,9 @@ final class ShareCardGenerator: ObservableObject {
             renderer.scale = 3.0
             renderer.proposedSize = .init(width: 1080, height: 1080)
             image = renderer.uiImage
+            
+        case .list:
+            image = nil
         }
         
         if let image {

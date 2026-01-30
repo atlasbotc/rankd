@@ -9,6 +9,7 @@ struct RankedListView: View {
     @State private var itemToDelete: RankedItem?
     @State private var selectedItem: RankedItem?
     @State private var showDetailSheet = false
+    @State private var isReorderMode = false
     
     var filteredItems: [RankedItem] {
         allItems
@@ -68,11 +69,13 @@ struct RankedListView: View {
                                             Button(role: .destructive) {
                                                 itemToDelete = item
                                                 showDeleteConfirmation = true
+                                                HapticManager.notification(.warning)
                                             } label: {
                                                 Label("Remove", systemImage: "trash")
                                             }
                                         }
                                 }
+                                .onMove(perform: isReorderMode ? moveItems : nil)
                             } header: {
                                 Text("All Rankings")
                                     .font(.headline)
@@ -82,9 +85,22 @@ struct RankedListView: View {
                         }
                     }
                     .listStyle(.plain)
+                    .environment(\.editMode, .constant(isReorderMode ? .active : .inactive))
                 }
             }
             .navigationTitle("Rankings")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    if !filteredItems.isEmpty && remainingItems.count > 1 {
+                        Button(isReorderMode ? "Done" : "Reorder") {
+                            withAnimation {
+                                isReorderMode.toggle()
+                            }
+                        }
+                        .font(.subheadline)
+                    }
+                }
+            }
             .alert("Remove from Rankings?", isPresented: $showDeleteConfirmation) {
                 Button("Cancel", role: .cancel) {}
                 Button("Remove", role: .destructive) {
@@ -248,6 +264,20 @@ struct RankedListView: View {
         
         try? modelContext.save()
     }
+    
+    private func moveItems(from source: IndexSet, to destination: Int) {
+        // Work with remaining items (rank #4+)
+        var reordered = remainingItems
+        reordered.move(fromOffsets: source, toOffset: destination)
+        
+        // Update rank numbers: top 3 keep ranks 1-3, remaining start at 4
+        for (index, item) in reordered.enumerated() {
+            item.rank = index + 4
+        }
+        
+        HapticManager.selection()
+        try? modelContext.save()
+    }
 }
 
 // MARK: - Top Ranked Card
@@ -391,9 +421,12 @@ struct RankedItemRow: View {
 struct ItemDetailSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \RankedItem.rank) private var allItems: [RankedItem]
     @Bindable var item: RankedItem
     @State private var editedReview: String = ""
     @State private var isEditing = false
+    @State private var showReRank = false
+    @State private var reRankSearchResult: TMDBSearchResult?
     
     var body: some View {
         NavigationStack {
@@ -432,6 +465,64 @@ struct ItemDetailSheet: View {
                                 .font(.headline)
                                 .foregroundStyle(.orange)
                         }
+                    }
+                    .padding(.horizontal)
+                    
+                    Divider()
+                    
+                    // Change Tier
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Tier")
+                            .font(.headline)
+                        
+                        HStack(spacing: 12) {
+                            ForEach(Tier.allCases, id: \.self) { t in
+                                Button {
+                                    guard t != item.tier else { return }
+                                    item.tier = t
+                                    try? modelContext.save()
+                                    HapticManager.impact(.medium)
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Text(t.emoji)
+                                        Text(t.rawValue)
+                                            .font(.subheadline.weight(.medium))
+                                    }
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        item.tier == t
+                                            ? tierColor(t).opacity(0.25)
+                                            : Color(.secondarySystemBackground)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .stroke(item.tier == t ? tierColor(t) : .clear, lineWidth: 2)
+                                    )
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                    
+                    Divider()
+                    
+                    // Re-rank Button
+                    Button {
+                        startReRank()
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "arrow.up.arrow.down")
+                            Text("Re-rank")
+                                .fontWeight(.medium)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.orange.opacity(0.15))
+                        .foregroundStyle(.orange)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                     .padding(.horizontal)
                     
@@ -493,7 +584,58 @@ struct ItemDetailSheet: View {
             .onAppear {
                 editedReview = item.review ?? ""
             }
+            .fullScreenCover(isPresented: $showReRank) {
+                if let result = reRankSearchResult {
+                    ComparisonFlowView(newItem: result)
+                }
+            }
+            .onChange(of: showReRank) { _, isShowing in
+                if !isShowing {
+                    // Dismiss the detail sheet after re-ranking completes
+                    dismiss()
+                }
+            }
         }
+    }
+    
+    private func tierColor(_ tier: Tier) -> Color {
+        switch tier {
+        case .good: return .green
+        case .medium: return .yellow
+        case .bad: return .red
+        }
+    }
+    
+    private func startReRank() {
+        // Build a TMDBSearchResult from the ranked item
+        let result = TMDBSearchResult(
+            id: item.tmdbId,
+            title: item.mediaType == .movie ? item.title : nil,
+            name: item.mediaType == .tv ? item.title : nil,
+            overview: item.overview,
+            posterPath: item.posterPath,
+            releaseDate: item.mediaType == .movie ? item.releaseDate : nil,
+            firstAirDate: item.mediaType == .tv ? item.releaseDate : nil,
+            mediaType: item.mediaType.rawValue,
+            voteAverage: nil
+        )
+        
+        // Remove the item from rankings and shift others up
+        let deletedRank = item.rank
+        let mediaType = item.mediaType
+        modelContext.delete(item)
+        
+        let itemsToShift = allItems.filter { $0.mediaType == mediaType && $0.rank > deletedRank }
+        for shiftItem in itemsToShift {
+            shiftItem.rank -= 1
+        }
+        try? modelContext.save()
+        
+        HapticManager.impact(.medium)
+        
+        // Open comparison flow
+        reRankSearchResult = result
+        showReRank = true
     }
 }
 

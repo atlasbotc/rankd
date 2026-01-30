@@ -58,7 +58,7 @@ struct DiscoverView: View {
         NavigationStack {
             Group {
                 if isLoading {
-                    ProgressView("Loading...")
+                    discoverSkeleton
                 } else if let error = error {
                     errorView(error)
                 } else {
@@ -264,6 +264,43 @@ struct DiscoverView: View {
             if !genres.isEmpty {
                 GenreGrid(genres: genres)
             }
+        }
+    }
+    
+    // MARK: - Skeleton Loading
+    
+    private var discoverSkeleton: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 24) {
+                ForEach(0..<3, id: \.self) { sectionIndex in
+                    VStack(alignment: .leading, spacing: 12) {
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.secondary.opacity(0.15))
+                            .frame(width: 200, height: 24)
+                            .shimmer()
+                            .padding(.horizontal)
+                        
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(0..<5, id: \.self) { _ in
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(Color.secondary.opacity(0.15))
+                                            .frame(width: 120, height: 180)
+                                            .shimmer()
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(Color.secondary.opacity(0.15))
+                                            .frame(width: 100, height: 12)
+                                            .shimmer()
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
+                }
+            }
+            .padding(.vertical)
         }
     }
     
@@ -554,6 +591,7 @@ struct DiscoverSection: View {
     let title: String
     let items: [TMDBSearchResult]
     let itemStatus: (TMDBSearchResult) -> ItemStatus
+    @State private var appeared = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -568,6 +606,13 @@ struct DiscoverSection: View {
                     }
                 }
                 .padding(.horizontal)
+            }
+        }
+        .opacity(appeared ? 1 : 0)
+        .offset(y: appeared ? 0 : 12)
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.4)) {
+                appeared = true
             }
         }
     }

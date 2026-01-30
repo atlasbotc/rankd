@@ -54,6 +54,9 @@ struct ProfileView: View {
                     // Watch Journal
                     journalButton
                     
+                    // My Lists
+                    myListsButton
+                    
                     // Compare Button
                     compareButton
                     
@@ -322,6 +325,40 @@ struct ProfileView: View {
         .padding(.horizontal)
     }
     
+    // MARK: - My Lists Button
+    
+    private var myListsButton: some View {
+        NavigationLink {
+            ListsView()
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "list.bullet.rectangle.portrait.fill")
+                    .font(.title2)
+                    .foregroundStyle(.orange)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("My Lists")
+                        .font(.headline)
+                    Text("Create and curate themed collections")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.secondarySystemBackground))
+            )
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal)
+    }
+    
     // MARK: - Compare Button
     
     private var compareButton: some View {
@@ -480,6 +517,11 @@ private struct StatCard: View {
     let label: String
     let icon: String
     let color: Color
+    @State private var displayedValue: Int = 0
+    
+    private var numericValue: Int? {
+        Int(value)
+    }
     
     var body: some View {
         VStack(spacing: 8) {
@@ -487,8 +529,21 @@ private struct StatCard: View {
                 .font(.title3)
                 .foregroundStyle(color)
             
-            Text(value)
-                .font(.title2.bold())
+            if let target = numericValue {
+                Text("\(displayedValue)")
+                    .font(.title2.bold())
+                    .onAppear {
+                        animateCount(to: target)
+                    }
+                    .onChange(of: value) { _, newValue in
+                        if let newTarget = Int(newValue) {
+                            animateCount(to: newTarget)
+                        }
+                    }
+            } else {
+                Text(value)
+                    .font(.title2.bold())
+            }
             
             Text(label)
                 .font(.caption)
@@ -500,6 +555,24 @@ private struct StatCard: View {
             RoundedRectangle(cornerRadius: 14)
                 .fill(Color(.secondarySystemBackground))
         )
+    }
+    
+    private func animateCount(to target: Int) {
+        guard target > 0 else {
+            displayedValue = 0
+            return
+        }
+        
+        let steps = min(target, 20)
+        let interval = 0.4 / Double(steps)
+        
+        for step in 0...steps {
+            DispatchQueue.main.asyncAfter(deadline: .now() + interval * Double(step)) {
+                withAnimation(.easeOut(duration: 0.05)) {
+                    displayedValue = Int(Double(target) * Double(step) / Double(steps))
+                }
+            }
+        }
     }
 }
 
@@ -545,5 +618,5 @@ private struct TierBar: View {
 
 #Preview {
     ProfileView()
-        .modelContainer(for: [RankedItem.self, WatchlistItem.self], inMemory: true)
+        .modelContainer(for: [RankedItem.self, WatchlistItem.self, CustomList.self, CustomListItem.self], inMemory: true)
 }
