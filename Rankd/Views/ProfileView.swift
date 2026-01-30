@@ -21,6 +21,7 @@ struct ProfileView: View {
     @State private var showCreateListSheet = false
     @State private var showResetConfirmation = false
     @State private var showAbout = false
+    @State private var showWhatsNew = false
     @State private var showExportSheet = false
     @State private var exportFileURL: URL?
     @State private var showExportShareSheet = false
@@ -205,6 +206,9 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $showLetterboxdImport) {
                 LetterboxdImportView()
+            }
+            .sheet(isPresented: $showWhatsNew) {
+                WhatsNewView()
             }
             .fullScreenCover(isPresented: $showCompareView) {
                 NavigationStack {
@@ -757,6 +761,18 @@ struct ProfileView: View {
                         icon: "square.and.arrow.down.fill",
                         title: "Import from Letterboxd",
                         subtitle: "Bring in your ratings and watched films"
+                    )
+                }
+                .buttonStyle(RankdPressStyle())
+                
+                // What's New
+                Button {
+                    showWhatsNew = true
+                } label: {
+                    settingsRowContent(
+                        icon: "sparkles",
+                        title: "What's New",
+                        subtitle: "See the latest features"
                     )
                 }
                 .buttonStyle(RankdPressStyle())

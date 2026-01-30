@@ -32,6 +32,8 @@
 		A1000001234567890000200 /* LetterboxdImporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000210 /* LetterboxdImporter.swift */; };
 		A1000001234567890000201 /* TMDBMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000211 /* TMDBMatcher.swift */; };
 		A1000001234567890000202 /* LetterboxdImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000212 /* LetterboxdImportView.swift */; };
+		A10000WHNW00000000000R /* WhatsNewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewView.swift; sourceTree = "<group>"; };
+		A10000WHNW00000000000B /* WhatsNewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000WHNW00000000000R /* WhatsNewView.swift */; };
 		A1000001234567890000300 /* PosterCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000310 /* PosterCache.swift */; };
 		A1000001234567890000301 /* ShareCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000311 /* ShareCardView.swift */; };
 		A1000001234567890000302 /* ShareProfileSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000312 /* ShareProfileSheet.swift */; };
@@ -426,6 +428,7 @@
 				A1000001234567890000200 /* LetterboxdImporter.swift in Sources */,
 				A1000001234567890000201 /* TMDBMatcher.swift in Sources */,
 				A1000001234567890000202 /* LetterboxdImportView.swift in Sources */,
+				A10000WHNW00000000000B /* WhatsNewView.swift in Sources */,
 				A1000001234567890000300 /* PosterCache.swift in Sources */,
 				A1000001234567890000301 /* ShareCardView.swift in Sources */,
 				A1000001234567890000302 /* ShareProfileSheet.swift in Sources */,
@@ -607,6 +610,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen__UIColorName = LaunchBackground;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -636,6 +640,7 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen__UIColorName = LaunchBackground;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (

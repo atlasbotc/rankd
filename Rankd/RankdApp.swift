@@ -4,6 +4,8 @@ import SwiftData
 @main
 struct RankdApp: App {
     @State private var deepLinkTab: Int?
+    @State private var showWhatsNew = false
+    @AppStorage("lastSeenVersion") private var lastSeenVersion: String = ""
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -33,6 +35,18 @@ struct RankdApp: App {
                 }
                 .onOpenURL { url in
                     handleDeepLink(url)
+                }
+                .onAppear {
+                    let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+                    if lastSeenVersion != currentVersion {
+                        showWhatsNew = true
+                    }
+                }
+                .sheet(isPresented: $showWhatsNew, onDismiss: {
+                    let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+                    lastSeenVersion = currentVersion
+                }) {
+                    WhatsNewView()
                 }
         }
         .modelContainer(sharedModelContainer)
