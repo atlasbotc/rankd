@@ -21,6 +21,9 @@ struct ProfileView: View {
     @State private var showCreateListSheet = false
     @State private var showResetConfirmation = false
     @State private var showAbout = false
+    @State private var showExportSheet = false
+    @State private var exportFileURL: URL?
+    @State private var showExportShareSheet = false
     @State private var suggestedListToCreate: SuggestedList?
     
     private var movieItems: [RankedItem] {
@@ -227,6 +230,12 @@ struct ProfileView: View {
                 }
             } message: {
                 Text("This will permanently delete all your rankings, watchlist, and lists. This cannot be undone.")
+            }
+            .sheet(isPresented: $showExportSheet) {
+                ExportOptionsSheet(
+                    rankedItems: Array(rankedItems),
+                    watchlistItems: Array(watchlistItems)
+                )
             }
         }
     }
@@ -728,6 +737,18 @@ struct ProfileView: View {
                 // Notifications toggle
                 notificationToggleRow
                 
+                // Export Data
+                Button {
+                    showExportSheet = true
+                } label: {
+                    settingsRowContent(
+                        icon: "square.and.arrow.up.fill",
+                        title: "Export Data",
+                        subtitle: "Save your rankings & watchlist as CSV or JSON"
+                    )
+                }
+                .buttonStyle(RankdPressStyle())
+                
                 // Import from Letterboxd
                 Button {
                     showLetterboxdImport = true
@@ -1213,6 +1234,139 @@ private struct TierBar: View {
                 .frame(width: 32, alignment: .trailing)
         }
     }
+}
+
+// MARK: - Export Options Sheet
+
+private struct ExportOptionsSheet: View {
+    let rankedItems: [RankedItem]
+    let watchlistItems: [WatchlistItem]
+    
+    @Environment(\.dismiss) private var dismiss
+    @State private var exportFileURL: URL?
+    @State private var showShareSheet = false
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: RankdSpacing.md) {
+                VStack(spacing: RankdSpacing.xs) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(RankdTypography.displayMedium)
+                        .foregroundStyle(RankdColors.brand)
+                    
+                    Text("Export Data")
+                        .font(RankdTypography.headingLarge)
+                        .foregroundStyle(RankdColors.textPrimary)
+                    
+                    Text("Save your data to share or back up")
+                        .font(RankdTypography.bodySmall)
+                        .foregroundStyle(RankdColors.textTertiary)
+                }
+                .padding(.top, RankdSpacing.lg)
+                
+                VStack(spacing: 1) {
+                    exportOptionRow(
+                        icon: "list.number",
+                        title: "Export Rankings",
+                        subtitle: "\(rankedItems.count) items · CSV",
+                        disabled: rankedItems.isEmpty
+                    ) {
+                        let url = ExportService.exportRankingsCSV(items: rankedItems)
+                        exportFileURL = url
+                        showShareSheet = true
+                    }
+                    
+                    exportOptionRow(
+                        icon: "bookmark",
+                        title: "Export Watchlist",
+                        subtitle: "\(watchlistItems.count) items · CSV",
+                        disabled: watchlistItems.isEmpty
+                    ) {
+                        let url = ExportService.exportWatchlistCSV(items: watchlistItems)
+                        exportFileURL = url
+                        showShareSheet = true
+                    }
+                    
+                    exportOptionRow(
+                        icon: "doc.text",
+                        title: "Export Everything",
+                        subtitle: "\(rankedItems.count + watchlistItems.count) items · JSON",
+                        disabled: rankedItems.isEmpty && watchlistItems.isEmpty
+                    ) {
+                        let url = ExportService.exportAllJSON(ranked: rankedItems, watchlist: watchlistItems)
+                        exportFileURL = url
+                        showShareSheet = true
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: RankdRadius.lg))
+                .padding(.horizontal, RankdSpacing.md)
+                
+                Spacer()
+            }
+            .background(RankdColors.background)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .foregroundStyle(RankdColors.brand)
+                }
+            }
+            .sheet(isPresented: $showShareSheet) {
+                if let url = exportFileURL {
+                    ShareSheet(activityItems: [url])
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+    
+    private func exportOptionRow(
+        icon: String,
+        title: String,
+        subtitle: String,
+        disabled: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: RankdSpacing.sm) {
+                Image(systemName: icon)
+                    .font(RankdTypography.headingSmall)
+                    .foregroundStyle(disabled ? RankdColors.textQuaternary : RankdColors.brand)
+                    .frame(width: 32)
+                
+                VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
+                    Text(title)
+                        .font(RankdTypography.headingSmall)
+                        .foregroundStyle(disabled ? RankdColors.textTertiary : RankdColors.textPrimary)
+                    Text(subtitle)
+                        .font(RankdTypography.bodySmall)
+                        .foregroundStyle(RankdColors.textTertiary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(RankdTypography.caption)
+                    .foregroundStyle(RankdColors.textQuaternary)
+            }
+            .padding(RankdSpacing.md)
+            .background(RankdColors.surfacePrimary)
+        }
+        .buttonStyle(RankdPressStyle())
+        .disabled(disabled)
+    }
+}
+
+// MARK: - Share Sheet (UIActivityViewController)
+
+private struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+    
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 #Preview {
