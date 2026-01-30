@@ -1,0 +1,16 @@
+import Foundation
+
+// MARK: - App Configuration
+// Copy this file as Config.swift and fill in your API key.
+// Config.swift is gitignored to protect secrets.
+
+enum Config {
+    /// TMDB API key — get yours at https://www.themoviedb.org/settings/api
+    static let tmdbApiKey = "YOUR_TMDB_API_KEY_HERE"
+    
+    /// TMDB API base URL
+    static let tmdbBaseURL = "https://api.themoviedb.org/3"
+    
+    /// TMDB image CDN base URL
+    static let tmdbImageBaseURL = "https://image.tmdb.org/t/p"
+}
