@@ -203,7 +203,7 @@ actor TMDBService {
     // MARK: - Detail Endpoints
     
     func getMovieDetails(id: Int) async throws -> TMDBMovieDetail {
-        let urlString = "\(Config.tmdbBaseURL)/movie/\(id)?api_key=\(Config.tmdbApiKey)&append_to_response=credits"
+        let urlString = "\(Config.tmdbBaseURL)/movie/\(id)?api_key=\(Config.tmdbApiKey)&append_to_response=credits,videos,watch/providers,recommendations"
         guard let url = URL(string: urlString) else { throw TMDBError.invalidURL }
         
         let (data, response) = try await URLSession.shared.data(from: url)
@@ -215,7 +215,7 @@ actor TMDBService {
     }
     
     func getTVDetails(id: Int) async throws -> TMDBTVDetail {
-        let urlString = "\(Config.tmdbBaseURL)/tv/\(id)?api_key=\(Config.tmdbApiKey)&append_to_response=credits"
+        let urlString = "\(Config.tmdbBaseURL)/tv/\(id)?api_key=\(Config.tmdbApiKey)&append_to_response=credits,videos,watch/providers,recommendations"
         guard let url = URL(string: urlString) else { throw TMDBError.invalidURL }
         
         let (data, response) = try await URLSession.shared.data(from: url)

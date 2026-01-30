@@ -24,7 +24,7 @@ class RankingViewModel {
         
         searchTask = Task {
             do {
-                try await Task.sleep(nanoseconds: 300_000_000) // Debounce 300ms
+                try await Task.sleep(nanoseconds: 400_000_000) // Debounce 400ms
                 
                 guard !Task.isCancelled else { return }
                 

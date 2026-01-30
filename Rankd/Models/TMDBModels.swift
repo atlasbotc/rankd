@@ -107,18 +107,24 @@ struct TMDBMovieDetail: Codable {
     let voteCount: Int?
     let genres: [TMDBGenre]
     let credits: TMDBCredits?
+    let videos: TMDBVideosResponse?
+    let recommendations: TMDBRecommendationsResponse?
     let tagline: String?
     let status: String?
     let budget: Int?
     let revenue: Int?
     
+    // watch/providers key has a slash — decoded manually
+    let watchProviders: TMDBWatchProvidersWrapper?
+    
     enum CodingKeys: String, CodingKey {
-        case id, title, overview, runtime, genres, credits, tagline, status, budget, revenue
+        case id, title, overview, runtime, genres, credits, videos, recommendations, tagline, status, budget, revenue
         case posterPath = "poster_path"
         case backdropPath = "backdrop_path"
         case releaseDate = "release_date"
         case voteAverage = "vote_average"
         case voteCount = "vote_count"
+        case watchProviders = "watch/providers"
     }
     
     var year: String? {
@@ -149,6 +155,24 @@ struct TMDBMovieDetail: Codable {
     var director: TMDBCrewMember? {
         credits?.crew.first { $0.job == "Director" }
     }
+    
+    var trailerURL: URL? {
+        videos?.results.first(where: { $0.isYouTubeTrailer })?.youtubeURL
+            ?? videos?.results.first(where: { $0.site == "YouTube" })?.youtubeURL
+    }
+    
+    var usStreamingProviders: [TMDBWatchProvider]? {
+        watchProviders?.results["US"]?.flatrate
+    }
+    
+    var usWatchLink: URL? {
+        guard let link = watchProviders?.results["US"]?.link else { return nil }
+        return URL(string: link)
+    }
+    
+    var recommendedTitles: [TMDBSearchResult] {
+        recommendations?.results ?? []
+    }
 }
 
 // MARK: - TV Detail
@@ -164,6 +188,8 @@ struct TMDBTVDetail: Codable {
     let voteCount: Int?
     let genres: [TMDBGenre]
     let credits: TMDBCredits?
+    let videos: TMDBVideosResponse?
+    let recommendations: TMDBRecommendationsResponse?
     let tagline: String?
     let status: String?
     let numberOfSeasons: Int?
@@ -171,8 +197,11 @@ struct TMDBTVDetail: Codable {
     let episodeRunTime: [Int]?
     let createdBy: [TMDBCreator]?
     
+    // watch/providers key has a slash — decoded manually
+    let watchProviders: TMDBWatchProvidersWrapper?
+    
     enum CodingKeys: String, CodingKey {
-        case id, name, overview, genres, credits, tagline, status
+        case id, name, overview, genres, credits, videos, recommendations, tagline, status
         case posterPath = "poster_path"
         case backdropPath = "backdrop_path"
         case firstAirDate = "first_air_date"
@@ -183,6 +212,7 @@ struct TMDBTVDetail: Codable {
         case numberOfEpisodes = "number_of_episodes"
         case episodeRunTime = "episode_run_time"
         case createdBy = "created_by"
+        case watchProviders = "watch/providers"
     }
     
     var year: String? {
@@ -214,6 +244,24 @@ struct TMDBTVDetail: Codable {
     var episodeRuntimeFormatted: String? {
         guard let runtimes = episodeRunTime, let avg = runtimes.first, avg > 0 else { return nil }
         return "\(avg)m per episode"
+    }
+    
+    var trailerURL: URL? {
+        videos?.results.first(where: { $0.isYouTubeTrailer })?.youtubeURL
+            ?? videos?.results.first(where: { $0.site == "YouTube" })?.youtubeURL
+    }
+    
+    var usStreamingProviders: [TMDBWatchProvider]? {
+        watchProviders?.results["US"]?.flatrate
+    }
+    
+    var usWatchLink: URL? {
+        guard let link = watchProviders?.results["US"]?.link else { return nil }
+        return URL(string: link)
+    }
+    
+    var recommendedTitles: [TMDBSearchResult] {
+        recommendations?.results ?? []
     }
 }
 
@@ -268,4 +316,64 @@ struct TMDBCreator: Codable, Identifiable {
         case id, name
         case profilePath = "profile_path"
     }
+}
+
+// MARK: - Videos
+struct TMDBVideosResponse: Codable {
+    let results: [TMDBVideo]
+}
+
+struct TMDBVideo: Codable, Identifiable {
+    let id: String
+    let key: String
+    let name: String
+    let site: String
+    let type: String
+    
+    var isYouTubeTrailer: Bool {
+        site == "YouTube" && type == "Trailer"
+    }
+    
+    var youtubeURL: URL? {
+        guard site == "YouTube" else { return nil }
+        return URL(string: "https://www.youtube.com/watch?v=\(key)")
+    }
+}
+
+// MARK: - Watch Providers
+struct TMDBWatchProvidersWrapper: Codable {
+    let results: [String: TMDBWatchProviderRegion]
+}
+
+struct TMDBWatchProviderRegion: Codable {
+    let link: String?
+    let flatrate: [TMDBWatchProvider]?
+    let rent: [TMDBWatchProvider]?
+    let buy: [TMDBWatchProvider]?
+}
+
+struct TMDBWatchProvider: Codable, Identifiable {
+    let providerId: Int
+    let providerName: String
+    let logoPath: String?
+    let displayPriority: Int?
+    
+    var id: Int { providerId }
+    
+    enum CodingKeys: String, CodingKey {
+        case providerId = "provider_id"
+        case providerName = "provider_name"
+        case logoPath = "logo_path"
+        case displayPriority = "display_priority"
+    }
+    
+    var logoURL: URL? {
+        guard let path = logoPath else { return nil }
+        return URL(string: "\(Config.tmdbImageBaseURL)/w92\(path)")
+    }
+}
+
+// MARK: - Recommendations Response (embedded in detail append_to_response)
+struct TMDBRecommendationsResponse: Codable {
+    let results: [TMDBSearchResult]
 }
