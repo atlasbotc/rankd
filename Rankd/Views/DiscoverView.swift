@@ -19,6 +19,7 @@ struct DiscoverView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var rankedItems: [RankedItem]
     @Query private var watchlistItems: [WatchlistItem]
+    @Query(sort: \CustomList.dateModified, order: .reverse) private var customLists: [CustomList]
     
     // Generic sections
     @State private var trending: [TMDBSearchResult] = []
@@ -71,6 +72,7 @@ struct DiscoverView: View {
             .navigationTitle("Discover")
             .refreshable {
                 await loadAllContent()
+                HapticManager.impact(.light)
             }
             .task {
                 await loadAllContent()
@@ -96,6 +98,12 @@ struct DiscoverView: View {
                         .padding(.top, RankdSpacing.lg)
                 }
                 
+                // MARK: Your Lists
+                if !customLists.isEmpty {
+                    discoverListsSection
+                        .padding(.top, RankdSpacing.lg)
+                }
+                
                 // MARK: Generic Sections
                 genericContent
                     .padding(.top, RankdSpacing.lg)
@@ -103,6 +111,39 @@ struct DiscoverView: View {
             .padding(.bottom, RankdSpacing.xl)
         }
         .scrollIndicators(.hidden)
+    }
+    
+    // MARK: - Your Lists on Discover
+    
+    private var discoverListsSection: some View {
+        VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+            HStack {
+                Text("Your Lists")
+                    .font(RankdTypography.headingMedium)
+                    .foregroundStyle(RankdColors.textPrimary)
+                Spacer()
+                NavigationLink {
+                    ListsView()
+                } label: {
+                    Text("See All")
+                        .font(RankdTypography.labelMedium)
+                        .foregroundStyle(RankdColors.brand)
+                }
+            }
+            .padding(.horizontal, RankdSpacing.md)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: RankdSpacing.sm) {
+                    ForEach(customLists.prefix(6)) { list in
+                        NavigationLink(destination: ListDetailView(list: list)) {
+                            ListPreviewCard(list: list)
+                        }
+                        .buttonStyle(RankdPressStyle())
+                    }
+                }
+                .padding(.horizontal, RankdSpacing.md)
+            }
+        }
     }
     
     // MARK: - Hero Section
@@ -188,7 +229,7 @@ struct DiscoverView: View {
             }
             .frame(height: UIScreen.main.bounds.height * 0.55)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(RankdPressStyle())
     }
     
     // MARK: - Welcome Header
@@ -746,7 +787,7 @@ struct DiscoverCard: View {
                 }
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(RankdPressStyle())
     }
 }
 
@@ -1010,7 +1051,7 @@ struct GenreDetailView: View {
             }
             .frame(height: 320)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(RankdPressStyle())
     }
     
     // MARK: - Grid Section
@@ -1223,7 +1264,7 @@ struct GenreGridCard: View {
             .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
             .shadow(color: RankdShadow.card, radius: RankdShadow.cardRadius / 2, y: RankdShadow.cardY / 2)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(RankdPressStyle())
     }
 }
 
