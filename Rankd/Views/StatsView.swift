@@ -10,6 +10,9 @@ struct StatsView: View {
     @State private var backfillProgress: Int = 0
     @State private var animateCharts = false
     
+    @AppStorage("cachedArchetype") private var cachedArchetype: String = ""
+    @State private var personalityResult: TastePersonality.Result?
+    
     // MARK: - Computed Properties
     
     private var movieItems: [RankedItem] {
@@ -39,6 +42,7 @@ struct StatsView: View {
                     emptyState
                 } else {
                     summaryHeader
+                    tasteDNASection
                     genreDistribution
                     decadeBreakdown
                     tierAnalysis
@@ -158,6 +162,102 @@ struct StatsView: View {
                 .fill(RankdColors.surfacePrimary)
         )
         .padding(.horizontal, RankdSpacing.md)
+    }
+    
+    // MARK: - Taste DNA
+    
+    private var currentDNA: TastePersonality.Result {
+        if let cached = personalityResult { return cached }
+        return TastePersonality.analyze(items: Array(rankedItems))
+    }
+    
+    private var tasteDNASection: some View {
+        StatsSection(title: "Taste DNA", icon: "dna") {
+            let dna = currentDNA.dna
+            
+            VStack(spacing: RankdSpacing.md) {
+                // Top 3 genres
+                if !dna.topGenres.isEmpty {
+                    VStack(alignment: .leading, spacing: RankdSpacing.xs) {
+                        Text("Top Genres")
+                            .font(RankdTypography.labelMedium)
+                            .foregroundStyle(RankdColors.textTertiary)
+                        
+                        ForEach(Array(dna.topGenres.enumerated()), id: \.offset) { index, genre in
+                            HStack(spacing: RankdSpacing.xs) {
+                                Text("\(index + 1)")
+                                    .font(RankdTypography.labelSmall)
+                                    .foregroundStyle(RankdColors.textTertiary)
+                                    .frame(width: 16)
+                                
+                                Text(genre.name)
+                                    .font(RankdTypography.bodyMedium)
+                                    .foregroundStyle(RankdColors.textPrimary)
+                                
+                                Spacer()
+                                
+                                Text("\(genre.percentage)%")
+                                    .font(RankdTypography.labelMedium)
+                                    .foregroundStyle(RankdColors.brand)
+                            }
+                        }
+                    }
+                    
+                    Rectangle()
+                        .fill(RankdColors.divider)
+                        .frame(height: 1)
+                }
+                
+                // Stats grid
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: RankdSpacing.sm) {
+                    // Average score
+                    DNAStatCell(
+                        label: "Avg Score",
+                        value: String(format: "%.1f", dna.averageScore),
+                        detail: "/ 3.0",
+                        icon: "star.fill"
+                    )
+                    
+                    // Pickiness
+                    DNAStatCell(
+                        label: "Pickiness",
+                        value: "\(dna.pickinessPercent)%",
+                        detail: "red tier",
+                        icon: "hand.thumbsdown"
+                    )
+                    
+                    // Favorite decade
+                    if let decade = dna.favoriteDecade {
+                        DNAStatCell(
+                            label: "Fav Decade",
+                            value: decade,
+                            detail: "",
+                            icon: "calendar"
+                        )
+                    }
+                    
+                    // Movie vs TV
+                    DNAStatCell(
+                        label: "Ratio",
+                        value: "\(dna.movieCount):\(dna.tvCount)",
+                        detail: "movie:tv",
+                        icon: "film"
+                    )
+                }
+            }
+        }
+        .onAppear {
+            recalculatePersonality()
+        }
+        .onChange(of: rankedItems.count) { _, _ in
+            recalculatePersonality()
+        }
+    }
+    
+    private func recalculatePersonality() {
+        let result = TastePersonality.analyze(items: Array(rankedItems))
+        personalityResult = result
+        cachedArchetype = result.archetype.rawValue
     }
     
     // MARK: - B. Genre Distribution
@@ -894,6 +994,41 @@ private struct InsightCard: View {
         .background(
             RoundedRectangle(cornerRadius: RankdRadius.md)
                 .fill(RankdColors.brandSubtle)
+        )
+    }
+}
+
+private struct DNAStatCell: View {
+    let label: String
+    let value: String
+    let detail: String
+    let icon: String
+    
+    var body: some View {
+        VStack(spacing: RankdSpacing.xxs) {
+            Image(systemName: icon)
+                .font(RankdTypography.bodySmall)
+                .foregroundStyle(RankdColors.brand)
+            
+            Text(value)
+                .font(RankdTypography.headingMedium)
+                .foregroundStyle(RankdColors.textPrimary)
+            
+            if !detail.isEmpty {
+                Text(detail)
+                    .font(RankdTypography.caption)
+                    .foregroundStyle(RankdColors.textTertiary)
+            }
+            
+            Text(label)
+                .font(RankdTypography.labelSmall)
+                .foregroundStyle(RankdColors.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, RankdSpacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: RankdRadius.md)
+                .fill(RankdColors.surfaceSecondary)
         )
     }
 }

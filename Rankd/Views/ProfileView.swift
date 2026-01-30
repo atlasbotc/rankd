@@ -12,6 +12,9 @@ struct ProfileView: View {
     @State private var showCreateListSheet = false
     @State private var suggestedListToCreate: SuggestedList?
     
+    @AppStorage("cachedArchetype") private var cachedArchetype: String = ""
+    @State private var personalityResult: TastePersonality.Result?
+    
     private var movieItems: [RankedItem] {
         rankedItems.filter { $0.mediaType == .movie }.sorted { $0.rank < $1.rank }
     }
@@ -44,7 +47,7 @@ struct ProfileView: View {
                     statsGrid
                     
                     if !rankedItems.isEmpty {
-                        tasteSection
+                        personalityCard
                     }
                     
                     // My Lists section
@@ -166,21 +169,64 @@ struct ProfileView: View {
         .padding(.horizontal, RankdSpacing.md)
     }
     
-    // MARK: - Taste Personality
+    // MARK: - Taste Personality Card
     
-    private var tasteSection: some View {
-        VStack(alignment: .leading, spacing: RankdSpacing.xs) {
-            Text("Taste Profile")
-                .font(RankdTypography.labelMedium)
-                .foregroundStyle(RankdColors.textTertiary)
+    private var currentPersonality: TastePersonality.Result {
+        if let cached = personalityResult { return cached }
+        return TastePersonality.analyze(items: Array(rankedItems))
+    }
+    
+    private var tastePersonality: String {
+        currentPersonality.archetype.rawValue
+    }
+    
+    private var personalityCard: some View {
+        VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+            // Header row with icon
+            HStack(spacing: RankdSpacing.xs) {
+                Image(systemName: currentPersonality.archetype.icon)
+                    .font(RankdTypography.headingLarge)
+                    .foregroundStyle(RankdColors.brand)
+                
+                VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
+                    Text("Taste Profile")
+                        .font(RankdTypography.labelMedium)
+                        .foregroundStyle(RankdColors.textTertiary)
+                    
+                    Text(currentPersonality.archetype.rawValue)
+                        .font(RankdTypography.headingMedium)
+                        .foregroundStyle(RankdColors.textPrimary)
+                }
+                
+                Spacer()
+            }
             
-            Text(tastePersonality)
-                .font(RankdTypography.headingMedium)
-                .foregroundStyle(RankdColors.brand)
-            
-            Text(tasteDescription)
+            // Description
+            Text(currentPersonality.archetype.description)
                 .font(RankdTypography.bodySmall)
                 .foregroundStyle(RankdColors.textSecondary)
+                .lineSpacing(3)
+            
+            // Data points
+            if !currentPersonality.dataPoints.isEmpty {
+                Rectangle()
+                    .fill(RankdColors.divider)
+                    .frame(height: 1)
+                
+                VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
+                    ForEach(currentPersonality.dataPoints, id: \.self) { point in
+                        HStack(spacing: RankdSpacing.xs) {
+                            Circle()
+                                .fill(RankdColors.brand)
+                                .frame(width: 5, height: 5)
+                            
+                            Text(point)
+                                .font(RankdTypography.labelMedium)
+                                .foregroundStyle(RankdColors.textSecondary)
+                        }
+                    }
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(RankdSpacing.md)
@@ -189,48 +235,18 @@ struct ProfileView: View {
                 .fill(RankdColors.surfacePrimary)
         )
         .padding(.horizontal, RankdSpacing.md)
-    }
-    
-    private var tastePersonality: String {
-        let total = rankedItems.count
-        let movies = movieItems.count
-        let tv = tvItems.count
-        
-        if total < 5 { return "Getting Started" }
-        
-        if movies > 0 && tv == 0 { return "Film Purist" }
-        if tv > 0 && movies == 0 { return "Binge Watcher" }
-        if Double(movies) / Double(total) > 0.75 { return "Movie Buff" }
-        if Double(tv) / Double(total) > 0.75 { return "Series Devotee" }
-        
-        let goodCount = rankedItems.filter { $0.tier == .good }.count
-        let badCount = rankedItems.filter { $0.tier == .bad }.count
-        
-        if Double(goodCount) / Double(total) > 0.7 { return "The Optimist" }
-        if Double(badCount) / Double(total) > 0.4 { return "Tough Critic" }
-        
-        return "Well-Rounded Viewer"
-    }
-    
-    private var tasteDescription: String {
-        switch tastePersonality {
-        case "Getting Started":
-            return "Rank more titles to unlock your taste profile."
-        case "Film Purist":
-            return "You're all about the big screen. Cinema is your thing."
-        case "Binge Watcher":
-            return "Episodes over end credits. You love a good series."
-        case "Movie Buff":
-            return "Mostly movies with the occasional show. Classic taste."
-        case "Series Devotee":
-            return "You prefer the long game. Character development is key."
-        case "The Optimist":
-            return "You tend to love what you watch. Glass half full."
-        case "Tough Critic":
-            return "High standards. Not everything makes the cut."
-        default:
-            return "A healthy mix of movies and TV. You appreciate it all."
+        .onAppear {
+            recalculatePersonality()
         }
+        .onChange(of: rankedItems.count) { _, _ in
+            recalculatePersonality()
+        }
+    }
+    
+    private func recalculatePersonality() {
+        let result = TastePersonality.analyze(items: Array(rankedItems))
+        personalityResult = result
+        cachedArchetype = result.archetype.rawValue
     }
     
     // MARK: - Navigation Cards
