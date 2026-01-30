@@ -12,6 +12,7 @@ struct ScoreBadge: View {
     var animated: Bool = true
     
     @State private var isVisible = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     private var backgroundColor: Color {
         RankdColors.tierColor(tier)
@@ -25,6 +26,10 @@ struct ScoreBadge: View {
         }
     }
     
+    private var shouldAnimate: Bool {
+        animated && !reduceMotion
+    }
+    
     var body: some View {
         Text(String(format: "%.1f", score))
             .font(RankdTypography.labelSmall)
@@ -35,21 +40,22 @@ struct ScoreBadge: View {
                 Capsule()
                     .fill(backgroundColor)
             )
-            .scaleEffect(animated ? (isVisible ? 1.0 : 0.5) : 1.0)
-            .opacity(animated ? (isVisible ? 1.0 : 0.0) : 1.0)
+            .scaleEffect(shouldAnimate ? (isVisible ? 1.0 : 0.5) : 1.0)
+            .opacity(shouldAnimate ? (isVisible ? 1.0 : 0.0) : 1.0)
             .onAppear {
-                guard animated else { return }
+                guard shouldAnimate else { return }
                 withAnimation(RankdMotion.slow) {
                     isVisible = true
                 }
             }
             .onChange(of: score) { _, _ in
-                guard animated else { return }
+                guard shouldAnimate else { return }
                 isVisible = false
                 withAnimation(RankdMotion.slow) {
                     isVisible = true
                 }
             }
+            .accessibilityLabel("Score \(String(format: "%.1f", score)) out of 10")
     }
 }
 

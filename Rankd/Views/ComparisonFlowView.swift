@@ -30,6 +30,9 @@ struct ComparisonFlowView: View {
     @State private var celebrationScale: CGFloat = 0.5
     @State private var celebrationOpacity: Double = 0
     
+    // Accessibility
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    
     private enum ChoiceSide {
         case left, right
     }
@@ -276,8 +279,8 @@ struct ComparisonFlowView: View {
                 ) {
                     animateChoice(side: .left, newIsBetter: true)
                 }
-                .scaleEffect(chosenSide == .left ? 1.05 : (chosenSide == .right ? 0.97 : 1.0))
-                .opacity(chosenSide == .right ? 0.3 : 1.0)
+                .scaleEffect(reduceMotion ? 1.0 : (chosenSide == .left ? 1.05 : (chosenSide == .right ? 0.97 : 1.0)))
+                .opacity(reduceMotion ? 1.0 : (chosenSide == .right ? 0.3 : 1.0))
                 
                 // Existing item (right)
                 ComparisonCard(
@@ -289,10 +292,10 @@ struct ComparisonFlowView: View {
                 ) {
                     animateChoice(side: .right, newIsBetter: false)
                 }
-                .scaleEffect(chosenSide == .right ? 1.05 : (chosenSide == .left ? 0.97 : 1.0))
-                .opacity(chosenSide == .left ? 0.3 : 1.0)
+                .scaleEffect(reduceMotion ? 1.0 : (chosenSide == .right ? 1.05 : (chosenSide == .left ? 0.97 : 1.0)))
+                .opacity(reduceMotion ? 1.0 : (chosenSide == .left ? 0.3 : 1.0))
             }
-            .animation(RankdMotion.fast, value: chosenSide)
+            .animation(reduceMotion ? nil : RankdMotion.fast, value: chosenSide)
             .padding(.horizontal, RankdSpacing.md)
             
             Spacer()
@@ -427,6 +430,13 @@ struct ComparisonFlowView: View {
         
         // Haptic on choice — medium impact for satisfying feedback
         HapticManager.impact(.medium)
+        
+        if reduceMotion {
+            // Skip animation, proceed immediately
+            handleChoice(newIsBetter: newIsBetter)
+            return
+        }
+        
         chosenSide = side
         
         // Fast transition: ~200ms for winner scale + loser fade, then next pair
@@ -482,6 +492,15 @@ struct ComparisonFlowView: View {
     
     private func showCompletionCelebration() {
         HapticManager.notification(.success)
+        
+        if reduceMotion {
+            // Skip celebration, go straight to review
+            showCelebration = false
+            showReviewStep = true
+            celebrationScale = 1.0
+            celebrationOpacity = 1.0
+            return
+        }
         
         withAnimation(RankdMotion.fast) {
             showCelebration = true
@@ -561,6 +580,9 @@ struct ComparisonFlowView: View {
             }
         }
         
+        // Update widget data with latest rankings
+        updateWidgetData()
+        
         // Show saved animation then dismiss
         withAnimation(RankdMotion.normal) {
             showSavedCheck = true
@@ -568,6 +590,26 @@ struct ComparisonFlowView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             dismiss()
         }
+    }
+    
+    /// Push top ranked items to shared UserDefaults for widget display.
+    private func updateWidgetData() {
+        let allItems = (allRankedItems + []).sorted { $0.rank < $1.rank }
+        let top10 = Array(allItems.prefix(10))
+        
+        let widgetItems = top10.map { item in
+            let score = RankedItem.calculateScore(for: item, allItems: allItems)
+            return WidgetDataManager.WidgetItem(
+                id: item.id.uuidString,
+                title: item.title,
+                score: score,
+                tier: item.tier.rawValue,
+                posterURL: item.posterURL?.absoluteString,
+                rank: item.rank
+            )
+        }
+        
+        WidgetDataManager.updateSharedData(items: widgetItems)
     }
 }
 
@@ -593,6 +635,8 @@ struct ComparisonCard: View {
     let isHighlighted: Bool
     var keyboardHint: String? = nil
     let action: () -> Void
+    
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     var body: some View {
         Button(action: action) {
@@ -656,8 +700,11 @@ struct ComparisonCard: View {
             }
         }
         .buttonStyle(RankdPressStyle())
-        .scaleEffect(isHighlighted ? 1.02 : 1.0)
-        .animation(RankdMotion.fast, value: isHighlighted)
+        .scaleEffect(reduceMotion ? 1.0 : (isHighlighted ? 1.02 : 1.0))
+        .animation(reduceMotion ? nil : RankdMotion.fast, value: isHighlighted)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title)\(year.map { ", \($0)" } ?? ""). Tap to choose as winner")
+        .accessibilityAddTraits(.isButton)
     }
 }
 

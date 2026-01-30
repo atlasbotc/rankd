@@ -152,11 +152,32 @@ enum RankdShadow {
 
 /// Subtle scale-down on press (0.97) with easeOut spring-back.
 /// Use on tappable cards throughout the app.
+/// Respects Reduce Motion — disables scale animation when enabled.
 struct RankdPressStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
-            .animation(RankdMotion.fast, value: configuration.isPressed)
+            .scaleEffect(reduceMotion ? 1.0 : (configuration.isPressed ? 0.97 : 1.0))
+            .animation(reduceMotion ? nil : RankdMotion.fast, value: configuration.isPressed)
+    }
+}
+
+// MARK: - Accessibility Helpers
+
+/// Limits Dynamic Type scaling so layouts don't break at very large sizes.
+/// Apply to root containers (e.g., tab views, full-screen views).
+struct RankdDynamicTypeModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+    }
+}
+
+extension View {
+    /// Caps Dynamic Type to `.accessibility2` to prevent layout breakage.
+    func rankdDynamicTypeLimit() -> some View {
+        modifier(RankdDynamicTypeModifier())
     }
 }
 

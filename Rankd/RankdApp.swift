@@ -3,6 +3,8 @@ import SwiftData
 
 @main
 struct RankdApp: App {
+    @State private var deepLinkTab: Int?
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             RankedItem.self,
@@ -23,12 +25,27 @@ struct RankdApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(deepLinkTab: $deepLinkTab)
+                .rankdDynamicTypeLimit()
                 .task {
                     // Clean expired disk cache entries on launch
                     await PosterCache.shared.cleanDiskCacheIfNeeded()
                 }
+                .onOpenURL { url in
+                    handleDeepLink(url)
+                }
         }
         .modelContainer(sharedModelContainer)
+    }
+    
+    private func handleDeepLink(_ url: URL) {
+        guard url.scheme == "rankd" else { return }
+        
+        switch url.host {
+        case "rankings":
+            deepLinkTab = 1  // Rankings tab
+        default:
+            break
+        }
     }
 }

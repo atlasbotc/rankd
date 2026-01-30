@@ -526,6 +526,15 @@ struct RankedItemRow: View {
         RankedItem.calculateScore(for: item, allItems: allItems)
     }
     
+    private var accessibilityDescription: String {
+        var parts = ["Rank \(displayRank)", item.title]
+        if !allItems.isEmpty {
+            parts.append("Score \(String(format: "%.1f", score))")
+        }
+        parts.append("\(item.tier.rawValue) tier")
+        return parts.joined(separator: ", ")
+    }
+    
     var body: some View {
         HStack(spacing: RankdSpacing.sm) {
             // Rank number
@@ -565,6 +574,8 @@ struct RankedItemRow: View {
             }
         }
         .padding(.vertical, RankdSpacing.xxs)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityDescription)
     }
 }
 

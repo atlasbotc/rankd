@@ -605,6 +605,7 @@ struct DiscoverSection: View {
     let title: String
     let items: [TMDBSearchResult]
     @State private var appeared = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     var body: some View {
         VStack(alignment: .leading, spacing: RankdSpacing.sm) {
@@ -634,9 +635,13 @@ struct DiscoverSection: View {
                 .padding(.horizontal, RankdSpacing.md)
             }
         }
-        .opacity(appeared ? 1 : 0)
-        .offset(y: appeared ? 0 : 12)
+        .opacity(reduceMotion ? 1 : (appeared ? 1 : 0))
+        .offset(y: reduceMotion ? 0 : (appeared ? 0 : 12))
         .onAppear {
+            guard !reduceMotion else {
+                appeared = true
+                return
+            }
             withAnimation(RankdMotion.normal) {
                 appeared = true
             }
@@ -657,6 +662,17 @@ struct DiscoverSection: View {
 
 struct DiscoverCard: View {
     let item: TMDBSearchResult
+    
+    private var accessibilityDescription: String {
+        var parts = [item.displayTitle]
+        if let year = item.displayYear {
+            parts.append(year)
+        }
+        if let rating = item.voteAverage, rating > 0 {
+            parts.append("Rating \(String(format: "%.1f", rating))")
+        }
+        return parts.joined(separator: ", ")
+    }
     
     var body: some View {
         NavigationLink(destination: MediaDetailView(tmdbId: item.id, mediaType: item.resolvedMediaType)) {
@@ -691,6 +707,8 @@ struct DiscoverCard: View {
             }
         }
         .buttonStyle(RankdPressStyle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityDescription)
     }
 }
 
@@ -714,6 +732,7 @@ struct RatingBadge: View {
             Capsule()
                 .fill(Color.black.opacity(0.7))
         )
+        .accessibilityLabel("Rating \(String(format: "%.1f", rating)) out of 10")
     }
 }
 
