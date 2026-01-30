@@ -29,6 +29,7 @@ final class RankedItem {
     var genreIds: [Int] = []
     var genreNames: [String] = []
     var runtimeMinutes: Int = 0
+    var isFavorite: Bool = false
     
     init(
         tmdbId: Int,
