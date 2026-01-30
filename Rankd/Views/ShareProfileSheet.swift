@@ -5,7 +5,7 @@ struct ShareProfileSheet: View {
     let cardData: ShareCardData
     
     @StateObject private var generator = ShareCardGenerator()
-    @State private var selectedFormat: ShareCardFormat = .top4
+    @State private var selectedFormat: ShareCardFormat = .top4Movies
     @State private var showShareSheet = false
     @State private var savedToPhotos = false
     @Environment(\.dismiss) private var dismiss
@@ -52,16 +52,46 @@ struct ShareProfileSheet: View {
     
     // MARK: - Format Picker
     
-    private static let profileFormats: [ShareCardFormat] = [.top4, .top10]
+    private static let profileFormats: [[ShareCardFormat]] = [
+        [.top4Movies, .top4Shows],
+        [.top10Movies, .top10Shows]
+    ]
     
     private var formatPicker: some View {
-        Picker("Format", selection: $selectedFormat) {
-            ForEach(Self.profileFormats) { format in
-                Text(format.rawValue).tag(format)
+        VStack(spacing: RankdSpacing.xs) {
+            ForEach(Self.profileFormats, id: \.first) { row in
+                HStack(spacing: RankdSpacing.xs) {
+                    ForEach(row) { format in
+                        formatButton(format)
+                    }
+                }
             }
         }
-        .pickerStyle(.segmented)
         .padding(.horizontal, RankdSpacing.md)
+    }
+    
+    private func formatButton(_ format: ShareCardFormat) -> some View {
+        let isSelected = selectedFormat == format
+        return Button {
+            withAnimation(RankdMotion.normal) {
+                selectedFormat = format
+            }
+        } label: {
+            Text(format.rawValue)
+                .font(RankdTypography.labelMedium)
+                .foregroundStyle(isSelected ? RankdColors.textPrimary : RankdColors.textSecondary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: RankdRadius.sm)
+                        .fill(isSelected ? RankdColors.surfaceSecondary : Color.clear)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: RankdRadius.sm)
+                        .strokeBorder(isSelected ? RankdColors.brand : RankdColors.border, lineWidth: isSelected ? 2 : 1)
+                )
+        }
+        .buttonStyle(.plain)
     }
     
     // MARK: - Card Preview
@@ -87,7 +117,7 @@ struct ShareProfileSheet: View {
     
     private var loadingState: some View {
         VStack(spacing: RankdSpacing.md) {
-            let aspectRatio: CGFloat = selectedFormat == .top4 ? 1080.0 / 1920.0 : 1.0
+            let aspectRatio: CGFloat = selectedFormat.isTop4 ? 1080.0 / 1920.0 : 1.0
             
             RoundedRectangle(cornerRadius: RankdRadius.lg)
                 .fill(RankdColors.surfacePrimary)

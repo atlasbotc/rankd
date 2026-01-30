@@ -4,11 +4,39 @@ import UIKit
 // MARK: - Share Card Format
 
 enum ShareCardFormat: String, CaseIterable, Identifiable {
-    case top4 = "Top 4"
-    case top10 = "Top 10"
+    case top4Movies = "Top 4 Movies"
+    case top4Shows = "Top 4 Shows"
+    case top10Movies = "Top 10 Movies"
+    case top10Shows = "Top 10 Shows"
     case list = "List"
     
     var id: String { rawValue }
+    
+    var isTop4: Bool {
+        self == .top4Movies || self == .top4Shows
+    }
+    
+    var isTop10: Bool {
+        self == .top10Movies || self == .top10Shows
+    }
+    
+    var mediaFilter: MediaType? {
+        switch self {
+        case .top4Movies, .top10Movies: return .movie
+        case .top4Shows, .top10Shows: return .tv
+        case .list: return nil
+        }
+    }
+    
+    var cardTitle: String {
+        switch self {
+        case .top4Movies: return "My Top 4 Movies"
+        case .top4Shows: return "My Top 4 Shows"
+        case .top10Movies: return "My Top 10 Movies"
+        case .top10Shows: return "My Top 10 Shows"
+        case .list: return "My Rankings"
+        }
+    }
 }
 
 // MARK: - Card Data Model
@@ -27,6 +55,26 @@ struct ShareCardData {
     
     var topTenItems: [RankedItem] {
         Array(items.sorted { $0.rank < $1.rank }.prefix(10))
+    }
+    
+    func topFourItems(for mediaType: MediaType) -> [RankedItem] {
+        Array(items.filter { $0.mediaType == mediaType }.sorted { $0.rank < $1.rank }.prefix(4))
+    }
+    
+    func topTenItems(for mediaType: MediaType) -> [RankedItem] {
+        Array(items.filter { $0.mediaType == mediaType }.sorted { $0.rank < $1.rank }.prefix(10))
+    }
+    
+    func filteredItems(for format: ShareCardFormat) -> [RankedItem] {
+        guard let mediaType = format.mediaFilter else {
+            return items.sorted { $0.rank < $1.rank }
+        }
+        let filtered = items.filter { $0.mediaType == mediaType }.sorted { $0.rank < $1.rank }
+        if format.isTop4 {
+            return Array(filtered.prefix(4))
+        } else {
+            return Array(filtered.prefix(10))
+        }
     }
     
     func posterImage(for item: RankedItem) -> UIImage? {
@@ -72,6 +120,7 @@ private enum CardColors {
 
 struct Top4CardView: View {
     let data: ShareCardData
+    let format: ShareCardFormat
     
     private let cardWidth: CGFloat = 1080
     private let cardHeight: CGFloat = 1920
@@ -116,7 +165,7 @@ struct Top4CardView: View {
                 .fill(CardColors.accent)
                 .frame(width: 48, height: 4)
             
-            Text("My Top 4")
+            Text(format.cardTitle)
                 .font(.system(size: 56, weight: .bold, design: .rounded))
                 .foregroundStyle(CardColors.primaryText)
                 .tracking(1)
@@ -124,7 +173,7 @@ struct Top4CardView: View {
     }
     
     private var posterGrid: some View {
-        let items = data.topFourItems
+        let items = data.filteredItems(for: format)
         let gridSpacing: CGFloat = 24
         let posterWidth = (cardWidth - 72 * 2 - gridSpacing) / 2
         let posterHeight = posterWidth * 1.5
@@ -288,6 +337,7 @@ struct Top4CardView: View {
 
 struct Top10CardView: View {
     let data: ShareCardData
+    let format: ShareCardFormat
     
     private let cardSize: CGFloat = 1080
     
@@ -322,7 +372,7 @@ struct Top10CardView: View {
                 .fill(CardColors.accent)
                 .frame(width: 40, height: 3)
             
-            Text("My Rankings")
+            Text(format.cardTitle)
                 .font(.system(size: 44, weight: .bold, design: .rounded))
                 .foregroundStyle(CardColors.primaryText)
                 .tracking(0.5)
@@ -330,7 +380,7 @@ struct Top10CardView: View {
     }
     
     private var rankingsList: some View {
-        let items = data.topTenItems
+        let items = data.filteredItems(for: format)
         let thumbSize: CGFloat = 64
         
         return VStack(spacing: 6) {

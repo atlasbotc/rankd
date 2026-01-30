@@ -19,10 +19,10 @@ final class ShareCardGenerator: ObservableObject {
         // Pre-load all poster images needed for the format
         let items: [RankedItem]
         switch format {
-        case .top4:
-            items = data.topFourItems
-        case .top10:
-            items = data.topTenItems
+        case .top4Movies, .top4Shows:
+            items = data.filteredItems(for: format)
+        case .top10Movies, .top10Shows:
+            items = data.filteredItems(for: format)
         case .list:
             // List cards are generated separately via ListShareSheet
             return nil
@@ -43,15 +43,15 @@ final class ShareCardGenerator: ObservableObject {
         // Render the card to a UIImage
         let image: UIImage?
         switch format {
-        case .top4:
-            let cardView = Top4CardView(data: enrichedData)
+        case .top4Movies, .top4Shows:
+            let cardView = Top4CardView(data: enrichedData, format: format)
             let renderer = ImageRenderer(content: cardView)
             renderer.scale = 3.0
             renderer.proposedSize = .init(width: 1080, height: 1920)
             image = renderer.uiImage
             
-        case .top10:
-            let cardView = Top10CardView(data: enrichedData)
+        case .top10Movies, .top10Shows:
+            let cardView = Top10CardView(data: enrichedData, format: format)
             let renderer = ImageRenderer(content: cardView)
             renderer.scale = 3.0
             renderer.proposedSize = .init(width: 1080, height: 1080)
