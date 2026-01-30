@@ -722,7 +722,7 @@ struct DiscoverCard: View {
                         .fill(RankdColors.surfaceSecondary)
                         .overlay {
                             Image(systemName: item.resolvedMediaType == .movie ? "film" : "tv")
-                                .font(.title2)
+                                .font(RankdTypography.headingLarge)
                                 .foregroundStyle(RankdColors.textTertiary)
                         }
                 }

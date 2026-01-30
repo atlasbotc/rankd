@@ -268,7 +268,7 @@ private struct TopRankedCard: View {
                             .fill(RankdColors.surfaceSecondary)
                             .overlay {
                                 Image(systemName: item.mediaType == .movie ? "film" : "tv")
-                                    .font(.title)
+                                    .font(RankdTypography.headingLarge)
                                     .foregroundStyle(RankdColors.textQuaternary)
                             }
                     }

@@ -435,7 +435,7 @@ struct ComparisonCard: View {
                         .fill(RankdColors.surfaceSecondary)
                         .overlay {
                             Image(systemName: "film")
-                                .font(.title)
+                                .font(RankdTypography.headingLarge)
                                 .foregroundStyle(RankdColors.textQuaternary)
                         }
                 }

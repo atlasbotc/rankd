@@ -108,7 +108,7 @@ struct ShareProfileSheet: View {
     private func errorState(message: String) -> some View {
         VStack(spacing: RankdSpacing.sm) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.largeTitle)
+                .font(RankdTypography.displayMedium)
                 .foregroundStyle(RankdColors.textTertiary)
             Text(message)
                 .font(RankdTypography.bodyMedium)

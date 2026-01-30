@@ -49,7 +49,7 @@ struct SearchView: View {
                     Spacer()
                     VStack(spacing: RankdSpacing.sm) {
                         Image(systemName: "exclamationmark.triangle")
-                            .font(.largeTitle)
+                            .font(RankdTypography.displayMedium)
                             .foregroundStyle(RankdColors.textTertiary)
                         Text(error)
                             .font(RankdTypography.bodyMedium)
@@ -62,7 +62,7 @@ struct SearchView: View {
                     Spacer()
                     VStack(spacing: RankdSpacing.sm) {
                         Image(systemName: "film")
-                            .font(.largeTitle)
+                            .font(RankdTypography.displayMedium)
                             .foregroundStyle(RankdColors.textQuaternary)
                         Text("No results found")
                             .font(RankdTypography.bodyMedium)

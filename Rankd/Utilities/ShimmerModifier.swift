@@ -7,7 +7,7 @@ struct ShimmerModifier: ViewModifier {
         content
             .overlay(
                 LinearGradient(
-                    colors: [.clear, .white.opacity(0.25), .clear],
+                    colors: [.clear, Color.black.opacity(0.04), .clear],
                     startPoint: .leading,
                     endPoint: .trailing
                 )
