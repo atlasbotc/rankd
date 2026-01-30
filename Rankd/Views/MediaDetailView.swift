@@ -33,18 +33,22 @@ struct MediaDetailView: View {
     
     var body: some View {
         ScrollView {
-            if isLoading {
-                mediaDetailSkeleton
-            } else if let error = error {
-                errorView(error)
-            } else if mediaType == .movie, let detail = movieDetail {
-                movieContent(detail)
-            } else if mediaType == .tv, let detail = tvDetail {
-                tvContent(detail)
+            VStack(alignment: .leading, spacing: 0) {
+                if isLoading {
+                    mediaDetailSkeleton
+                } else if let error = error {
+                    errorView(error)
+                } else if mediaType == .movie, let detail = movieDetail {
+                    movieContent(detail)
+                } else if mediaType == .tv, let detail = tvDetail {
+                    tvContent(detail)
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(RankdColors.background)
         .scrollIndicators(.hidden)
+        .clipped()
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
         .task {
@@ -264,6 +268,7 @@ struct MediaDetailView: View {
                         .fill(RankdColors.surfacePrimary)
                         .shimmer()
                 }
+                .frame(maxWidth: .infinity)
                 .frame(height: 300)
                 .clipped()
             } else if let posterURL = posterURL {
@@ -277,6 +282,7 @@ struct MediaDetailView: View {
                         .fill(RankdColors.surfacePrimary)
                         .shimmer()
                 }
+                .frame(maxWidth: .infinity)
                 .frame(height: 300)
                 .clipped()
             } else {
@@ -297,7 +303,9 @@ struct MediaDetailView: View {
             )
             .frame(height: 300)
         }
+        .frame(maxWidth: .infinity)
         .frame(height: 300)
+        .clipped()
     }
     
     private func metadataRow(year: String?, runtime: String?, rating: Double?) -> some View {
