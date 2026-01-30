@@ -6,6 +6,7 @@ struct MediaDetailView: View {
     let mediaType: MediaType
     
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @Environment(\.modelContext) private var modelContext
     @Query private var rankedItems: [RankedItem]
     @Query private var watchlistItems: [WatchlistItem]
@@ -104,13 +105,19 @@ struct MediaDetailView: View {
                     .padding(.horizontal, RankdSpacing.md)
                     .offset(y: -24)
                 
-                // Metadata row
+                // Metadata row (year, runtime, rating)
                 metadataRow(
                     year: detail.year,
                     runtime: detail.runtimeFormatted,
                     rating: detail.voteAverage
                 )
                 .offset(y: -16)
+                
+                // Genres
+                if !detail.genres.isEmpty {
+                    genrePills(detail.genres)
+                        .offset(y: -12)
+                }
                 
                 // User rank badge
                 if let ranked = rankedItem {
@@ -119,14 +126,14 @@ struct MediaDetailView: View {
                         .offset(y: -8)
                 }
                 
-                // Action buttons
+                // Action buttons (Rank / Watchlist / Add to List)
                 actionButtonsSection
                     .padding(.horizontal, RankdSpacing.md)
                 
-                // Genres
-                if !detail.genres.isEmpty {
-                    genrePills(detail.genres)
-                        .padding(.top, RankdSpacing.xs)
+                // Trailer button
+                if let trailerURL = detail.trailerURL {
+                    trailerButton(url: trailerURL)
+                        .padding(.horizontal, RankdSpacing.md)
                 }
                 
                 // Synopsis
@@ -134,9 +141,14 @@ struct MediaDetailView: View {
                     synopsisSection(overview)
                 }
                 
-                // Cast
+                // Where to Watch
+                if let providers = detail.usStreamingProviders, !providers.isEmpty {
+                    watchProvidersSection(providers, watchLink: detail.usWatchLink)
+                }
+                
+                // Cast & Crew
                 if let credits = detail.credits, !credits.cast.isEmpty {
-                    castSection(Array(credits.cast.prefix(10)))
+                    castSection(Array(credits.cast.prefix(15)))
                 }
                 
                 // Crew
@@ -147,6 +159,11 @@ struct MediaDetailView: View {
                     if !keyCrews.isEmpty {
                         crewSection(Array(keyCrews.prefix(8)))
                     }
+                }
+                
+                // Similar Titles
+                if !detail.recommendedTitles.isEmpty {
+                    similarTitlesSection(detail.recommendedTitles)
                 }
             }
             .padding(.bottom, RankdSpacing.xxl)
@@ -193,6 +210,12 @@ struct MediaDetailView: View {
                 tvMetadataRow(detail)
                     .offset(y: -16)
                 
+                // Genres
+                if !detail.genres.isEmpty {
+                    genrePills(detail.genres)
+                        .offset(y: -12)
+                }
+                
                 // User rank badge
                 if let ranked = rankedItem {
                     rankBadge(ranked)
@@ -204,10 +227,10 @@ struct MediaDetailView: View {
                 actionButtonsSection
                     .padding(.horizontal, RankdSpacing.md)
                 
-                // Genres
-                if !detail.genres.isEmpty {
-                    genrePills(detail.genres)
-                        .padding(.top, RankdSpacing.xs)
+                // Trailer button
+                if let trailerURL = detail.trailerURL {
+                    trailerButton(url: trailerURL)
+                        .padding(.horizontal, RankdSpacing.md)
                 }
                 
                 // Synopsis
@@ -215,9 +238,19 @@ struct MediaDetailView: View {
                     synopsisSection(overview)
                 }
                 
+                // Where to Watch
+                if let providers = detail.usStreamingProviders, !providers.isEmpty {
+                    watchProvidersSection(providers, watchLink: detail.usWatchLink)
+                }
+                
                 // Cast
                 if let credits = detail.credits, !credits.cast.isEmpty {
-                    castSection(Array(credits.cast.prefix(10)))
+                    castSection(Array(credits.cast.prefix(15)))
+                }
+                
+                // Similar Titles
+                if !detail.recommendedTitles.isEmpty {
+                    similarTitlesSection(detail.recommendedTitles)
                 }
             }
             .padding(.bottom, RankdSpacing.xxl)
@@ -275,15 +308,22 @@ struct MediaDetailView: View {
     }
     
     private func metadataRow(year: String?, runtime: String?, rating: Double?) -> some View {
-        HStack(spacing: 0) {
+        HStack(spacing: RankdSpacing.xs) {
             if let year = year {
                 Text(year)
             }
             if let runtime = runtime {
-                Text(" · \(runtime)")
+                Text("·")
+                Text(runtime)
             }
             if let rating = rating, rating > 0 {
-                Text(" · \(String(format: "%.1f", rating))")
+                Text("·")
+                HStack(spacing: RankdSpacing.xxs) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(RankdColors.tierMedium)
+                    Text(String(format: "%.1f", rating))
+                }
             }
         }
         .font(RankdTypography.bodySmall)
@@ -292,15 +332,26 @@ struct MediaDetailView: View {
     }
     
     private func tvMetadataRow(_ detail: TMDBTVDetail) -> some View {
-        HStack(spacing: 0) {
+        HStack(spacing: RankdSpacing.xs) {
             if let yearRange = detail.yearRange {
                 Text(yearRange)
             }
             if let seasons = detail.numberOfSeasons {
-                Text(" · \(seasons) season\(seasons == 1 ? "" : "s")")
+                Text("·")
+                Text("\(seasons) season\(seasons == 1 ? "" : "s")")
+            }
+            if let runtime = detail.episodeRuntimeFormatted {
+                Text("·")
+                Text(runtime)
             }
             if let rating = detail.voteAverage, rating > 0 {
-                Text(" · \(String(format: "%.1f", rating))")
+                Text("·")
+                HStack(spacing: RankdSpacing.xxs) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(RankdColors.tierMedium)
+                    Text(String(format: "%.1f", rating))
+                }
             }
         }
         .font(RankdTypography.bodySmall)
@@ -376,6 +427,25 @@ struct MediaDetailView: View {
         }
     }
     
+    private func trailerButton(url: URL) -> some View {
+        Button {
+            openURL(url)
+        } label: {
+            HStack(spacing: RankdSpacing.xs) {
+                Image(systemName: "play.fill")
+                    .font(.system(size: 12))
+                Text("Watch Trailer")
+            }
+            .font(RankdTypography.labelLarge)
+            .foregroundStyle(RankdColors.brand)
+            .frame(maxWidth: .infinity)
+            .frame(height: 44)
+            .background(RankdColors.brandSubtle)
+            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
+        }
+        .buttonStyle(RankdPressStyle())
+    }
+    
     private func genrePills(_ genres: [TMDBGenre]) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: RankdSpacing.xs) {
@@ -384,7 +454,7 @@ struct MediaDetailView: View {
                         .font(RankdTypography.labelSmall)
                         .foregroundStyle(RankdColors.textSecondary)
                         .padding(.horizontal, RankdSpacing.sm)
-                        .padding(.vertical, RankdSpacing.xs)
+                        .padding(.vertical, RankdSpacing.xxs)
                         .background(RankdColors.surfaceSecondary)
                         .clipShape(Capsule())
                 }
@@ -402,10 +472,10 @@ struct MediaDetailView: View {
             Text(text)
                 .font(RankdTypography.bodyMedium)
                 .foregroundStyle(RankdColors.textSecondary)
-                .lineLimit(synopsisExpanded ? nil : 4)
+                .lineLimit(synopsisExpanded ? nil : 3)
                 .lineSpacing(4)
             
-            if !synopsisExpanded && text.count > 200 {
+            if !synopsisExpanded && text.count > 150 {
                 Button {
                     withAnimation(RankdMotion.normal) {
                         synopsisExpanded = true
@@ -421,6 +491,58 @@ struct MediaDetailView: View {
         .padding(.horizontal, RankdSpacing.md)
         .padding(.top, RankdSpacing.lg)
     }
+    
+    // MARK: - Where to Watch
+    
+    private func watchProvidersSection(_ providers: [TMDBWatchProvider], watchLink: URL?) -> some View {
+        VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+            Text("Where to Watch")
+                .font(RankdTypography.headingSmall)
+                .foregroundStyle(RankdColors.textPrimary)
+                .padding(.horizontal, RankdSpacing.md)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: RankdSpacing.sm) {
+                    ForEach(providers) { provider in
+                        VStack(spacing: RankdSpacing.xxs) {
+                            AsyncImage(url: provider.logoURL) { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            } placeholder: {
+                                RoundedRectangle(cornerRadius: RankdRadius.sm)
+                                    .fill(RankdColors.surfaceSecondary)
+                            }
+                            .frame(width: 48, height: 48)
+                            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
+                            
+                            Text(provider.providerName)
+                                .font(RankdTypography.caption)
+                                .foregroundStyle(RankdColors.textTertiary)
+                                .lineLimit(1)
+                        }
+                        .frame(width: 64)
+                    }
+                }
+                .padding(.horizontal, RankdSpacing.md)
+            }
+            
+            if let watchLink = watchLink {
+                Button {
+                    openURL(watchLink)
+                } label: {
+                    Text("View all options on TMDB")
+                        .font(RankdTypography.caption)
+                        .foregroundStyle(RankdColors.brand)
+                }
+                .padding(.horizontal, RankdSpacing.md)
+                .padding(.top, RankdSpacing.xxs)
+            }
+        }
+        .padding(.top, RankdSpacing.lg)
+    }
+    
+    // MARK: - Cast & Crew
     
     private func castSection(_ cast: [TMDBCastMember]) -> some View {
         VStack(alignment: .leading, spacing: RankdSpacing.sm) {
@@ -496,6 +618,63 @@ struct MediaDetailView: View {
                 }
             }
             .padding(.horizontal, RankdSpacing.md)
+        }
+        .padding(.top, RankdSpacing.lg)
+    }
+    
+    // MARK: - Similar Titles
+    
+    private func similarTitlesSection(_ titles: [TMDBSearchResult]) -> some View {
+        VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+            Text("You Might Also Like")
+                .font(RankdTypography.headingSmall)
+                .foregroundStyle(RankdColors.textPrimary)
+                .padding(.horizontal, RankdSpacing.md)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: RankdSpacing.sm) {
+                    ForEach(Array(titles.prefix(15))) { item in
+                        NavigationLink {
+                            MediaDetailView(
+                                tmdbId: item.id,
+                                mediaType: item.resolvedMediaType
+                            )
+                        } label: {
+                            VStack(alignment: .leading, spacing: RankdSpacing.xs) {
+                                AsyncImage(url: item.posterURL) { image in
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                } placeholder: {
+                                    RoundedRectangle(cornerRadius: RankdPoster.cornerRadius)
+                                        .fill(RankdColors.surfaceSecondary)
+                                }
+                                .frame(width: RankdPoster.standardWidth, height: RankdPoster.standardHeight)
+                                .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+                                
+                                Text(item.displayTitle)
+                                    .font(RankdTypography.labelSmall)
+                                    .foregroundStyle(RankdColors.textPrimary)
+                                    .lineLimit(1)
+                                
+                                if let rating = item.voteAverage, rating > 0 {
+                                    HStack(spacing: RankdSpacing.xxs) {
+                                        Image(systemName: "star.fill")
+                                            .font(.system(size: 9))
+                                            .foregroundStyle(RankdColors.tierMedium)
+                                        Text(String(format: "%.1f", rating))
+                                            .font(RankdTypography.caption)
+                                            .foregroundStyle(RankdColors.textTertiary)
+                                    }
+                                }
+                            }
+                            .frame(width: RankdPoster.standardWidth)
+                        }
+                        .buttonStyle(RankdPressStyle())
+                    }
+                }
+                .padding(.horizontal, RankdSpacing.md)
+            }
         }
         .padding(.top, RankdSpacing.lg)
     }
