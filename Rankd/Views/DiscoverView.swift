@@ -624,8 +624,11 @@ struct DiscoverSection: View {
             
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: RankdSpacing.sm) {
-                    ForEach(items) { item in
+                    ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                         DiscoverCard(item: item)
+                            .onAppear {
+                                prefetchAhead(from: index)
+                            }
                     }
                 }
                 .padding(.horizontal, RankdSpacing.md)
@@ -639,6 +642,15 @@ struct DiscoverSection: View {
             }
         }
     }
+    
+    /// Prefetch the next 4 poster images beyond the currently appearing index.
+    private func prefetchAhead(from index: Int) {
+        let start = index + 1
+        let end = min(start + 4, items.count)
+        guard start < end else { return }
+        let urls = items[start..<end].map(\.posterURL)
+        ImagePrefetcher.prefetch(urls: urls)
+    }
 }
 
 // MARK: - Discover Card
@@ -650,21 +662,12 @@ struct DiscoverCard: View {
         NavigationLink(destination: MediaDetailView(tmdbId: item.id, mediaType: item.resolvedMediaType)) {
             VStack(alignment: .leading, spacing: RankdSpacing.xs) {
                 ZStack(alignment: .topTrailing) {
-                    AsyncImage(url: item.posterURL) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        Rectangle()
-                            .fill(RankdColors.surfaceSecondary)
-                            .overlay {
-                                Image(systemName: item.resolvedMediaType == .movie ? "film" : "tv")
-                                    .font(RankdTypography.headingLarge)
-                                    .foregroundStyle(RankdColors.textTertiary)
-                            }
-                    }
-                    .frame(width: RankdPoster.standardWidth, height: RankdPoster.standardHeight)
-                    .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+                    CachedPosterImage(
+                        url: item.posterURL,
+                        width: RankdPoster.standardWidth,
+                        height: RankdPoster.standardHeight,
+                        placeholderIcon: item.resolvedMediaType == .movie ? "film" : "tv"
+                    )
                     .shadow(color: RankdShadow.card, radius: RankdShadow.cardRadius, y: RankdShadow.cardY)
                     
                     // Rating badge
@@ -858,7 +861,7 @@ struct GenreDetailView: View {
             GeometryReader { geo in
                 ZStack(alignment: .bottomLeading) {
                     if let backdropURL = item.backdropURL {
-                        AsyncImage(url: backdropURL) { image in
+                        CachedAsyncImage(url: backdropURL) { image in
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
@@ -870,7 +873,7 @@ struct GenreDetailView: View {
                                 .shimmer()
                         }
                     } else if let posterURL = item.posterURL {
-                        AsyncImage(url: posterURL) { image in
+                        CachedAsyncImage(url: posterURL) { image in
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
@@ -1107,21 +1110,13 @@ struct GenreGridCard: View {
             HStack(spacing: RankdSpacing.sm) {
                 // Poster
                 ZStack(alignment: .topTrailing) {
-                    AsyncImage(url: item.posterURL) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        Rectangle()
-                            .fill(RankdColors.surfaceSecondary)
-                            .overlay {
-                                Image(systemName: item.resolvedMediaType == .movie ? "film" : "tv")
-                                    .font(RankdTypography.bodyMedium)
-                                    .foregroundStyle(RankdColors.textTertiary)
-                            }
-                    }
-                    .frame(width: 80, height: 120)
-                    .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
+                    CachedPosterImage(
+                        url: item.posterURL,
+                        width: 80,
+                        height: 120,
+                        cornerRadius: RankdRadius.sm,
+                        placeholderIcon: item.resolvedMediaType == .movie ? "film" : "tv"
+                    )
                 }
                 
                 // Info

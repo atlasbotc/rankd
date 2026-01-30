@@ -340,20 +340,13 @@ struct EnhancedSearchResultRow: View {
     var body: some View {
         HStack(spacing: RankdSpacing.sm) {
             // Poster thumbnail
-            AsyncImage(url: result.posterURL) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                RoundedRectangle(cornerRadius: RankdRadius.sm)
-                    .fill(RankdColors.surfaceSecondary)
-                    .overlay {
-                        Image(systemName: result.resolvedMediaType == .movie ? "film" : "tv")
-                            .foregroundStyle(RankdColors.textQuaternary)
-                    }
-            }
-            .frame(width: RankdPoster.thumbWidth, height: RankdPoster.thumbHeight)
-            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
+            CachedPosterImage(
+                url: result.posterURL,
+                width: RankdPoster.thumbWidth,
+                height: RankdPoster.thumbHeight,
+                cornerRadius: RankdRadius.sm,
+                placeholderIcon: result.resolvedMediaType == .movie ? "film" : "tv"
+            )
             
             // Info
             VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
@@ -424,21 +417,13 @@ struct TrendingRow: View {
     var body: some View {
         HStack(spacing: RankdSpacing.sm) {
             // Poster thumbnail
-            AsyncImage(url: result.posterURL) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                RoundedRectangle(cornerRadius: RankdRadius.sm)
-                    .fill(RankdColors.surfaceSecondary)
-                    .overlay {
-                        Image(systemName: result.resolvedMediaType == .movie ? "film" : "tv")
-                            .font(RankdTypography.caption)
-                            .foregroundStyle(RankdColors.textQuaternary)
-                    }
-            }
-            .frame(width: RankdPoster.thumbWidth, height: RankdPoster.thumbHeight)
-            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
+            CachedPosterImage(
+                url: result.posterURL,
+                width: RankdPoster.thumbWidth,
+                height: RankdPoster.thumbHeight,
+                cornerRadius: RankdRadius.sm,
+                placeholderIcon: result.resolvedMediaType == .movie ? "film" : "tv"
+            )
             
             // Info
             VStack(alignment: .leading, spacing: RankdSpacing.xxs) {

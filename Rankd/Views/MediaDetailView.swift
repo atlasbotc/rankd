@@ -82,14 +82,11 @@ struct MediaDetailView: View {
             VStack(alignment: .leading, spacing: RankdSpacing.md) {
                 // Poster overlay
                 HStack(alignment: .bottom, spacing: RankdSpacing.md) {
-                    AsyncImage(url: detail.posterURL) { image in
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        RoundedRectangle(cornerRadius: RankdPoster.cornerRadius)
-                            .fill(RankdColors.surfaceSecondary)
-                    }
-                    .frame(width: 80, height: 120)
-                    .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+                    CachedPosterImage(
+                        url: detail.posterURL,
+                        width: 80,
+                        height: 120
+                    )
                     .shadow(color: RankdShadow.elevated, radius: RankdShadow.elevatedRadius, y: RankdShadow.elevatedY)
                     .offset(y: -40)
                     
@@ -183,14 +180,11 @@ struct MediaDetailView: View {
             VStack(alignment: .leading, spacing: RankdSpacing.md) {
                 // Poster overlay
                 HStack(alignment: .bottom, spacing: RankdSpacing.md) {
-                    AsyncImage(url: detail.posterURL) { image in
-                        image.resizable().aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        RoundedRectangle(cornerRadius: RankdPoster.cornerRadius)
-                            .fill(RankdColors.surfaceSecondary)
-                    }
-                    .frame(width: 80, height: 120)
-                    .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+                    CachedPosterImage(
+                        url: detail.posterURL,
+                        width: 80,
+                        height: 120
+                    )
                     .shadow(color: RankdShadow.elevated, radius: RankdShadow.elevatedRadius, y: RankdShadow.elevatedY)
                     .offset(y: -40)
                     
@@ -261,7 +255,7 @@ struct MediaDetailView: View {
     private func backdropHero(backdropURL: URL?, posterURL: URL?) -> some View {
         ZStack(alignment: .bottom) {
             if let backdropURL = backdropURL {
-                AsyncImage(url: backdropURL) { image in
+                CachedAsyncImage(url: backdropURL) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -273,7 +267,7 @@ struct MediaDetailView: View {
                 .frame(height: 300)
                 .clipped()
             } else if let posterURL = posterURL {
-                AsyncImage(url: posterURL) { image in
+                CachedAsyncImage(url: posterURL) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -504,16 +498,13 @@ struct MediaDetailView: View {
                 HStack(spacing: RankdSpacing.sm) {
                     ForEach(providers) { provider in
                         VStack(spacing: RankdSpacing.xxs) {
-                            AsyncImage(url: provider.logoURL) { image in
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                            } placeholder: {
-                                RoundedRectangle(cornerRadius: RankdRadius.sm)
-                                    .fill(RankdColors.surfaceSecondary)
-                            }
-                            .frame(width: 48, height: 48)
-                            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
+                            CachedPosterImage(
+                                url: provider.logoURL,
+                                width: 48,
+                                height: 48,
+                                cornerRadius: RankdRadius.sm,
+                                placeholderIcon: "play.tv"
+                            )
                             
                             Text(provider.providerName)
                                 .font(RankdTypography.caption)
@@ -554,7 +545,7 @@ struct MediaDetailView: View {
                 HStack(spacing: RankdSpacing.md) {
                     ForEach(cast) { member in
                         VStack(spacing: RankdSpacing.xs) {
-                            AsyncImage(url: member.profileURL) { image in
+                            CachedAsyncImage(url: member.profileURL) { image in
                                 image
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
@@ -566,6 +557,7 @@ struct MediaDetailView: View {
                                             .font(RankdTypography.bodySmall)
                                             .foregroundStyle(RankdColors.textTertiary)
                                     }
+                                    .shimmer()
                             }
                             .frame(width: 56, height: 56)
                             .clipShape(Circle())
@@ -640,16 +632,12 @@ struct MediaDetailView: View {
                             )
                         } label: {
                             VStack(alignment: .leading, spacing: RankdSpacing.xs) {
-                                AsyncImage(url: item.posterURL) { image in
-                                    image
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                } placeholder: {
-                                    RoundedRectangle(cornerRadius: RankdPoster.cornerRadius)
-                                        .fill(RankdColors.surfaceSecondary)
-                                }
-                                .frame(width: RankdPoster.standardWidth, height: RankdPoster.standardHeight)
-                                .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+                                CachedPosterImage(
+                                    url: item.posterURL,
+                                    width: RankdPoster.standardWidth,
+                                    height: RankdPoster.standardHeight,
+                                    placeholderIcon: item.resolvedMediaType == .movie ? "film" : "tv"
+                                )
                                 
                                 Text(item.displayTitle)
                                     .font(RankdTypography.labelSmall)

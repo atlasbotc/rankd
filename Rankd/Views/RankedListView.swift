@@ -429,7 +429,7 @@ private struct TopRankedCard: View {
         Button(action: onTap) {
             VStack(spacing: RankdSpacing.xs) {
                 ZStack(alignment: .topLeading) {
-                    AsyncImage(url: item.posterURL) { image in
+                    CachedAsyncImage(url: item.posterURL) { image in
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fill)
@@ -441,6 +441,7 @@ private struct TopRankedCard: View {
                                     .font(RankdTypography.headingLarge)
                                     .foregroundStyle(RankdColors.textQuaternary)
                             }
+                            .shimmer()
                     }
                     .aspectRatio(2/3, contentMode: .fit)
                     .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
@@ -534,20 +535,13 @@ struct RankedItemRow: View {
                 .frame(width: 32, alignment: .leading)
             
             // Poster
-            AsyncImage(url: item.posterURL) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Rectangle()
-                    .fill(RankdColors.surfaceSecondary)
-                    .overlay {
-                        Image(systemName: item.mediaType == .movie ? "film" : "tv")
-                            .foregroundStyle(RankdColors.textQuaternary)
-                    }
-            }
-            .frame(width: RankdPoster.thumbWidth, height: RankdPoster.thumbHeight)
-            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
+            CachedPosterImage(
+                url: item.posterURL,
+                width: RankdPoster.thumbWidth,
+                height: RankdPoster.thumbHeight,
+                cornerRadius: RankdRadius.sm,
+                placeholderIcon: item.mediaType == .movie ? "film" : "tv"
+            )
             
             // Info
             VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
@@ -592,16 +586,11 @@ struct ItemDetailSheet: View {
                 VStack(alignment: .leading, spacing: RankdSpacing.lg) {
                     // Header
                     HStack(alignment: .top, spacing: RankdSpacing.md) {
-                        AsyncImage(url: item.posterURL) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                        } placeholder: {
-                            Rectangle()
-                                .fill(RankdColors.surfaceSecondary)
-                        }
-                        .frame(width: 100, height: 150)
-                        .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+                        CachedPosterImage(
+                            url: item.posterURL,
+                            width: 100,
+                            height: 150
+                        )
                         
                         VStack(alignment: .leading, spacing: RankdSpacing.xs) {
                             Text(item.title)

@@ -15,7 +15,7 @@ struct TMDBSearchResponse: Codable {
 }
 
 // MARK: - Search Result
-struct TMDBSearchResult: Codable, Identifiable {
+struct TMDBSearchResult: Codable, Identifiable, Equatable, Hashable {
     let id: Int
     let title: String?
     let name: String? // For TV shows
