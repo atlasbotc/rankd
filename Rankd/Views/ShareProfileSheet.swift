@@ -54,7 +54,8 @@ struct ShareProfileSheet: View {
     
     private static let profileFormats: [[ShareCardFormat]] = [
         [.top4Movies, .top4Shows],
-        [.top10Movies, .top10Shows]
+        [.top10Movies, .top10Shows],
+        [.favorites]
     ]
     
     private var formatPicker: some View {
@@ -117,7 +118,7 @@ struct ShareProfileSheet: View {
     
     private var loadingState: some View {
         VStack(spacing: RankdSpacing.md) {
-            let aspectRatio: CGFloat = selectedFormat.isTop4 ? 1080.0 / 1920.0 : 1.0
+            let aspectRatio: CGFloat = selectedFormat.isTop4 ? (1080.0 / 1920.0) : 1.0
             
             RoundedRectangle(cornerRadius: RankdRadius.lg)
                 .fill(RankdColors.surfacePrimary)

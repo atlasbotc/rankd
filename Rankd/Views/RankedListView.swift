@@ -13,11 +13,13 @@ struct RankedListView: View {
     @State private var showReRankFlow = false
     @State private var reRankSearchResult: TMDBSearchResult?
     @State private var showReRankPrompt = false
+    @State private var showFavoritesOnly = false
     @AppStorage("lastReRankMilestone") private var lastReRankMilestone: Int = 0
     
     var filteredItems: [RankedItem] {
         allItems
             .filter { $0.mediaType == selectedMediaType }
+            .filter { !showFavoritesOnly || $0.isFavorite }
             .sorted { $0.rank < $1.rank }
     }
     
@@ -126,6 +128,18 @@ struct RankedListView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: RankdSpacing.sm) {
+                        // Favorites filter
+                        Button {
+                            withAnimation(RankdMotion.fast) {
+                                showFavoritesOnly.toggle()
+                            }
+                            HapticManager.selection()
+                        } label: {
+                            Image(systemName: showFavoritesOnly ? "heart.fill" : "heart")
+                                .font(RankdTypography.labelLarge)
+                                .foregroundStyle(showFavoritesOnly ? RankdColors.tierBad : RankdColors.textSecondary)
+                        }
+                        
                         if filteredItems.count >= 2 {
                             Button {
                                 startReRankLeastCompared()
@@ -540,7 +554,7 @@ private struct TopRankedCard: View {
 // MARK: - Ranked Item Row
 
 struct RankedItemRow: View {
-    let item: RankedItem
+    @Bindable var item: RankedItem
     let displayRank: Int
     var allItems: [RankedItem] = []
     
@@ -554,6 +568,7 @@ struct RankedItemRow: View {
             parts.append("Score \(String(format: "%.1f", score))")
         }
         parts.append("\(item.tier.rawValue) tier")
+        if item.isFavorite { parts.append("Favorite") }
         return parts.joined(separator: ", ")
     }
     
@@ -589,6 +604,19 @@ struct RankedItemRow: View {
             }
             
             Spacer()
+            
+            // Favorite heart
+            Button {
+                withAnimation(RankdMotion.fast) {
+                    item.isFavorite.toggle()
+                }
+                HapticManager.impact(.light)
+            } label: {
+                Image(systemName: item.isFavorite ? "heart.fill" : "heart")
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(item.isFavorite ? RankdColors.tierBad : RankdColors.textQuaternary)
+            }
+            .buttonStyle(.plain)
             
             // Score badge
             if !allItems.isEmpty {
@@ -654,6 +682,33 @@ struct ItemDetailSheet: View {
                                 tier: item.tier
                             )
                         }
+                    }
+                    .padding(.horizontal, RankdSpacing.md)
+                    
+                    // Favorite toggle
+                    Button {
+                        withAnimation(RankdMotion.fast) {
+                            item.isFavorite.toggle()
+                        }
+                        try? modelContext.save()
+                        HapticManager.impact(.light)
+                    } label: {
+                        HStack(spacing: RankdSpacing.xs) {
+                            Image(systemName: item.isFavorite ? "heart.fill" : "heart")
+                                .font(RankdTypography.headingSmall)
+                                .foregroundStyle(item.isFavorite ? RankdColors.tierBad : RankdColors.textTertiary)
+                            Text(item.isFavorite ? "Favorited" : "Add to Favorites")
+                                .font(RankdTypography.headingSmall)
+                                .foregroundStyle(item.isFavorite ? RankdColors.textPrimary : RankdColors.textSecondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, RankdSpacing.sm)
+                        .background(
+                            item.isFavorite
+                                ? RankdColors.tierBad.opacity(0.12)
+                                : RankdColors.surfaceSecondary
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
                     }
                     .padding(.horizontal, RankdSpacing.md)
                     

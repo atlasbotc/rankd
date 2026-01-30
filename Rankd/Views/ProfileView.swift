@@ -41,6 +41,10 @@ struct ProfileView: View {
             .prefix(4))
     }
     
+    private var favoriteItems: [RankedItem] {
+        rankedItems.filter { $0.isFavorite }.sorted { $0.rank < $1.rank }
+    }
+    
     private var memberSinceDate: Date {
         if let date = ISO8601DateFormatter().date(from: memberSinceDateString) {
             return date
@@ -159,6 +163,10 @@ struct ProfileView: View {
                     }
                     
                     topFourSection
+                    
+                    if !favoriteItems.isEmpty {
+                        favoritesSection
+                    }
                     
                     if !rankedItems.isEmpty {
                         tasteSection
@@ -439,6 +447,62 @@ struct ProfileView: View {
                     .font(RankdTypography.headingLarge)
                     .foregroundStyle(RankdColors.textQuaternary)
             }
+    }
+    
+    // MARK: - Favorites Showcase
+    
+    private var favoritesSection: some View {
+        VStack(alignment: .leading, spacing: RankdSpacing.sm) {
+            HStack {
+                HStack(spacing: RankdSpacing.xs) {
+                    Image(systemName: "heart.fill")
+                        .font(RankdTypography.headingSmall)
+                        .foregroundStyle(RankdColors.tierBad)
+                    Text("Favorites")
+                        .font(RankdTypography.headingLarge)
+                        .foregroundStyle(RankdColors.textPrimary)
+                }
+                Spacer()
+                Text("\(favoriteItems.count)")
+                    .font(RankdTypography.labelMedium)
+                    .foregroundStyle(RankdColors.textTertiary)
+            }
+            .padding(.horizontal, RankdSpacing.md)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: RankdSpacing.sm) {
+                    ForEach(favoriteItems) { item in
+                        VStack(spacing: RankdSpacing.xs) {
+                            ZStack(alignment: .topTrailing) {
+                                CachedPosterImage(
+                                    url: item.posterURL,
+                                    width: RankdPoster.standardWidth,
+                                    height: RankdPoster.standardHeight,
+                                    placeholderIcon: item.mediaType == .movie ? "film" : "tv"
+                                )
+                                
+                                Image(systemName: "heart.fill")
+                                    .font(RankdTypography.labelSmall)
+                                    .foregroundStyle(.white)
+                                    .padding(RankdSpacing.xs)
+                                    .background(
+                                        Circle()
+                                            .fill(RankdColors.tierBad.opacity(0.85))
+                                    )
+                                    .padding(RankdSpacing.xs)
+                            }
+                            
+                            Text(item.title)
+                                .font(RankdTypography.labelSmall)
+                                .foregroundStyle(RankdColors.textPrimary)
+                                .lineLimit(1)
+                        }
+                        .frame(width: RankdPoster.standardWidth)
+                    }
+                }
+                .padding(.horizontal, RankdSpacing.md)
+            }
+        }
     }
     
     // MARK: - Taste Personality

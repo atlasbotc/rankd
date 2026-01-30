@@ -23,6 +23,8 @@ final class ShareCardGenerator: ObservableObject {
             items = data.filteredItems(for: format)
         case .top10Movies, .top10Shows:
             items = data.filteredItems(for: format)
+        case .favorites:
+            items = data.favoriteItems
         case .list:
             // List cards are generated separately via ListShareSheet
             return nil
@@ -52,6 +54,13 @@ final class ShareCardGenerator: ObservableObject {
             
         case .top10Movies, .top10Shows:
             let cardView = Top10CardView(data: enrichedData, format: format)
+            let renderer = ImageRenderer(content: cardView)
+            renderer.scale = 3.0
+            renderer.proposedSize = .init(width: 1080, height: 1080)
+            image = renderer.uiImage
+            
+        case .favorites:
+            let cardView = FavoritesCardView(data: enrichedData)
             let renderer = ImageRenderer(content: cardView)
             renderer.scale = 3.0
             renderer.proposedSize = .init(width: 1080, height: 1080)

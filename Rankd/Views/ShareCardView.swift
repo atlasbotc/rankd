@@ -8,6 +8,7 @@ enum ShareCardFormat: String, CaseIterable, Identifiable {
     case top4Shows = "Top 4 Shows"
     case top10Movies = "Top 10 Movies"
     case top10Shows = "Top 10 Shows"
+    case favorites = "My Favorites"
     case list = "List"
     
     var id: String { rawValue }
@@ -20,11 +21,15 @@ enum ShareCardFormat: String, CaseIterable, Identifiable {
         self == .top10Movies || self == .top10Shows
     }
     
+    var isFavorites: Bool {
+        self == .favorites
+    }
+    
     var mediaFilter: MediaType? {
         switch self {
         case .top4Movies, .top10Movies: return .movie
         case .top4Shows, .top10Shows: return .tv
-        case .list: return nil
+        case .favorites, .list: return nil
         }
     }
     
@@ -34,6 +39,7 @@ enum ShareCardFormat: String, CaseIterable, Identifiable {
         case .top4Shows: return "My Top 4 Shows"
         case .top10Movies: return "My Top 10 Movies"
         case .top10Shows: return "My Top 10 Shows"
+        case .favorites: return "My Favorites"
         case .list: return "My Rankings"
         }
     }
@@ -65,7 +71,14 @@ struct ShareCardData {
         Array(items.filter { $0.mediaType == mediaType }.sorted { $0.rank < $1.rank }.prefix(10))
     }
     
+    var favoriteItems: [RankedItem] {
+        Array(items.filter { $0.isFavorite }.sorted { $0.rank < $1.rank }.prefix(10))
+    }
+    
     func filteredItems(for format: ShareCardFormat) -> [RankedItem] {
+        if format.isFavorites {
+            return favoriteItems
+        }
         guard let mediaType = format.mediaFilter else {
             return items.sorted { $0.rank < $1.rank }
         }
@@ -512,6 +525,131 @@ struct Top10CardView: View {
         case 2: return Color(red: 0.75, green: 0.75, blue: 0.78)
         case 3: return Color(red: 0.80, green: 0.50, blue: 0.20)
         default: return CardColors.secondaryText
+        }
+    }
+}
+
+// MARK: - Favorites Card (Square — 1080x1080)
+
+struct FavoritesCardView: View {
+    let data: ShareCardData
+    
+    private let cardSize: CGFloat = 1080
+    
+    private var heartColor: Color {
+        Color(red: 0.85, green: 0.30, blue: 0.35)
+    }
+    
+    var body: some View {
+        ZStack {
+            CardColors.backgroundGradient
+            
+            Circle()
+                .fill(heartColor.opacity(0.06))
+                .frame(width: 500, height: 500)
+                .offset(x: 250, y: -250)
+            
+            VStack(spacing: 0) {
+                Spacer().frame(height: 64)
+                favoritesHeader
+                Spacer().frame(height: 40)
+                favoritesList
+                Spacer()
+                favoritesFooter
+                Spacer().frame(height: 48)
+            }
+            .padding(.horizontal, 64)
+        }
+        .frame(width: cardSize, height: cardSize)
+    }
+    
+    private var favoritesHeader: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "heart.fill")
+                .font(.system(size: 28))
+                .foregroundStyle(heartColor)
+            
+            Text("My Favorites")
+                .font(.system(size: 44, weight: .bold, design: .rounded))
+                .foregroundStyle(CardColors.primaryText)
+                .tracking(0.5)
+        }
+    }
+    
+    private var favoritesList: some View {
+        let items = data.favoriteItems
+        let thumbSize: CGFloat = 64
+        
+        return VStack(spacing: 6) {
+            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                HStack(spacing: 16) {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 14))
+                        .foregroundStyle(heartColor.opacity(0.7))
+                        .frame(width: 36)
+                    
+                    if let image = data.posterImage(for: item) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: thumbSize, height: thumbSize)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    } else {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.white.opacity(0.08))
+                            .frame(width: thumbSize, height: thumbSize)
+                            .overlay {
+                                Image(systemName: item.mediaType == .movie ? "film" : "tv")
+                                    .font(.system(size: 20))
+                                    .foregroundStyle(Color.white.opacity(0.2))
+                            }
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.title)
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(CardColors.primaryText)
+                            .lineLimit(1)
+                        
+                        if let year = item.year {
+                            Text(year)
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(CardColors.secondaryText)
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    let score = RankedItem.calculateScore(for: item, allItems: data.items)
+                    Text(String(format: "%.1f", score))
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(RankdColors.tierColor(item.tier))
+                        )
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(index % 2 == 0 ? Color.white.opacity(0.04) : Color.clear)
+                )
+            }
+        }
+    }
+    
+    private var favoritesFooter: some View {
+        VStack(spacing: 12) {
+            Text(data.statsString)
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(CardColors.secondaryText)
+            
+            Text("rankd")
+                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                .foregroundStyle(CardColors.tertiaryText)
         }
     }
 }

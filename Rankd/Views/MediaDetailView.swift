@@ -364,6 +364,22 @@ struct MediaDetailView: View {
                 Text("#\(ranked.rank) in \(ranked.mediaType == .movie ? "Movies" : "TV Shows")")
                     .font(RankdTypography.labelMedium)
                     .foregroundStyle(RankdColors.textSecondary)
+                
+                Spacer()
+                
+                // Favorite heart toggle
+                Button {
+                    withAnimation(RankdMotion.fast) {
+                        ranked.isFavorite.toggle()
+                    }
+                    try? modelContext.save()
+                    HapticManager.impact(.light)
+                } label: {
+                    Image(systemName: ranked.isFavorite ? "heart.fill" : "heart")
+                        .font(RankdTypography.headingSmall)
+                        .foregroundStyle(ranked.isFavorite ? RankdColors.tierBad : RankdColors.textTertiary)
+                }
+                .buttonStyle(.plain)
             }
             
             ScoreDisplay(score: score, tier: ranked.tier)
