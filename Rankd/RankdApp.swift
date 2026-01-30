@@ -9,6 +9,8 @@ struct RankdApp: App {
             WatchlistItem.self,
             CustomList.self,
             CustomListItem.self,
+            UserProfile.self,
+            Activity.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -22,6 +24,10 @@ struct RankdApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .task {
+                    // Clean expired disk cache entries on launch
+                    await PosterCache.shared.cleanDiskCacheIfNeeded()
+                }
         }
         .modelContainer(sharedModelContainer)
     }

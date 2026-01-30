@@ -48,6 +48,11 @@
 		A1000001234567890000700 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000710 /* HapticManager.swift */; };
 		A1000001234567890000701 /* ShimmerModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000711 /* ShimmerModifier.swift */; };
 		A1000001234567890000800 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000810 /* DesignSystem.swift */; };
+		A1000001234567890000900 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000910 /* UserProfile.swift */; };
+		A1000001234567890000901 /* Activity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000911 /* Activity.swift */; };
+		A1000001234567890000902 /* ActivityLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000912 /* ActivityLogger.swift */; };
+		A1000001234567890000903 /* ActivityFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000913 /* ActivityFeedView.swift */; };
+		A1000001234567890000904 /* UsernameEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000914 /* UsernameEditorView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -93,6 +98,11 @@
 		A1000001234567890000710 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
 		A1000001234567890000711 /* ShimmerModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmerModifier.swift; sourceTree = "<group>"; };
 		A1000001234567890000810 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		A1000001234567890000910 /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
+		A1000001234567890000911 /* Activity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Activity.swift; sourceTree = "<group>"; };
+		A1000001234567890000912 /* ActivityLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLogger.swift; sourceTree = "<group>"; };
+		A1000001234567890000913 /* ActivityFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityFeedView.swift; sourceTree = "<group>"; };
+		A1000001234567890000914 /* UsernameEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsernameEditorView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -140,6 +150,8 @@
 				A1000001234567890000017 /* TMDBModels.swift */,
 				A100000123456789000001D /* WatchlistItem.swift */,
 				A1000001234567890000610 /* CustomList.swift */,
+				A1000001234567890000910 /* UserProfile.swift */,
+				A1000001234567890000911 /* Activity.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -168,6 +180,8 @@
 				A1000001234567890000614 /* AddToListView.swift */,
 				A1000001234567890000615 /* ListShareSheet.swift */,
 				A1000001234567890000616 /* AddToListSheet.swift */,
+				A1000001234567890000913 /* ActivityFeedView.swift */,
+				A1000001234567890000914 /* UsernameEditorView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -189,6 +203,7 @@
 				A1000001234567890000310 /* PosterCache.swift */,
 				A1000001234567890000313 /* ShareCardGenerator.swift */,
 				A1000001234567890000511 /* GenreBackfillService.swift */,
+				A1000001234567890000912 /* ActivityLogger.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -335,6 +350,11 @@
 				A1000001234567890000700 /* HapticManager.swift in Sources */,
 				A1000001234567890000701 /* ShimmerModifier.swift in Sources */,
 				A1000001234567890000800 /* DesignSystem.swift in Sources */,
+				A1000001234567890000900 /* UserProfile.swift in Sources */,
+				A1000001234567890000901 /* Activity.swift in Sources */,
+				A1000001234567890000902 /* ActivityLogger.swift in Sources */,
+				A1000001234567890000903 /* ActivityFeedView.swift in Sources */,
+				A1000001234567890000904 /* UsernameEditorView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

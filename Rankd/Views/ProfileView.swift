@@ -251,6 +251,12 @@ struct ProfileView: View {
                     .font(RankdTypography.displayMedium)
                     .foregroundStyle(RankdColors.textPrimary)
                 
+                if !username.isEmpty {
+                    Text("@\(username)")
+                        .font(RankdTypography.bodySmall)
+                        .foregroundStyle(RankdColors.textTertiary)
+                }
+                
                 HStack(spacing: RankdSpacing.xs) {
                     Image(systemName: "calendar")
                         .font(RankdTypography.caption)
@@ -829,6 +835,10 @@ struct ProfileView: View {
         }
         .navigationTitle("Display Name")
         .navigationBarTitleDisplayMode(.inline)
+    }
+    
+    private var usernameEditor: some View {
+        UsernameEditorView(username: $username)
     }
     
     // MARK: - Notification Toggle
