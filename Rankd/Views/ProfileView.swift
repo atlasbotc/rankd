@@ -8,7 +8,6 @@ struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
     
     @AppStorage("displayName") private var displayName: String = ""
-    @AppStorage("username") private var username: String = ""
     @AppStorage("memberSinceDate") private var memberSinceDateString: String = ""
     @AppStorage("streakDates") private var streakDatesString: String = ""
     @AppStorage("notificationsEnabled") private var notificationsEnabled: Bool = false

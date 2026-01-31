@@ -31,15 +31,5 @@ final class UserProfile {
         guard let str = avatarURLString else { return nil }
         return URL(string: str)
     }
-    
-    /// Validate username: 3-20 chars, alphanumeric + underscores only
-    static func isValidUsername(_ username: String) -> Bool {
-        let pattern = "^[a-zA-Z0-9_]{3,20}$"
-        return username.range(of: pattern, options: .regularExpression) != nil
-    }
-    
-    /// Formatted handle
-    var handle: String {
-        "@\(username)"
-    }
+
 }
