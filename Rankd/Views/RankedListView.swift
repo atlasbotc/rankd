@@ -110,9 +110,10 @@ struct RankedListView: View {
                                 }
                                 .onMove(perform: isReorderMode ? moveItems : nil)
                             } header: {
-                                Text("All Rankings")
-                                    .font(RankdTypography.headingSmall)
-                                    .foregroundStyle(RankdColors.textPrimary)
+                                Text("ALL RANKINGS")
+                                    .font(RankdTypography.sectionLabel)
+                                    .tracking(1.5)
+                                    .foregroundStyle(RankdColors.textTertiary)
                                     .textCase(nil)
                             }
                         }
@@ -203,8 +204,12 @@ struct RankedListView: View {
                         .padding(.vertical, RankdSpacing.sm)
                         .background(
                             selectedMediaType == type
-                                ? RankdColors.brand
-                                : Color.clear
+                                ? AnyShapeStyle(LinearGradient(
+                                    colors: [RankdColors.gradientStart, RankdColors.gradientEnd],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                  ))
+                                : AnyShapeStyle(Color.clear)
                         )
                         .foregroundStyle(
                             selectedMediaType == type
@@ -212,6 +217,11 @@ struct RankedListView: View {
                                 : RankdColors.textTertiary
                         )
                         .clipShape(Capsule())
+                        .shadow(
+                            color: selectedMediaType == type ? RankdColors.brand.opacity(0.3) : .clear,
+                            radius: selectedMediaType == type ? 4 : 0,
+                            y: selectedMediaType == type ? 2 : 0
+                        )
                 }
             }
         }
@@ -285,11 +295,18 @@ struct RankedListView: View {
             NavigationLink(destination: SearchView()) {
                 Text("Search & Rank")
                     .font(RankdTypography.labelLarge)
-                    .foregroundStyle(RankdColors.surfacePrimary)
+                    .foregroundStyle(.white)
                     .padding(.horizontal, RankdSpacing.xl)
                     .padding(.vertical, RankdSpacing.sm)
-                    .background(RankdColors.brand)
-                    .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
+                    .background(
+                        LinearGradient(
+                            colors: [RankdColors.gradientStart, RankdColors.gradientEnd],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .clipShape(Capsule())
+                    .shadow(color: RankdColors.brand.opacity(0.4), radius: 8, y: 4)
             }
             .padding(.top, RankdSpacing.xs)
         }
@@ -477,6 +494,14 @@ private struct TopRankedCard: View {
                     }
                     .aspectRatio(2/3, contentMode: .fit)
                     .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+                    .overlay(
+                        LinearGradient(
+                            colors: [.clear, .clear, .black.opacity(0.4)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+                    )
                     
                     // Rank badge
                     rankBadge
@@ -564,11 +589,24 @@ struct RankedItemRow: View {
     }
     
     var body: some View {
-        HStack(spacing: RankdSpacing.sm) {
-            // Rank number
+        HStack(spacing: 0) {
+            // Tier-colored left accent bar
+            RoundedRectangle(cornerRadius: 2)
+                .fill(RankdColors.tierColor(item.tier))
+                .frame(width: 3, height: 48)
+                .padding(.trailing, RankdSpacing.xs)
+            
+            HStack(spacing: RankdSpacing.sm) {
+            // Rank number — gradient text
             Text("\(displayRank)")
                 .font(RankdTypography.headingSmall)
-                .foregroundStyle(RankdColors.textTertiary)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [RankdColors.gradientStart, RankdColors.gradientEnd],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
                 .frame(width: 32, alignment: .leading)
             
             // Poster
@@ -613,6 +651,7 @@ struct RankedItemRow: View {
             if !allItems.isEmpty {
                 ScoreBadge(score: score, tier: item.tier)
             }
+        }
         }
         .padding(.vertical, RankdSpacing.xxs)
         .accessibilityElement(children: .combine)
