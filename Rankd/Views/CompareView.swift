@@ -297,9 +297,18 @@ struct FilterChip: View {
             .padding(.horizontal, RankdSpacing.sm)
             .padding(.vertical, RankdSpacing.xs)
             .frame(minHeight: 44)
-            .background(isSelected ? RankdColors.brand : RankdColors.surfaceSecondary)
+            .background(
+                Group {
+                    if isSelected {
+                        LinearGradient(colors: [RankdColors.gradientStart, RankdColors.gradientEnd], startPoint: .leading, endPoint: .trailing)
+                    } else {
+                        LinearGradient(colors: [RankdColors.surfaceSecondary, RankdColors.surfaceSecondary], startPoint: .leading, endPoint: .trailing)
+                    }
+                }
+            )
             .foregroundStyle(isSelected ? RankdColors.surfacePrimary : RankdColors.textSecondary)
             .clipShape(Capsule())
+            .shadow(color: isSelected ? RankdColors.brand.opacity(0.3) : .clear, radius: 4, y: 2)
         }
         .buttonStyle(.plain)
     }

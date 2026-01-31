@@ -118,9 +118,10 @@ struct DiscoverView: View {
     private var discoverListsSection: some View {
         VStack(alignment: .leading, spacing: RankdSpacing.sm) {
             HStack {
-                Text("Your Lists")
-                    .font(RankdTypography.headingMedium)
-                    .foregroundStyle(RankdColors.textPrimary)
+                Text("YOUR LISTS")
+                    .font(RankdTypography.sectionLabel)
+                    .tracking(1.5)
+                    .foregroundStyle(RankdColors.textTertiary)
                 Spacer()
                 NavigationLink {
                     ListsView()
@@ -610,17 +611,18 @@ struct DiscoverSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: RankdSpacing.sm) {
-            // Section header
+            // Section header — tracked uppercase
             HStack {
-                Text(title)
-                    .font(RankdTypography.headingMedium)
-                    .foregroundStyle(RankdColors.textPrimary)
+                Text(title.uppercased())
+                    .font(RankdTypography.sectionLabel)
+                    .tracking(1.5)
+                    .foregroundStyle(RankdColors.textTertiary)
                 
                 Spacer()
                 
                 Text("See all")
                     .font(RankdTypography.labelMedium)
-                    .foregroundStyle(RankdColors.textTertiary)
+                    .foregroundStyle(RankdColors.brand)
             }
             .padding(.horizontal, RankdSpacing.md)
             
@@ -750,9 +752,10 @@ struct GenreGrid: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: RankdSpacing.sm) {
-            Text("Browse by Genre")
-                .font(RankdTypography.headingMedium)
-                .foregroundStyle(RankdColors.textPrimary)
+            Text("BROWSE BY GENRE")
+                .font(RankdTypography.sectionLabel)
+                .tracking(1.5)
+                .foregroundStyle(RankdColors.textTertiary)
                 .padding(.horizontal, RankdSpacing.md)
             
             LazyVGrid(columns: columns, spacing: RankdSpacing.xs) {
@@ -961,11 +964,18 @@ struct GenreDetailView: View {
                         
                         Text("Rank It")
                             .font(RankdTypography.labelLarge)
-                            .foregroundStyle(RankdColors.textPrimary)
+                            .foregroundStyle(.white)
                             .padding(.horizontal, RankdSpacing.lg)
                             .padding(.vertical, RankdSpacing.sm)
-                            .background(RankdColors.brand)
+                            .background(
+                                LinearGradient(
+                                    colors: [RankdColors.gradientStart, RankdColors.gradientEnd],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
                             .clipShape(Capsule())
+                            .shadow(color: RankdColors.brand.opacity(0.4), radius: 8, y: 4)
                             .padding(.top, RankdSpacing.xxs)
                     }
                     .padding(.horizontal, RankdSpacing.md)
