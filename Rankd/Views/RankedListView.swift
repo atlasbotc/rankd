@@ -8,7 +8,7 @@ struct RankedListView: View {
     @State private var showDeleteConfirmation = false
     @State private var itemToDelete: RankedItem?
     @State private var selectedItem: RankedItem?
-    @State private var showDetailSheet = false
+    // selectedItem drives the detail sheet via .sheet(item:)
     @State private var isReorderMode = false
     @State private var showReRankFlow = false
     @State private var reRankSearchResult: TMDBSearchResult?
@@ -81,7 +81,6 @@ struct RankedListView: View {
                                         .animation(RankdMotion.normal, value: item.rank)
                                         .onTapGesture {
                                             selectedItem = item
-                                            showDetailSheet = true
                                         }
                                         .contextMenu {
                                             Button {
@@ -174,10 +173,8 @@ struct RankedListView: View {
                     Text("Remove \"\(item.title)\" from your rankings?")
                 }
             }
-            .sheet(isPresented: $showDetailSheet) {
-                if let item = selectedItem {
-                    ItemDetailSheet(item: item)
-                }
+            .sheet(item: $selectedItem) { item in
+                ItemDetailSheet(item: item)
             }
             .fullScreenCover(isPresented: $showReRankFlow) {
                 if let result = reRankSearchResult {
@@ -250,7 +247,6 @@ struct RankedListView: View {
                         allItems: filteredItems,
                         onTap: {
                             selectedItem = item
-                            showDetailSheet = true
                         },
                         onDelete: {
                             itemToDelete = item
