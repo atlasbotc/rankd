@@ -272,11 +272,7 @@ struct ProfileView: View {
                     .font(RankdTypography.displayMedium)
                     .foregroundStyle(RankdColors.textPrimary)
                 
-                if !username.isEmpty {
-                    Text("@\(username)")
-                        .font(RankdTypography.bodySmall)
-                        .foregroundStyle(RankdColors.textTertiary)
-                }
+                // Username will show here when social features launch
                 
                 HStack(spacing: RankdSpacing.xs) {
                     Image(systemName: "calendar")
@@ -786,20 +782,12 @@ struct ProfileView: View {
             .padding(.horizontal, RankdSpacing.md)
             
             VStack(spacing: 1) {
-                // Display Name
+                // Name
                 settingsRow(
                     icon: "person.fill",
-                    title: "Display Name",
+                    title: "Name",
                     subtitle: displayName.isEmpty ? "Set your name" : displayName,
                     destination: AnyView(displayNameEditor)
-                )
-                
-                // Username
-                settingsRow(
-                    icon: "at",
-                    title: "Username",
-                    subtitle: username.isEmpty ? "Set a unique handle" : "@\(username)",
-                    destination: AnyView(usernameEditor)
                 )
                 
                 // Notifications toggle
@@ -926,18 +914,14 @@ struct ProfileView: View {
     private var displayNameEditor: some View {
         Form {
             Section {
-                TextField("Display Name", text: $displayName)
+                TextField("Name", text: $displayName)
                     .font(RankdTypography.bodyLarge)
             } header: {
                 Text("Your name appears at the top of your profile.")
             }
         }
-        .navigationTitle("Display Name")
+        .navigationTitle("Name")
         .navigationBarTitleDisplayMode(.inline)
-    }
-    
-    private var usernameEditor: some View {
-        UsernameEditorView(username: $username)
     }
     
     // MARK: - Notification Toggle
