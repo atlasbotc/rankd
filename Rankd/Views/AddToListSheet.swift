@@ -66,7 +66,7 @@ struct AddToListSheet: View {
                             Text(list.name)
                                 .font(RankdTypography.headingSmall)
                                 .foregroundStyle(RankdColors.textPrimary)
-                            Text("\(list.items.count) item\(list.items.count == 1 ? "" : "s")")
+                            Text("\(list.itemCount) item\(list.itemCount == 1 ? "" : "s")")
                                 .font(RankdTypography.labelSmall)
                                 .foregroundStyle(RankdColors.textSecondary)
                         }

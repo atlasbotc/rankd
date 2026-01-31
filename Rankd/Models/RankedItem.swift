@@ -14,17 +14,17 @@ enum MediaType: String, Codable {
 
 @Model
 final class RankedItem {
-    var id: UUID
-    var tmdbId: Int
-    var title: String
-    var overview: String
+    var id: UUID = UUID()
+    var tmdbId: Int = 0
+    var title: String = ""
+    var overview: String = ""
     var posterPath: String?
     var releaseDate: String?
-    var mediaType: MediaType
-    var tier: Tier
-    var rank: Int // Lower = better (1 = best)
-    var dateAdded: Date
-    var comparisonCount: Int
+    var mediaType: MediaType = .movie
+    var tier: Tier = .medium
+    var rank: Int = Int.max // Lower = better (1 = best)
+    var dateAdded: Date = Date()
+    var comparisonCount: Int = 0
     var review: String?
     var genreIds: [Int] = []
     var genreNames: [String] = []
@@ -41,7 +41,6 @@ final class RankedItem {
         tier: Tier,
         review: String? = nil
     ) {
-        self.id = UUID()
         self.tmdbId = tmdbId
         self.title = title
         self.overview = overview
@@ -49,9 +48,6 @@ final class RankedItem {
         self.releaseDate = releaseDate
         self.mediaType = mediaType
         self.tier = tier
-        self.rank = Int.max // New items start at bottom until compared
-        self.dateAdded = Date()
-        self.comparisonCount = 0
         self.review = review
     }
     

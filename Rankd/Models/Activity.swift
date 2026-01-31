@@ -31,13 +31,13 @@ enum ActivityType: String, Codable {
 
 @Model
 final class Activity {
-    var id: UUID
-    var userId: UUID
-    var activityTypeRaw: String
-    var mediaTitle: String
-    var mediaTMDBId: Int
-    var mediaTypeRaw: String
-    var timestamp: Date
+    var id: UUID = UUID()
+    var userId: UUID = UUID()
+    var activityTypeRaw: String = ActivityType.ranked.rawValue
+    var mediaTitle: String = ""
+    var mediaTMDBId: Int = 0
+    var mediaTypeRaw: String = MediaType.movie.rawValue
+    var timestamp: Date = Date()
     var metadata: String?
     
     var activityType: ActivityType {
@@ -58,13 +58,11 @@ final class Activity {
         mediaType: MediaType,
         metadata: String? = nil
     ) {
-        self.id = UUID()
         self.userId = userId
         self.activityTypeRaw = activityType.rawValue
         self.mediaTitle = mediaTitle
         self.mediaTMDBId = mediaTMDBId
         self.mediaTypeRaw = mediaType.rawValue
-        self.timestamp = Date()
         self.metadata = metadata
     }
     

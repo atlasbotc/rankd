@@ -166,7 +166,7 @@ struct AddToListView: View {
     
     private var fromRankingsSection: some View {
         Group {
-            if rankedNotInList.isEmpty && list.items.isEmpty {
+            if rankedNotInList.isEmpty && (list.items ?? []).isEmpty {
                 VStack(spacing: RankdSpacing.md) {
                     Spacer()
                     Image(systemName: "magnifyingglass")

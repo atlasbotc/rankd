@@ -3,57 +3,58 @@ import SwiftData
 
 @Model
 final class CustomList {
-    var id: UUID
-    var name: String
-    var listDescription: String
-    var emoji: String
+    var id: UUID = UUID()
+    var name: String = ""
+    var listDescription: String = ""
+    var emoji: String = "📋"
     @Relationship(deleteRule: .cascade, inverse: \CustomListItem.list)
-    var items: [CustomListItem]
-    var dateCreated: Date
-    var dateModified: Date
+    var items: [CustomListItem]? = []
+    var dateCreated: Date = Date()
+    var dateModified: Date = Date()
     
     init(
         name: String,
         listDescription: String = "",
         emoji: String = "📋"
     ) {
-        self.id = UUID()
         self.name = name
         self.listDescription = listDescription
         self.emoji = emoji
-        self.items = []
-        self.dateCreated = Date()
-        self.dateModified = Date()
     }
     
     /// Items sorted by position
     var sortedItems: [CustomListItem] {
-        items.sorted { $0.position < $1.position }
+        (items ?? []).sorted { $0.position < $1.position }
     }
     
     /// Next available position
     var nextPosition: Int {
-        (items.map(\.position).max() ?? 0) + 1
+        ((items ?? []).map(\.position).max() ?? 0) + 1
     }
     
     /// Check if a TMDB item is already in this list
     func contains(tmdbId: Int) -> Bool {
-        items.contains { $0.tmdbId == tmdbId }
+        (items ?? []).contains { $0.tmdbId == tmdbId }
+    }
+    
+    /// Convenience: unwrapped items count
+    var itemCount: Int {
+        (items ?? []).count
     }
 }
 
 @Model
 final class CustomListItem {
-    var id: UUID
-    var tmdbId: Int
-    var title: String
+    var id: UUID = UUID()
+    var tmdbId: Int = 0
+    var title: String = ""
     var posterPath: String?
     var releaseDate: String?
-    var mediaType: MediaType
-    var position: Int
+    var mediaType: MediaType = .movie
+    var position: Int = 0
     var note: String?
     var list: CustomList?
-    var dateAdded: Date
+    var dateAdded: Date = Date()
     
     init(
         tmdbId: Int,
@@ -64,7 +65,6 @@ final class CustomListItem {
         position: Int,
         note: String? = nil
     ) {
-        self.id = UUID()
         self.tmdbId = tmdbId
         self.title = title
         self.posterPath = posterPath
@@ -72,7 +72,6 @@ final class CustomListItem {
         self.mediaType = mediaType
         self.position = position
         self.note = note
-        self.dateAdded = Date()
     }
     
     var posterURL: URL? {

@@ -142,7 +142,7 @@ struct ListShareSheet: View {
             emoji: list.emoji,
             listDescription: list.listDescription,
             items: displayItems,
-            totalCount: list.items.count,
+            totalCount: list.itemCount,
             posterImages: posterImages
         )
         

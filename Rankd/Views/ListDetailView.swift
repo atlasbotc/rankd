@@ -85,7 +85,7 @@ struct ListDetailView: View {
                         .listRowBackground(RankdColors.background)
                 }
                 
-                Text("\(list.items.count) item\(list.items.count == 1 ? "" : "s")")
+                Text("\(list.itemCount) item\(list.itemCount == 1 ? "" : "s")")
                     .font(RankdTypography.caption)
                     .foregroundStyle(RankdColors.textTertiary)
                     .listRowSeparator(.hidden)

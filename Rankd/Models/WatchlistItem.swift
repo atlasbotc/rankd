@@ -29,14 +29,14 @@ enum WatchlistPriority: Int, Codable, CaseIterable, Comparable {
 
 @Model
 final class WatchlistItem {
-    var id: UUID
-    var tmdbId: Int
-    var title: String
-    var overview: String
+    var id: UUID = UUID()
+    var tmdbId: Int = 0
+    var title: String = ""
+    var overview: String = ""
     var posterPath: String?
     var releaseDate: String?
-    var mediaType: MediaType
-    var dateAdded: Date
+    var mediaType: MediaType = .movie
+    var dateAdded: Date = Date()
     var notes: String?
     var priorityRaw: Int = 1
     
@@ -54,15 +54,12 @@ final class WatchlistItem {
         mediaType: MediaType,
         priority: WatchlistPriority = .normal
     ) {
-        self.id = UUID()
         self.tmdbId = tmdbId
         self.title = title
         self.overview = overview
         self.posterPath = posterPath
         self.releaseDate = releaseDate
         self.mediaType = mediaType
-        self.dateAdded = Date()
-        self.notes = nil
         self.priorityRaw = priority.rawValue
     }
     
