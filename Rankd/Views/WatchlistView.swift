@@ -355,17 +355,26 @@ struct WatchlistView: View {
     // MARK: - Watchlist
     
     private var watchlist: some View {
-        List {
-            Section {
-                VStack(spacing: RankdSpacing.sm) {
-                    pillPicker
-                    itemCountHeader
-                }
-                .listRowBackground(RankdColors.background)
-                .listRowInsets(EdgeInsets(top: RankdSpacing.xs, leading: 0, bottom: RankdSpacing.xs, trailing: 0))
-                .listRowSeparator(.hidden)
+        VStack(spacing: 0) {
+            VStack(spacing: RankdSpacing.sm) {
+                pillPicker
+                itemCountHeader
             }
+            .padding(.vertical, RankdSpacing.xs)
             
+            if filteredAndSorted.isEmpty {
+                Spacer()
+                VStack(spacing: RankdSpacing.md) {
+                    Image(systemName: filterOption == .tvShows ? "tv" : "film")
+                        .font(.system(size: 36))
+                        .foregroundStyle(RankdColors.textQuaternary)
+                    Text("No \(filterOption.rawValue.lowercased()) in your watchlist yet")
+                        .font(RankdTypography.bodyMedium)
+                        .foregroundStyle(RankdColors.textTertiary)
+                }
+                Spacer()
+            } else {
+            List {
             Section {
                 ForEach(filteredAndSorted) { item in
                     WatchlistRow(item: item)
@@ -469,6 +478,8 @@ struct WatchlistView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
+            }
+        }
     }
     
     private func deleteItem(_ item: WatchlistItem) {
