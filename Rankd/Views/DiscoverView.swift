@@ -352,11 +352,18 @@ struct DiscoverView: View {
             } label: {
                 Text("Try Again")
                     .font(RankdTypography.labelLarge)
-                    .foregroundStyle(RankdColors.textPrimary)
+                    .foregroundStyle(.white)
                     .padding(.horizontal, RankdSpacing.lg)
                     .frame(height: 48)
-                    .background(RankdColors.brand)
-                    .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
+                    .background(
+                        LinearGradient(
+                            colors: [RankdColors.gradientStart, RankdColors.gradientEnd],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .clipShape(Capsule())
+                    .shadow(color: RankdColors.brand.opacity(0.4), radius: 8, y: 4)
             }
             .padding(.top, RankdSpacing.xs)
         }

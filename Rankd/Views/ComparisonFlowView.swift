@@ -349,17 +349,24 @@ struct ComparisonFlowView: View {
                 }
                 .padding(.horizontal, RankdSpacing.md)
                 
-                // Save button
+                // Save button — gradient CTA
                 Button {
                     saveItem()
                 } label: {
                     Text("Save to Rankings")
                         .font(RankdTypography.headingSmall)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                        .background(RankdColors.brand)
-                        .foregroundStyle(RankdColors.surfacePrimary)
-                        .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
+                        .frame(height: 52)
+                        .background(
+                            LinearGradient(
+                                colors: [RankdColors.gradientStart, RankdColors.gradientEnd],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .foregroundStyle(.white)
+                        .clipShape(Capsule())
+                        .shadow(color: RankdColors.brand.opacity(0.4), radius: 8, y: 4)
                 }
                 .padding(.horizontal, RankdSpacing.md)
                 .padding(.top, RankdSpacing.xs)
