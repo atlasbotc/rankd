@@ -330,11 +330,18 @@ private struct OnboardingButton: View {
         Button(action: action) {
             Text(title)
                 .font(RankdTypography.headingSmall)
-                .foregroundStyle(isFinal ? .white : RankdColors.textPrimary)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)
-                .background(RankdColors.brand)
-                .clipShape(RoundedRectangle(cornerRadius: RankdRadius.md))
+                .background(
+                    LinearGradient(
+                        colors: [RankdColors.gradientStart, RankdColors.gradientEnd],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .clipShape(Capsule())
+                .shadow(color: RankdColors.brand.opacity(0.4), radius: 8, y: 4)
         }
     }
 }

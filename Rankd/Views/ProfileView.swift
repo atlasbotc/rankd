@@ -376,9 +376,10 @@ struct ProfileView: View {
     private var topFourSection: some View {
         VStack(spacing: RankdSpacing.md) {
             HStack {
-                Text("Top 4")
-                    .font(RankdTypography.headingLarge)
-                    .foregroundStyle(RankdColors.textPrimary)
+                Text("YOUR TOP 4")
+                    .font(RankdTypography.sectionLabel)
+                    .tracking(1.5)
+                    .foregroundStyle(RankdColors.textTertiary)
                 Spacer()
             }
             .padding(.horizontal, RankdSpacing.md)
