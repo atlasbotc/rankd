@@ -452,11 +452,12 @@ struct ProfileView: View {
             HStack {
                 HStack(spacing: RankdSpacing.xs) {
                     Image(systemName: "heart.fill")
-                        .font(RankdTypography.headingSmall)
+                        .font(RankdTypography.labelSmall)
                         .foregroundStyle(RankdColors.tierBad)
-                    Text("Favorites")
-                        .font(RankdTypography.headingLarge)
-                        .foregroundStyle(RankdColors.textPrimary)
+                    Text("FAVORITES")
+                        .font(RankdTypography.sectionLabel)
+                        .tracking(1.5)
+                        .foregroundStyle(RankdColors.textTertiary)
                 }
                 Spacer()
                 Text("\(favoriteItems.count)")
@@ -601,9 +602,10 @@ struct ProfileView: View {
     private var myListsSection: some View {
         VStack(alignment: .leading, spacing: RankdSpacing.sm) {
             HStack {
-                Text("My Lists")
-                    .font(RankdTypography.headingLarge)
-                    .foregroundStyle(RankdColors.textPrimary)
+                Text("MY LISTS")
+                    .font(RankdTypography.sectionLabel)
+                    .tracking(1.5)
+                    .foregroundStyle(RankdColors.textTertiary)
                 Spacer()
                 NavigationLink {
                     ListsView()
@@ -774,9 +776,10 @@ struct ProfileView: View {
     private var settingsSection: some View {
         VStack(spacing: RankdSpacing.sm) {
             HStack {
-                Text("Settings")
-                    .font(RankdTypography.headingLarge)
-                    .foregroundStyle(RankdColors.textPrimary)
+                Text("SETTINGS")
+                    .font(RankdTypography.sectionLabel)
+                    .tracking(1.5)
+                    .foregroundStyle(RankdColors.textTertiary)
                 Spacer()
             }
             .padding(.horizontal, RankdSpacing.md)
@@ -999,9 +1002,10 @@ struct ProfileView: View {
     private var tierBreakdown: some View {
         VStack(spacing: RankdSpacing.sm) {
             HStack {
-                Text("Tier Breakdown")
-                    .font(RankdTypography.headingMedium)
-                    .foregroundStyle(RankdColors.textPrimary)
+                Text("TIER BREAKDOWN")
+                    .font(RankdTypography.sectionLabel)
+                    .tracking(1.5)
+                    .foregroundStyle(RankdColors.textTertiary)
                 Spacer()
             }
             
