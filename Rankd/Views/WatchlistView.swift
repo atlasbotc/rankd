@@ -377,102 +377,39 @@ struct WatchlistView: View {
             List {
             Section {
                 ForEach(filteredAndSorted) { item in
-                    WatchlistRow(item: item)
-                        .listRowBackground(RankdColors.background)
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button(role: .destructive) {
-                                itemToDelete = item
-                                showDeleteConfirmation = true
-                                HapticManager.notification(.warning)
-                            } label: {
-                                Label("Remove", systemImage: "trash")
-                            }
-                            .tint(RankdColors.error)
+                    WatchlistRow(
+                        item: item,
+                        onSetPriority: { priority in
+                            item.priority = priority
+                            try? modelContext.save()
+                        },
+                        onRemind: {
+                            itemToRemind = item
+                            customReminderDate = Date().addingTimeInterval(86400)
+                            showCustomDatePicker = true
+                        },
+                        onRank: {
+                            itemToRank = item
+                            searchResultToRank = TMDBSearchResult(
+                                id: item.tmdbId,
+                                title: item.mediaType == .movie ? item.title : nil,
+                                name: item.mediaType == .tv ? item.title : nil,
+                                overview: item.overview,
+                                posterPath: item.posterPath,
+                                releaseDate: item.mediaType == .movie ? item.releaseDate : nil,
+                                firstAirDate: item.mediaType == .tv ? item.releaseDate : nil,
+                                mediaType: item.mediaType.rawValue,
+                                voteAverage: nil
+                            )
+                            showComparisonFlow = true
+                        },
+                        onDelete: {
+                            itemToDelete = item
+                            showDeleteConfirmation = true
+                            HapticManager.notification(.warning)
                         }
-                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                            Button {
-                                itemToRank = item
-                                searchResultToRank = TMDBSearchResult(
-                                    id: item.tmdbId,
-                                    title: item.mediaType == .movie ? item.title : nil,
-                                    name: item.mediaType == .tv ? item.title : nil,
-                                    overview: item.overview,
-                                    posterPath: item.posterPath,
-                                    releaseDate: item.mediaType == .movie ? item.releaseDate : nil,
-                                    firstAirDate: item.mediaType == .tv ? item.releaseDate : nil,
-                                    mediaType: item.mediaType.rawValue,
-                                    voteAverage: nil
-                                )
-                                showComparisonFlow = true
-                            } label: {
-                                Label("Rank It", systemImage: "list.number")
-                            }
-                            .tint(RankdColors.brand)
-                        }
-                        .contextMenu {
-                            Section("Priority") {
-                                ForEach(WatchlistPriority.allCases, id: \.self) { priority in
-                                    Button {
-                                        item.priority = priority
-                                        try? modelContext.save()
-                                    } label: {
-                                        Label {
-                                            Text(priority.label)
-                                        } icon: {
-                                            Image(systemName: priority.iconName)
-                                        }
-                                        if item.priority == priority {
-                                            Image(systemName: "checkmark")
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            Section("Remind Me") {
-                                ForEach(ReminderOption.allCases.filter { $0 != .custom }) { option in
-                                    Button {
-                                        scheduleReminder(for: item, option: option)
-                                    } label: {
-                                        Label(option.rawValue, systemImage: option.icon)
-                                    }
-                                }
-                                
-                                Button {
-                                    itemToRemind = item
-                                    customReminderDate = Date().addingTimeInterval(86400)
-                                    showCustomDatePicker = true
-                                } label: {
-                                    Label(ReminderOption.custom.rawValue, systemImage: ReminderOption.custom.icon)
-                                }
-                            }
-                            
-                            Section {
-                                Button {
-                                    itemToRank = item
-                                    searchResultToRank = TMDBSearchResult(
-                                        id: item.tmdbId,
-                                        title: item.mediaType == .movie ? item.title : nil,
-                                        name: item.mediaType == .tv ? item.title : nil,
-                                        overview: item.overview,
-                                        posterPath: item.posterPath,
-                                        releaseDate: item.mediaType == .movie ? item.releaseDate : nil,
-                                        firstAirDate: item.mediaType == .tv ? item.releaseDate : nil,
-                                        mediaType: item.mediaType.rawValue,
-                                        voteAverage: nil
-                                    )
-                                    showComparisonFlow = true
-                                } label: {
-                                    Label("Rank It", systemImage: "list.number")
-                                }
-                                
-                                Button(role: .destructive) {
-                                    itemToDelete = item
-                                    showDeleteConfirmation = true
-                                } label: {
-                                    Label("Remove", systemImage: "trash")
-                                }
-                            }
-                        }
+                    )
+                    .listRowBackground(RankdColors.background)
                 }
             }
         }
@@ -492,6 +429,10 @@ struct WatchlistView: View {
 
 struct WatchlistRow: View {
     let item: WatchlistItem
+    var onSetPriority: (WatchlistPriority) -> Void = { _ in }
+    var onRemind: () -> Void = {}
+    var onRank: () -> Void = {}
+    var onDelete: () -> Void = {}
     
     var body: some View {
         HStack(spacing: RankdSpacing.sm) {
@@ -542,6 +483,54 @@ struct WatchlistRow: View {
             }
             
             Spacer()
+            
+            // Three-dot menu
+            Menu {
+                Section("Priority") {
+                    ForEach(WatchlistPriority.allCases, id: \.self) { priority in
+                        Button {
+                            onSetPriority(priority)
+                        } label: {
+                            Label {
+                                Text(priority.label)
+                            } icon: {
+                                Image(systemName: priority.iconName)
+                            }
+                            if item.priority == priority {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+                
+                Section("Remind Me") {
+                    Button {
+                        onRemind()
+                    } label: {
+                        Label("Set Reminder", systemImage: "bell")
+                    }
+                }
+                
+                Section {
+                    Button {
+                        onRank()
+                    } label: {
+                        Label("Rank It", systemImage: "list.number")
+                    }
+                    
+                    Button(role: .destructive) {
+                        onDelete()
+                    } label: {
+                        Label("Remove", systemImage: "trash")
+                    }
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(RankdTypography.bodyMedium)
+                    .foregroundStyle(RankdColors.textTertiary)
+                    .frame(width: 32, height: 32)
+                    .contentShape(Rectangle())
+            }
         }
         .padding(.vertical, RankdSpacing.xxs)
     }
