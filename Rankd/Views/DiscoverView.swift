@@ -110,6 +110,7 @@ struct DiscoverView: View {
             .padding(.bottom, RankdSpacing.xl)
         }
         .scrollIndicators(.hidden)
+        .background(RankdColors.background)
     }
     
     // MARK: - Your Lists on Discover
