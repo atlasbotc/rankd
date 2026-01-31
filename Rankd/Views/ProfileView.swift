@@ -1326,7 +1326,6 @@ private struct ExportOptionsSheet: View {
     
     @Environment(\.dismiss) private var dismiss
     @State private var exportFileURL: URL?
-    @State private var showShareSheet = false
     
     var body: some View {
         NavigationStack {
@@ -1353,9 +1352,7 @@ private struct ExportOptionsSheet: View {
                         subtitle: "\(rankedItems.count) items · CSV",
                         disabled: rankedItems.isEmpty
                     ) {
-                        let url = ExportService.exportRankingsCSV(items: rankedItems)
-                        exportFileURL = url
-                        showShareSheet = true
+                        exportFileURL = ExportService.exportRankingsCSV(items: rankedItems)
                     }
                     
                     exportOptionRow(
@@ -1364,9 +1361,7 @@ private struct ExportOptionsSheet: View {
                         subtitle: "\(watchlistItems.count) items · CSV",
                         disabled: watchlistItems.isEmpty
                     ) {
-                        let url = ExportService.exportWatchlistCSV(items: watchlistItems)
-                        exportFileURL = url
-                        showShareSheet = true
+                        exportFileURL = ExportService.exportWatchlistCSV(items: watchlistItems)
                     }
                     
                     exportOptionRow(
@@ -1375,9 +1370,7 @@ private struct ExportOptionsSheet: View {
                         subtitle: "\(rankedItems.count + watchlistItems.count) items · JSON",
                         disabled: rankedItems.isEmpty && watchlistItems.isEmpty
                     ) {
-                        let url = ExportService.exportAllJSON(ranked: rankedItems, watchlist: watchlistItems)
-                        exportFileURL = url
-                        showShareSheet = true
+                        exportFileURL = ExportService.exportAllJSON(ranked: rankedItems, watchlist: watchlistItems)
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: RankdRadius.lg))
@@ -1393,9 +1386,22 @@ private struct ExportOptionsSheet: View {
                         .foregroundStyle(RankdColors.brand)
                 }
             }
-            .sheet(isPresented: $showShareSheet) {
-                if let url = exportFileURL {
-                    ShareSheet(activityItems: [url])
+            .onChange(of: exportFileURL) { _, newURL in
+                // Trigger share sheet via UIKit since URL isn't Identifiable
+                if let url = newURL {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+                        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                           let rootVC = windowScene.windows.first?.rootViewController {
+                            var topVC = rootVC
+                            while let presented = topVC.presentedViewController {
+                                topVC = presented
+                            }
+                            activityVC.popoverPresentationController?.sourceView = topVC.view
+                            topVC.present(activityVC, animated: true)
+                        }
+                        exportFileURL = nil
+                    }
                 }
             }
         }
