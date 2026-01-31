@@ -17,10 +17,18 @@ enum RankdColors {
     static let textTertiary = Color(red: 0.13, green: 0.13, blue: 0.15).opacity(0.40)
     static let textQuaternary = Color(red: 0.13, green: 0.13, blue: 0.15).opacity(0.20)
     
-    // Brand — muted slate/steel blue, used <5%, action-only
-    // "Use blue as a promise, not a personality"
-    static let brand = Color(red: 0.35, green: 0.45, blue: 0.58)            // #596F94 — muted slate blue
-    static let brandSubtle = Color(red: 0.35, green: 0.45, blue: 0.58).opacity(0.12)
+    // Brand — warm copper, cinematic and distinctive
+    static let brand = Color(red: 0.77, green: 0.48, blue: 0.23)            // #C47B3B — warm copper
+    static let brandSubtle = Color(red: 0.77, green: 0.48, blue: 0.23).opacity(0.12)
+    static let brandSecondary = Color(red: 0.55, green: 0.38, blue: 0.31)   // #8C6150 — warm brown
+    static let brandGlow = Color(red: 0.95, green: 0.75, blue: 0.45)        // warm gold glow
+    
+    // Warm gradient pair for hero sections / CTAs
+    static let gradientStart = Color(red: 0.77, green: 0.48, blue: 0.23)    // copper
+    static let gradientEnd = Color(red: 0.55, green: 0.38, blue: 0.31)      // warm brown
+    
+    // Surface warmth — slightly warmer card for featured content
+    static let surfaceWarm = Color(red: 0.98, green: 0.95, blue: 0.90)
     
     // Accent — alias for brand (backward compatibility)
     static let accent = brand
@@ -67,12 +75,12 @@ enum RankdColors {
 // Strict scale. No in-between sizes.
 
 enum RankdTypography {
-    // Display — hero, feature headers
-    static let displayLarge = Font.system(size: 34, weight: .bold, design: .default)
-    static let displayMedium = Font.system(size: 28, weight: .bold, design: .default)
+    // Display — hero, feature headers (rounded for warmth + personality)
+    static let displayLarge = Font.system(size: 34, weight: .bold, design: .rounded)
+    static let displayMedium = Font.system(size: 28, weight: .bold, design: .rounded)
     
     // Headings
-    static let headingLarge = Font.system(size: 22, weight: .semibold, design: .default)
+    static let headingLarge = Font.system(size: 22, weight: .semibold, design: .rounded)
     static let headingMedium = Font.system(size: 18, weight: .semibold, design: .default)
     static let headingSmall = Font.system(size: 16, weight: .semibold, design: .default)
     
@@ -88,6 +96,9 @@ enum RankdTypography {
     
     // Caption
     static let caption = Font.system(size: 11, weight: .regular, design: .default)
+    
+    // Section label — tracked uppercase for section headers
+    static let sectionLabel = Font.system(size: 11, weight: .bold, design: .default)
 }
 
 // MARK: - Spacing Scale
@@ -196,11 +207,18 @@ extension View {
 }
 
 struct RankdCardStyle: ViewModifier {
+    var elevated: Bool = false
+    
     func body(content: Content) -> some View {
         content
             .background(
                 RoundedRectangle(cornerRadius: RankdRadius.lg)
                     .fill(RankdColors.surfacePrimary)
+                    .shadow(
+                        color: elevated ? RankdShadow.elevated : RankdShadow.card,
+                        radius: elevated ? RankdShadow.elevatedRadius : RankdShadow.cardRadius,
+                        y: elevated ? RankdShadow.elevatedY : RankdShadow.cardY
+                    )
             )
     }
 }
