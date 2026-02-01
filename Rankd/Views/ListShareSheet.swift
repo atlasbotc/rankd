@@ -232,7 +232,7 @@ struct ListCardView: View {
                 
                 Spacer()
                 
-                Text("rankd")
+                Text("marqui")
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
                     .foregroundStyle(Colors.tertiaryText)
                 

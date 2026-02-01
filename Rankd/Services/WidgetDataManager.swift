@@ -5,7 +5,7 @@ import WidgetKit
 /// Widget runs in a separate process — this bridges the gap using UserDefaults.
 enum WidgetDataManager {
     
-    static let suiteName = "group.com.rankd.shared"
+    static let suiteName = "group.app.marqui.shared"
     static let topItemsKey = "widget_top_items"
     
     /// Lightweight struct for widget display — no SwiftData dependency.

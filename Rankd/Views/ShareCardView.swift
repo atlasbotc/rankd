@@ -345,7 +345,7 @@ struct Top4CardView: View {
     }
     
     private var brandingFooter: some View {
-        Text("rankd")
+        Text("marqui")
             .font(.system(size: 20, weight: .semibold, design: .rounded))
             .foregroundStyle(CardColors.tertiaryText)
     }
@@ -514,7 +514,7 @@ struct Top10CardView: View {
     }
     
     private var top10Branding: some View {
-        Text("rankd")
+        Text("marqui")
             .font(.system(size: 18, weight: .semibold, design: .rounded))
             .foregroundStyle(CardColors.tertiaryText)
     }
@@ -647,7 +647,7 @@ struct FavoritesCardView: View {
                 .font(.system(size: 18, weight: .medium))
                 .foregroundStyle(CardColors.secondaryText)
             
-            Text("rankd")
+            Text("marqui")
                 .font(.system(size: 18, weight: .semibold, design: .rounded))
                 .foregroundStyle(CardColors.tertiaryText)
         }

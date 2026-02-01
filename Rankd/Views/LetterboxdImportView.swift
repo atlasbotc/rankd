@@ -175,7 +175,7 @@ struct LetterboxdImportView: View {
                         .font(RankdTypography.headingLarge)
                         .foregroundStyle(RankdColors.textPrimary)
                     
-                    Text("Bring your movie ratings into Rankd. We'll match them with TMDB and sort them into tiers.")
+                    Text("Bring your movie ratings into Marqui. We'll match them with TMDB and sort them into tiers.")
                         .font(RankdTypography.bodyMedium)
                         .foregroundStyle(RankdColors.textSecondary)
                         .multilineTextAlignment(.center)
@@ -285,7 +285,7 @@ struct LetterboxdImportView: View {
                 HStack(spacing: RankdSpacing.md) {
                     SummaryBadge(icon: "checkmark.circle.fill", count: matchedOnly.count, label: "Matched", color: RankdColors.success)
                     SummaryBadge(icon: "questionmark.circle.fill", count: notFoundEntries.count, label: "Not Found", color: RankdColors.textTertiary)
-                    SummaryBadge(icon: "arrow.right.circle.fill", count: duplicateCount, label: "Already In Rankd", color: RankdColors.textSecondary)
+                    SummaryBadge(icon: "arrow.right.circle.fill", count: duplicateCount, label: "Already In Marqui", color: RankdColors.textSecondary)
                 }
                 .padding(RankdSpacing.md)
                 .background(

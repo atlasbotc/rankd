@@ -54,7 +54,7 @@ enum ExportService {
         }
         
         let csv = lines.joined(separator: "\n")
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("rankd_rankings.csv")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("marqui_rankings.csv")
         try? csv.write(to: url, atomically: true, encoding: .utf8)
         return url
     }
@@ -83,7 +83,7 @@ enum ExportService {
         }
         
         let csv = lines.joined(separator: "\n")
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("rankd_watchlist.csv")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("marqui_watchlist.csv")
         try? csv.write(to: url, atomically: true, encoding: .utf8)
         return url
     }
@@ -129,12 +129,12 @@ enum ExportService {
         
         let exportData: [String: Any] = [
             "exportDate": dateFormatter.string(from: Date()),
-            "app": "Rankd",
+            "app": "Marqui",
             "rankings": rankedDicts,
             "watchlist": watchlistDicts
         ]
         
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("rankd_export.json")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("marqui_export.json")
         
         if let jsonData = try? JSONSerialization.data(withJSONObject: exportData, options: [.prettyPrinted, .sortedKeys]) {
             try? jsonData.write(to: url)

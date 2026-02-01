@@ -16,7 +16,7 @@ struct SplashView: View {
                     .foregroundStyle(RankdColors.brand)
                 
                 // Wordmark — rounded for brand personality
-                Text("Rankd")
+                Text("Marqui")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundStyle(RankdColors.textPrimary)
             }

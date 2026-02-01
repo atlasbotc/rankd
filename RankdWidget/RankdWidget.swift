@@ -70,7 +70,7 @@ struct RankdTimelineProvider: TimelineProvider {
     }
     
     private func loadItems() -> [WidgetItem] {
-        guard let defaults = UserDefaults(suiteName: "group.com.rankd.shared"),
+        guard let defaults = UserDefaults(suiteName: "group.app.marqui.shared"),
               let data = defaults.data(forKey: "widget_top_items") else {
             return []
         }
@@ -392,7 +392,7 @@ struct RankdWidgetEntryView: View {
                 RankdSmallView(entry: entry)
             }
         }
-        .widgetURL(URL(string: "rankd://rankings"))
+        .widgetURL(URL(string: "marqui://rankings"))
     }
 }
 

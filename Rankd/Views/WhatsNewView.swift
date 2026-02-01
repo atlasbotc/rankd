@@ -58,7 +58,7 @@ struct WhatsNewView: View {
                             .foregroundStyle(RankdColors.brand)
                             .padding(.top, RankdSpacing.xxl)
                         
-                        Text("What's New in Rankd \(appVersion)")
+                        Text("What's New in Marqui \(appVersion)")
                             .font(RankdTypography.displayMedium)
                             .foregroundStyle(RankdColors.textPrimary)
                             .multilineTextAlignment(.center)

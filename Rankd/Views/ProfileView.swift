@@ -227,7 +227,7 @@ struct ProfileView: View {
                         }
                 }
             }
-            .alert("About Rankd", isPresented: $showAbout) {
+            .alert("About Marqui", isPresented: $showAbout) {
                 Button("OK", role: .cancel) { }
             } message: {
                 let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -838,7 +838,7 @@ struct ProfileView: View {
                 } label: {
                     settingsRowContent(
                         icon: "info.circle.fill",
-                        title: "About Rankd",
+                        title: "About Marqui",
                         subtitle: "Version & credits"
                     )
                 }

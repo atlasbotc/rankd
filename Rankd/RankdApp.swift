@@ -53,7 +53,7 @@ struct RankdApp: App {
     }
     
     private func handleDeepLink(_ url: URL) {
-        guard url.scheme == "rankd" else { return }
+        guard url.scheme == "marqui" else { return }
         
         switch url.host {
         case "rankings":

@@ -151,7 +151,7 @@ struct DiscoverView: View {
     
     private var welcomeHeader: some View {
         VStack(alignment: .leading, spacing: RankdSpacing.sm) {
-            Text("Welcome to Rankd")
+            Text("Welcome to Marqui")
                 .font(RankdTypography.headingLarge)
                 .foregroundStyle(RankdColors.textPrimary)
             
