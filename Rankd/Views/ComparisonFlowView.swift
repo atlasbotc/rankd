@@ -557,7 +557,7 @@ struct ComparisonFlowView: View {
         // Backfill genre and runtime data
         let itemTmdbId = newItem.id
         let itemMediaType = newItem.resolvedMediaType
-        Task {
+        Task { @MainActor in
             if itemMediaType == .movie {
                 if let details = try? await TMDBService.shared.getMovieDetails(id: itemTmdbId) {
                     item.genreIds = details.genres.map { $0.id }
