@@ -153,17 +153,11 @@ struct ComparisonFlowView: View {
             Spacer()
             
             // Poster thumbnail
-            AsyncImage(url: newItem.posterURL) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Rectangle()
-                    .fill(RankdColors.surfaceSecondary)
-                    .shimmer()
-            }
-            .frame(width: RankdPoster.standardWidth, height: RankdPoster.standardHeight)
-            .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+            CachedPosterImage(
+                url: newItem.posterURL,
+                width: RankdPoster.standardWidth,
+                height: RankdPoster.standardHeight
+            )
             
             Text(newItem.displayTitle)
                 .font(RankdTypography.headingLarge)
@@ -379,17 +373,11 @@ struct ComparisonFlowView: View {
     
     private var itemHeader: some View {
         HStack(spacing: RankdSpacing.md) {
-            AsyncImage(url: newItem.posterURL) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Rectangle()
-                    .fill(RankdColors.surfaceSecondary)
-                    .shimmer()
-            }
-            .frame(width: 80, height: 120)
-            .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+            CachedPosterImage(
+                url: newItem.posterURL,
+                width: 80,
+                height: 120
+            )
             
             VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
                 Text(newItem.displayTitle)
@@ -540,9 +528,7 @@ struct ComparisonFlowView: View {
         let rank = finalRank ?? (existingItems.count + 1)
         
         // Shift existing items down
-        for item in existingItems where item.rank >= rank {
-            item.rank += 1
-        }
+        RankingService.insertAtRank(rank, shifting: existingItems, context: modelContext)
         
         // Create new item
         let item = RankedItem(

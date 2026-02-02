@@ -5,6 +5,23 @@ import UIKit
 actor PosterCache {
     static let shared = PosterCache()
     
+    // Note: NSCache already evicts on memory pressure, but we additionally
+    // subscribe to memory warnings for explicit full-clear.
+    private static let memoryWarningTask: Void = {
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didReceiveMemoryWarningNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            Task { await PosterCache.shared.clearCache() }
+        }
+    }()
+    
+    private init() {
+        // Trigger lazy static registration of memory warning observer
+        _ = Self.memoryWarningTask
+    }
+    
     // MARK: - Memory Cache (NSCache)
     
     private let memoryCache: NSCache<NSString, UIImage> = {
