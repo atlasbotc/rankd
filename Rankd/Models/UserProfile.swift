@@ -22,6 +22,7 @@ final class UserProfile {
         self.username = username
         self.avatarURLString = avatarURLString
         self.bio = String(bio.prefix(150))
+        self.isCurrentUser = isCurrentUser
     }
     
     var avatarURL: URL? {

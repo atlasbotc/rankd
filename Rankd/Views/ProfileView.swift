@@ -86,7 +86,6 @@ struct ProfileView: View {
     // MARK: - Streak Calculation
     
     private var currentStreak: Int {
-        recordTodayIfNeeded()
         let dates = parsedStreakDates
         guard !dates.isEmpty else { return 0 }
         
@@ -192,6 +191,7 @@ struct ProfileView: View {
             .background(RankdColors.background)
             .navigationTitle("Profile")
             .task {
+                recordTodayIfNeeded()
                 if notificationsEnabled {
                     await notificationManager.refreshAuthorizationStatus()
                     await scheduleStreakReminderIfNeeded()

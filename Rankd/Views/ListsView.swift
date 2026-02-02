@@ -249,7 +249,7 @@ struct SuggestedList: Identifiable {
     
     static let allSuggestions: [SuggestedList] = [
         SuggestedList(emoji: "🏆", name: "All-Time Favorites", description: "The ones that never get old"),
-        SuggestedList(emoji: "🔥", name: "Best of 2024", description: "Top picks from this year"),
+        SuggestedList(emoji: "🔥", name: "Best of \(Calendar.current.component(.year, from: Date()))", description: "Top picks from this year"),
         SuggestedList(emoji: "🍿", name: "Watch with Friends", description: "Perfect for movie night"),
         SuggestedList(emoji: "📺", name: "Weekend Binge", description: "Clear your schedule for these"),
         SuggestedList(emoji: "❤️", name: "Comfort Watches", description: "Warm, familiar, always good"),
