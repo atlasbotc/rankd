@@ -32,6 +32,26 @@ enum WidgetDataManager {
         WidgetCenter.shared.reloadAllTimelines()
     }
     
+    /// Convenience: compute and push top-10 widget data from a full list of ranked items.
+    /// Call after any ranking mutation (save, delete, reorder, import).
+    static func refreshWidgetData(from allItems: [RankedItem]) {
+        let sorted = allItems.sorted { $0.rank < $1.rank }
+        let top10 = Array(sorted.prefix(10))
+        let scores = RankedItem.calculateAllScores(for: sorted)
+        
+        let widgetItems = top10.map { item in
+            WidgetItem(
+                id: item.id.uuidString,
+                title: item.title,
+                score: scores[item.id] ?? 0,
+                tier: item.tier.rawValue,
+                posterURL: item.posterURL?.absoluteString,
+                rank: item.rank
+            )
+        }
+        updateSharedData(items: widgetItems)
+    }
+    
     /// Read top items from shared UserDefaults (used by widget).
     static func loadSharedData() -> [WidgetItem] {
         guard let defaults = UserDefaults(suiteName: suiteName),

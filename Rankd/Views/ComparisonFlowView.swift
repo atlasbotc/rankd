@@ -602,24 +602,8 @@ struct ComparisonFlowView: View {
         }
     }
     
-    /// Push top ranked items to shared UserDefaults for widget display.
     private func updateWidgetData() {
-        let allItems = (allRankedItems + []).sorted { $0.rank < $1.rank }
-        let top10 = Array(allItems.prefix(10))
-        
-        let widgetItems = top10.map { item in
-            let score = RankedItem.calculateScore(for: item, allItems: allItems)
-            return WidgetDataManager.WidgetItem(
-                id: item.id.uuidString,
-                title: item.title,
-                score: score,
-                tier: item.tier.rawValue,
-                posterURL: item.posterURL?.absoluteString,
-                rank: item.rank
-            )
-        }
-        
-        WidgetDataManager.updateSharedData(items: widgetItems)
+        WidgetDataManager.refreshWidgetData(from: allRankedItems)
     }
 }
 

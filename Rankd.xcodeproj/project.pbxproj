@@ -34,6 +34,7 @@
 		A1000001234567890000202 /* LetterboxdImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000212 /* LetterboxdImportView.swift */; };
 		A10000WHNW00000000000B /* WhatsNewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000WHNW00000000000R /* WhatsNewView.swift */; };
 		A10000APIP00000000000B /* AppIconPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000APIP00000000000R /* AppIconPreview.swift */; };
+		A1RNKSVC0000000000000B0 /* RankingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1RNKSVC0000000000000B1 /* RankingService.swift */; };
 		A1000001234567890000300 /* PosterCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000310 /* PosterCache.swift */; };
 		A1000001234567890000301 /* ShareCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000311 /* ShareCardView.swift */; };
 		A1000001234567890000302 /* ShareProfileSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000001234567890000312 /* ShareProfileSheet.swift */; };
@@ -90,6 +91,7 @@
 		A1000001234567890000210 /* LetterboxdImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LetterboxdImporter.swift; sourceTree = "<group>"; };
 		A1000001234567890000211 /* TMDBMatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TMDBMatcher.swift; sourceTree = "<group>"; };
 		A1000001234567890000212 /* LetterboxdImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LetterboxdImportView.swift; sourceTree = "<group>"; };
+		A1RNKSVC0000000000000B1 /* RankingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankingService.swift; sourceTree = "<group>"; };
 		A1000001234567890000310 /* PosterCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PosterCache.swift; sourceTree = "<group>"; };
 		A1000001234567890000311 /* ShareCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareCardView.swift; sourceTree = "<group>"; };
 		A1000001234567890000312 /* ShareProfileSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareProfileSheet.swift; sourceTree = "<group>"; };
@@ -275,6 +277,7 @@
 				E1EXP001000000000000001 /* ExportService.swift */,
 				A1000001234567890000930 /* NotificationManager.swift */,
 				A1000001234567890000912 /* ActivityLogger.swift */,
+				A1RNKSVC0000000000000B1 /* RankingService.swift */,
 				A1W00001234567890000010 /* WidgetDataManager.swift */,
 			);
 			path = Services;
@@ -430,6 +433,7 @@
 				A1000001234567890000201 /* TMDBMatcher.swift in Sources */,
 				A1000001234567890000202 /* LetterboxdImportView.swift in Sources */,
 				A10000WHNW00000000000B /* WhatsNewView.swift in Sources */,
+				A1RNKSVC0000000000000B0 /* RankingService.swift in Sources */,
 				A1000001234567890000300 /* PosterCache.swift in Sources */,
 				A1000001234567890000301 /* ShareCardView.swift in Sources */,
 				A1000001234567890000302 /* ShareProfileSheet.swift in Sources */,

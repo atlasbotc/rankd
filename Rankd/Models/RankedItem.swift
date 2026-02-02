@@ -79,6 +79,44 @@ final class RankedItem {
         return (score * 10).rounded() / 10 // round to 1 decimal
     }
     
+    /// Calculate all scores in a single O(n) pass by pre-grouping items by tier and media type.
+    static func calculateAllScores(for items: [RankedItem]) -> [UUID: Double] {
+        // Group by (tier, mediaType)
+        var grouped: [String: [RankedItem]] = [:]
+        for item in items {
+            let key = "\(item.tier.rawValue)-\(item.mediaType.rawValue)"
+            grouped[key, default: []].append(item)
+        }
+        // Sort each group by rank
+        for key in grouped.keys {
+            grouped[key]?.sort { $0.rank < $1.rank }
+        }
+        
+        var scores: [UUID: Double] = [:]
+        for (_, tierItems) in grouped {
+            let count = tierItems.count
+            guard count > 0, let firstItem = tierItems.first else { continue }
+            
+            let (top, bottom): (Double, Double) = {
+                switch firstItem.tier {
+                case .good:   return (10.0, 7.0)
+                case .medium: return (6.9, 4.0)
+                case .bad:    return (3.9, 1.0)
+                }
+            }()
+            
+            if count == 1 {
+                scores[tierItems[0].id] = top
+            } else {
+                for (index, item) in tierItems.enumerated() {
+                    let score = top - (top - bottom) * Double(index) / Double(count - 1)
+                    scores[item.id] = (score * 10).rounded() / 10
+                }
+            }
+        }
+        return scores
+    }
+    
     var posterURL: URL? {
         guard let path = posterPath else { return nil }
         return URL(string: "\(Config.tmdbImageBaseURL)/w500\(path)")
