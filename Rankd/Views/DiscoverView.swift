@@ -290,10 +290,13 @@ struct DiscoverView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 // Hero skeleton
-                RoundedRectangle(cornerRadius: 0)
-                    .fill(RankdColors.surfacePrimary)
-                    .frame(height: UIScreen.main.bounds.height * 0.55)
-                    .shimmer()
+                GeometryReader { geo in
+                    RoundedRectangle(cornerRadius: 0)
+                        .fill(RankdColors.surfacePrimary)
+                        .shimmer()
+                        .frame(height: geo.size.height * 0.55)
+                }
+                .frame(height: 400) // fallback height
                 
                 VStack(alignment: .leading, spacing: RankdSpacing.lg) {
                     ForEach(0..<3, id: \.self) { _ in

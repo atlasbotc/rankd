@@ -392,11 +392,13 @@ struct RankedListView: View {
         modelContext.delete(item)
         modelContext.safeSave()
         
-        let itemsToShift = allItems.filter { $0.id != deletedId && $0.mediaType == mediaType && $0.rank > deletedRank }
-        for shiftItem in itemsToShift {
-            shiftItem.rank -= 1
-        }
-        modelContext.safeSave()
+        RankingService.shiftRanksAfterDeletion(
+            excludingId: deletedId,
+            deletedRank: deletedRank,
+            mediaType: mediaType,
+            in: allItems,
+            context: modelContext
+        )
         
         HapticManager.impact(.medium)
         
@@ -417,12 +419,13 @@ struct RankedListView: View {
         modelContext.delete(item)
         modelContext.safeSave()
         
-        let itemsToShift = allItems.filter { $0.id != deletedId && $0.mediaType == mediaType && $0.rank > deletedRank }
-        for shiftItem in itemsToShift {
-            shiftItem.rank -= 1
-        }
-        
-        modelContext.safeSave()
+        RankingService.shiftRanksAfterDeletion(
+            excludingId: deletedId,
+            deletedRank: deletedRank,
+            mediaType: mediaType,
+            in: allItems,
+            context: modelContext
+        )
         updateWidgetData()
     }
     

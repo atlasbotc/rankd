@@ -26,7 +26,7 @@ struct RankingService {
         for item in itemsToShift {
             item.rank -= 1
         }
-        try? context.save()
+        context.safeSave()
     }
 
     /// Shift existing items down to make room, then set the new item's rank.
@@ -43,6 +43,6 @@ struct RankingService {
         for item in existingItems where item.rank >= rank {
             item.rank += 1
         }
-        try? context.save()
+        context.safeSave()
     }
 }
