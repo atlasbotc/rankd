@@ -36,6 +36,10 @@ struct DiscoverView: View {
     @State private var isLoading = true
     @State private var isPersonalizedLoading = true
     @State private var error: String?
+    @State private var lastGenericLoadTime: Date?
+    
+    /// Cache TTL for generic content (trending, popular, etc.) — 5 minutes
+    private let genericCacheTTL: TimeInterval = 5 * 60
     
     private var hasRankedItems: Bool {
         !rankedItems.isEmpty
@@ -70,7 +74,7 @@ struct DiscoverView: View {
             .toolbarBackground(.visible, for: .navigationBar)
             .navigationTitle("Discover")
             .refreshable {
-                await loadAllContent()
+                await loadAllContent(forceRefresh: true)
                 HapticManager.impact(.light)
             }
             .task {
@@ -351,7 +355,7 @@ struct DiscoverView: View {
                 .foregroundStyle(RankdColors.textSecondary)
             
             Button {
-                Task { await loadAllContent() }
+                Task { await loadAllContent(forceRefresh: true) }
             } label: {
                 Text("Try Again")
                     .font(RankdTypography.labelLarge)
@@ -375,7 +379,10 @@ struct DiscoverView: View {
     
     // MARK: - Data Loading
     
-    private func loadAllContent() async {
+    private func loadAllContent(forceRefresh: Bool = false) async {
+        if forceRefresh {
+            lastGenericLoadTime = nil
+        }
         isLoading = error != nil
         error = nil
         
@@ -386,6 +393,14 @@ struct DiscoverView: View {
     }
     
     private func loadGenericContent() async {
+        // Skip re-fetch if cache is still fresh
+        if let lastLoad = lastGenericLoadTime,
+           Date().timeIntervalSince(lastLoad) < genericCacheTTL,
+           !trending.isEmpty {
+            isLoading = false
+            return
+        }
+        
         do {
             async let trendingTask = TMDBService.shared.getTrending()
             async let popularMoviesTask = TMDBService.shared.getPopularMovies()
@@ -409,6 +424,7 @@ struct DiscoverView: View {
             topRatedMovies = trm
             topRatedTV = trtv
             genres = g
+            lastGenericLoadTime = Date()
             
         } catch {
             self.error = error.localizedDescription
