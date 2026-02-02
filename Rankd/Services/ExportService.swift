@@ -29,11 +29,12 @@ enum ExportService {
     /// Columns: Rank, Title, Media Type, Tier, Score, Genre, Year, Date Ranked
     static func exportRankingsCSV(items: [RankedItem]) -> URL {
         let sorted = items.sorted { $0.rank < $1.rank }
+        let scores = RankedItem.calculateAllScores(for: items)
         
         var lines = ["Rank,Title,Media Type,Tier,Score,Genre,Year,Date Ranked"]
         
         for item in sorted {
-            let score = RankedItem.calculateScore(for: item, allItems: items)
+            let score = scores[item.id] ?? RankedItem.calculateScore(for: item, allItems: items)
             let genre = item.genreNames.joined(separator: "; ")
             let year = item.year ?? ""
             let date = dateFormatter.string(from: item.dateAdded)
@@ -92,8 +93,9 @@ enum ExportService {
     
     /// Creates a pretty-printed JSON file with all ranked and watchlist data.
     static func exportAllJSON(ranked: [RankedItem], watchlist: [WatchlistItem]) -> URL {
+        let scores = RankedItem.calculateAllScores(for: ranked)
         let rankedDicts: [[String: Any]] = ranked.sorted { $0.rank < $1.rank }.map { item in
-            let score = RankedItem.calculateScore(for: item, allItems: ranked)
+            let score = scores[item.id] ?? RankedItem.calculateScore(for: item, allItems: ranked)
             var dict: [String: Any] = [
                 "rank": item.rank,
                 "title": item.title,
