@@ -84,30 +84,6 @@ actor TMDBService {
         }
     }
     
-    func searchTVShows(query: String) async throws -> [TMDBSearchResult] {
-        guard !query.isEmpty else { return [] }
-        
-        guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
-            throw TMDBError.invalidURL
-        }
-        
-        let urlString = "\(Config.tmdbBaseURL)/search/tv?api_key=\(Config.tmdbApiKey)&query=\(encodedQuery)"
-        
-        guard let url = URL(string: urlString) else {
-            throw TMDBError.invalidURL
-        }
-        
-        do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            let searchResponse = try JSONDecoder().decode(TMDBSearchResponse.self, from: data)
-            return searchResponse.results
-        } catch let error as DecodingError {
-            throw TMDBError.decodingError(error)
-        } catch {
-            throw TMDBError.networkError(error)
-        }
-    }
-    
     // MARK: - Discovery Endpoints
     
     func getTrending(mediaType: String = "all", timeWindow: String = "week") async throws -> [TMDBSearchResult] {

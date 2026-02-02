@@ -96,16 +96,5 @@ extension RankingViewModel {
         // Save changes
         try? context.save()
     }
-    
-    /// Normalize ranks within a tier (1, 2, 3, etc.)
-    func normalizeRanks(items: [RankedItem], tier: Tier, context: ModelContext) {
-        let tierItems = items.filter { $0.tier == tier }
-            .sorted { $0.rank < $1.rank }
-        
-        for (index, item) in tierItems.enumerated() {
-            item.rank = index + 1
-        }
-        
-        try? context.save()
-    }
+
 }

@@ -71,11 +71,6 @@ actor PosterCache {
         return image
     }
     
-    /// Legacy compatibility — load from URL directly.
-    func loadImage(from url: URL) async -> UIImage? {
-        await loadImage(for: url)
-    }
-    
     /// Pre-load multiple poster images in parallel. Returns a dictionary of URL → UIImage.
     func preload(urls: [URL]) async -> [URL: UIImage] {
         await withTaskGroup(of: (URL, UIImage?).self) { group in

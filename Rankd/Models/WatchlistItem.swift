@@ -72,17 +72,5 @@ final class WatchlistItem {
         guard let date = releaseDate, date.count >= 4 else { return nil }
         return String(date.prefix(4))
     }
-    
-    /// Convert to a RankedItem when user has watched it
-    func toRankedItem(tier: Tier) -> RankedItem {
-        return RankedItem(
-            tmdbId: tmdbId,
-            title: title,
-            overview: overview,
-            posterPath: posterPath,
-            releaseDate: releaseDate,
-            mediaType: mediaType,
-            tier: tier
-        )
-    }
+
 }
