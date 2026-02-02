@@ -104,14 +104,25 @@ struct ProfileView: View {
     }
     
     private var parsedStreakDates: Set<Date> {
+        guard !streakDatesString.isEmpty else { return [] }
         let calendar = Calendar.current
         let formatter = ISO8601DateFormatter()
-        return Set(
-            streakDatesString
-                .split(separator: ",")
-                .compactMap { formatter.date(from: String($0)) }
-                .map { calendar.startOfDay(for: $0) }
-        )
+        let parts = streakDatesString.split(separator: ",")
+        let dates = parts.compactMap { part -> Date? in
+            guard let date = formatter.date(from: String(part)) else {
+                print("⚠️ Failed to parse streak date: \(part)")
+                return nil
+            }
+            return calendar.startOfDay(for: date)
+        }
+        // If all parts failed to parse, the data is corrupt — reset it
+        if dates.isEmpty && !parts.isEmpty {
+            print("⚠️ All streak dates failed to parse, resetting streakDatesString")
+            DispatchQueue.main.async { [self] in
+                self.streakDatesString = ""
+            }
+        }
+        return Set(dates)
     }
     
     private func recordTodayIfNeeded() {

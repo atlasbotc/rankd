@@ -10,7 +10,16 @@ struct SearchView: View {
     @AppStorage("recentSearches") private var recentSearchesData: String = "[]"
     
     private var recentSearches: [String] {
-        (try? JSONDecoder().decode([String].self, from: Data(recentSearchesData.utf8))) ?? []
+        do {
+            return try JSONDecoder().decode([String].self, from: Data(recentSearchesData.utf8))
+        } catch {
+            print("⚠️ Failed to decode recentSearches, resetting: \(error)")
+            // Schedule reset on next run loop to avoid modifying state during view update
+            DispatchQueue.main.async { [self] in
+                self.recentSearchesData = "[]"
+            }
+            return []
+        }
     }
     
     private func saveRecentSearches(_ searches: [String]) {

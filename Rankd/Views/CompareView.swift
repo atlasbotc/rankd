@@ -228,21 +228,12 @@ struct CompareItemCard: View {
         Button(action: onTap) {
             VStack(spacing: RankdSpacing.sm) {
                 // Poster
-                AsyncImage(url: item.posterURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(RankdColors.surfaceSecondary)
-                        .overlay {
-                            Image(systemName: item.mediaType == .movie ? "film" : "tv")
-                                .font(RankdTypography.headingLarge)
-                                .foregroundStyle(RankdColors.textQuaternary)
-                        }
-                }
-                .frame(width: RankdPoster.largeWidth, height: RankdPoster.largeHeight)
-                .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+                CachedPosterImage(
+                    url: item.posterURL,
+                    width: RankdPoster.largeWidth,
+                    height: RankdPoster.largeHeight,
+                    placeholderIcon: item.mediaType == .movie ? "film" : "tv"
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: RankdPoster.cornerRadius)
                         .stroke(

@@ -118,18 +118,13 @@ struct AddToListView: View {
         let inList = isInList(tmdbId: result.id)
         
         return HStack(spacing: RankdSpacing.sm) {
-            AsyncImage(url: result.posterURL) { image in
-                image.resizable().aspectRatio(contentMode: .fill)
-            } placeholder: {
-                RoundedRectangle(cornerRadius: RankdRadius.sm)
-                    .fill(RankdColors.surfaceSecondary)
-                    .overlay {
-                        Image(systemName: result.resolvedMediaType == .movie ? "film" : "tv")
-                            .foregroundStyle(RankdColors.textQuaternary)
-                    }
-            }
-            .frame(width: RankdPoster.miniWidth, height: RankdPoster.miniHeight)
-            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
+            CachedPosterImage(
+                url: result.posterURL,
+                width: RankdPoster.miniWidth,
+                height: RankdPoster.miniHeight,
+                cornerRadius: RankdRadius.sm,
+                placeholderIcon: result.resolvedMediaType == .movie ? "film" : "tv"
+            )
             
             VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
                 Text(result.displayTitle)
@@ -218,18 +213,13 @@ struct AddToListView: View {
     
     private func rankedItemRow(_ item: RankedItem) -> some View {
         HStack(spacing: RankdSpacing.sm) {
-            AsyncImage(url: item.posterURL) { image in
-                image.resizable().aspectRatio(contentMode: .fill)
-            } placeholder: {
-                RoundedRectangle(cornerRadius: RankdRadius.sm)
-                    .fill(RankdColors.surfaceSecondary)
-                    .overlay {
-                        Image(systemName: item.mediaType == .movie ? "film" : "tv")
-                            .foregroundStyle(RankdColors.textQuaternary)
-                    }
-            }
-            .frame(width: RankdPoster.miniWidth, height: RankdPoster.miniHeight)
-            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
+            CachedPosterImage(
+                url: item.posterURL,
+                width: RankdPoster.miniWidth,
+                height: RankdPoster.miniHeight,
+                cornerRadius: RankdRadius.sm,
+                placeholderIcon: item.mediaType == .movie ? "film" : "tv"
+            )
             
             VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
                 Text(item.title)

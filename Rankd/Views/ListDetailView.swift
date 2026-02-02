@@ -197,18 +197,13 @@ struct ListItemRow: View {
                 .frame(width: 32, alignment: .center)
             
             // Poster
-            AsyncImage(url: item.posterURL) { image in
-                image.resizable().aspectRatio(contentMode: .fill)
-            } placeholder: {
-                RoundedRectangle(cornerRadius: RankdRadius.sm)
-                    .fill(RankdColors.surfaceSecondary)
-                    .overlay {
-                        Image(systemName: item.mediaType == .movie ? "film" : "tv")
-                            .foregroundStyle(RankdColors.textQuaternary)
-                    }
-            }
-            .frame(width: RankdPoster.thumbWidth, height: RankdPoster.thumbHeight)
-            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
+            CachedPosterImage(
+                url: item.posterURL,
+                width: RankdPoster.thumbWidth,
+                height: RankdPoster.thumbHeight,
+                cornerRadius: RankdRadius.sm,
+                placeholderIcon: item.mediaType == .movie ? "film" : "tv"
+            )
             
             // Info
             VStack(alignment: .leading, spacing: RankdSpacing.xxs) {

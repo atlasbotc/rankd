@@ -224,7 +224,7 @@ struct ListRowView: View {
     @ViewBuilder
     private func miniPoster(for item: CustomListItem?, size: CGFloat) -> some View {
         if let item = item, let url = item.posterURL {
-            AsyncImage(url: url) { image in
+            CachedAsyncImage(url: url) { image in
                 image.resizable().aspectRatio(contentMode: .fill)
             } placeholder: {
                 Rectangle().fill(RankdColors.surfaceTertiary)
