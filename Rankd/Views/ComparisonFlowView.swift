@@ -447,7 +447,8 @@ struct ComparisonFlowView: View {
         chosenSide = side
         
         // Fast transition: ~200ms for winner scale + loser fade, then next pair
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(200))
             chosenSide = nil
             handleChoice(newIsBetter: newIsBetter)
         }
@@ -520,7 +521,8 @@ struct ComparisonFlowView: View {
         }
         
         // Auto-advance to review step after a brief pause
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(1200))
             withAnimation(RankdMotion.normal) {
                 showCelebration = false
                 showReviewStep = true
@@ -594,7 +596,8 @@ struct ComparisonFlowView: View {
         withAnimation(RankdMotion.normal) {
             showSavedCheck = true
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(800))
             dismiss()
         }
     }

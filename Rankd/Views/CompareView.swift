@@ -209,7 +209,8 @@ struct CompareView: View {
         chosenItem = winner
         HapticManager.impact(.light)
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(500))
             viewModel.processComparison(winner: winner, loser: loser, context: modelContext)
             findNewPair()
         }

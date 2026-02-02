@@ -15,7 +15,7 @@ enum MediaType: String, Codable {
 @Model
 final class RankedItem {
     var id: UUID = UUID()
-    var tmdbId: Int = 0
+    @Attribute(.unique) var tmdbId: Int = 0
     var title: String = ""
     var overview: String = ""
     var posterPath: String?

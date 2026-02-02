@@ -30,7 +30,7 @@ enum WatchlistPriority: Int, Codable, CaseIterable, Comparable {
 @Model
 final class WatchlistItem {
     var id: UUID = UUID()
-    var tmdbId: Int = 0
+    @Attribute(.unique) var tmdbId: Int = 0
     var title: String = ""
     var overview: String = ""
     var posterPath: String?

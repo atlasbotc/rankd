@@ -32,7 +32,7 @@ enum ActivityType: String, Codable {
 @Model
 final class Activity {
     var id: UUID = UUID()
-    var userId: UUID = UUID()
+    var userId: UUID
     var activityTypeRaw: String = ActivityType.ranked.rawValue
     var mediaTitle: String = ""
     var mediaTMDBId: Int = 0
