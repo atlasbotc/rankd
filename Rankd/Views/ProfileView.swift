@@ -1167,7 +1167,7 @@ struct ListPreviewCard: View {
     @ViewBuilder
     private func posterImage(for item: CustomListItem) -> some View {
         if let url = item.posterURL {
-            AsyncImage(url: url) { image in
+            CachedAsyncImage(url: url) { image in
                 image.resizable().aspectRatio(contentMode: .fill)
             } placeholder: {
                 Rectangle().fill(RankdColors.surfaceTertiary)
@@ -1230,7 +1230,7 @@ private struct TopFourCard: View {
     var body: some View {
         VStack(spacing: RankdSpacing.xs) {
             ZStack(alignment: .topLeading) {
-                AsyncImage(url: item.posterURL) { image in
+                CachedAsyncImage(url: item.posterURL) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)

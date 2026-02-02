@@ -807,6 +807,7 @@ struct GenreDetailView: View {
     @State private var popularTVPage = 1
     @State private var topRatedTVPage = 1
     @State private var isLoadingMore = false
+    @State private var hasMoreContent = true
     
     private let gridColumns = [
         GridItem(.flexible(), spacing: RankdSpacing.sm),
@@ -854,7 +855,7 @@ struct GenreDetailView: View {
                 }
                 
                 // Infinite scroll trigger
-                if !isLoading {
+                if !isLoading && hasMoreContent {
                     Color.clear
                         .frame(height: 1)
                         .onAppear {
@@ -1101,7 +1102,7 @@ struct GenreDetailView: View {
     }
     
     private func loadMoreContent() async {
-        guard !isLoadingMore else { return }
+        guard !isLoadingMore, hasMoreContent else { return }
         isLoadingMore = true
         
         do {
@@ -1123,10 +1124,20 @@ struct GenreDetailView: View {
             let existingTVIds = Set(popularTV.map(\.id))
             let existingTopTVIds = Set(topRatedTV.map(\.id))
             
-            popularMovies += mpm.filter { !existingMovieIds.contains($0.id) }
-            topRatedMovies += mtrm.filter { !existingTopMovieIds.contains($0.id) }
-            popularTV += mptv.filter { !existingTVIds.contains($0.id) }
-            topRatedTV += mtrtv.filter { !existingTopTVIds.contains($0.id) }
+            let newPopMovies = mpm.filter { !existingMovieIds.contains($0.id) }
+            let newTopMovies = mtrm.filter { !existingTopMovieIds.contains($0.id) }
+            let newPopTV = mptv.filter { !existingTVIds.contains($0.id) }
+            let newTopTV = mtrtv.filter { !existingTopTVIds.contains($0.id) }
+            
+            // Stop infinite scroll if all pages returned empty/duplicate results
+            if newPopMovies.isEmpty && newTopMovies.isEmpty && newPopTV.isEmpty && newTopTV.isEmpty {
+                hasMoreContent = false
+            }
+            
+            popularMovies += newPopMovies
+            topRatedMovies += newTopMovies
+            popularTV += newPopTV
+            topRatedTV += newTopTV
             
             popularMoviesPage = nextPopularMoviesPage
             topRatedMoviesPage = nextTopRatedMoviesPage
@@ -1134,6 +1145,7 @@ struct GenreDetailView: View {
             topRatedTVPage = nextTopRatedTVPage
         } catch {
             // Network errors handled gracefully — UI shows last state
+            hasMoreContent = false
         }
         
         isLoadingMore = false

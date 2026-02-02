@@ -407,21 +407,13 @@ private struct JournalEntryCard: View {
     var body: some View {
         HStack(alignment: .top, spacing: RankdSpacing.sm) {
             // Poster
-            AsyncImage(url: item.posterURL) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                RoundedRectangle(cornerRadius: RankdRadius.sm)
-                    .fill(RankdColors.surfaceSecondary)
-                    .overlay {
-                        Image(systemName: item.mediaType == .movie ? "film" : "tv")
-                            .font(RankdTypography.headingSmall)
-                            .foregroundStyle(RankdColors.textQuaternary)
-                    }
-            }
-            .frame(width: RankdPoster.miniWidth, height: RankdPoster.miniHeight)
-            .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
+            CachedPosterImage(
+                url: item.posterURL,
+                width: RankdPoster.miniWidth,
+                height: RankdPoster.miniHeight,
+                cornerRadius: RankdRadius.sm,
+                placeholderIcon: item.mediaType == .movie ? "film" : "tv"
+            )
             
             // Info
             VStack(alignment: .leading, spacing: RankdSpacing.xxs) {

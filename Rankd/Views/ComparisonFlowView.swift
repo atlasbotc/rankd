@@ -621,31 +621,11 @@ struct ComparisonCard: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: RankdSpacing.sm) {
-                AsyncImage(url: posterURL) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    case .failure:
-                        Rectangle()
-                            .fill(RankdColors.surfaceSecondary)
-                            .overlay {
-                                Image(systemName: "film")
-                                    .font(RankdTypography.headingLarge)
-                                    .foregroundStyle(RankdColors.textQuaternary)
-                            }
-                    case .empty:
-                        Rectangle()
-                            .fill(RankdColors.surfaceSecondary)
-                            .shimmer()
-                    @unknown default:
-                        Rectangle()
-                            .fill(RankdColors.surfaceSecondary)
-                    }
-                }
-                .frame(width: RankdPoster.largeWidth, height: RankdPoster.largeHeight)
-                .clipShape(RoundedRectangle(cornerRadius: RankdPoster.cornerRadius))
+                CachedPosterImage(
+                    url: posterURL,
+                    width: RankdPoster.largeWidth,
+                    height: RankdPoster.largeHeight
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: RankdPoster.cornerRadius)
                         .stroke(
