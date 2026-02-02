@@ -21,6 +21,7 @@ struct ProfileView: View {
     @State private var showResetConfirmation = false
     @State private var showAbout = false
     @State private var showWhatsNew = false
+    @State private var showNotificationSettingsAlert = false
     @State private var showExportSheet = false
     @State private var exportFileURL: URL?
     @State private var showExportShareSheet = false
@@ -960,10 +961,7 @@ struct ProfileView: View {
                     if !granted {
                         notificationsEnabled = false
                         if notificationManager.isDenied {
-                            // Open settings if previously denied
-                            if let url = URL(string: UIApplication.openSettingsURLString) {
-                                await UIApplication.shared.open(url)
-                            }
+                            showNotificationSettingsAlert = true
                         }
                     } else {
                         // Schedule streak reminder now
@@ -973,6 +971,16 @@ struct ProfileView: View {
                     notificationManager.cancelAllNotifications()
                 }
             }
+        }
+        .alert("Notifications Disabled", isPresented: $showNotificationSettingsAlert) {
+            Button("Go to Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Notifications are turned off for Marqui. Enable them in Settings to receive streak reminders and updates.")
         }
     }
     
