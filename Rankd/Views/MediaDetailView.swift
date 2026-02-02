@@ -16,7 +16,7 @@ struct MediaDetailView: View {
     @State private var error: String?
     @State private var synopsisExpanded = false
     
-    @State private var showComparisonFlow = false
+    @State private var comparisonFlowItem: TMDBSearchResult?
     @State private var showAddToList = false
     
     private var isRanked: Bool {
@@ -54,10 +54,8 @@ struct MediaDetailView: View {
         .task {
             await loadDetails()
         }
-        .fullScreenCover(isPresented: $showComparisonFlow) {
-            if let result = searchResult {
-                ComparisonFlowView(newItem: result)
-            }
+        .fullScreenCover(item: $comparisonFlowItem) { result in
+            ComparisonFlowView(newItem: result)
         }
         .sheet(isPresented: $showAddToList) {
             if let result = searchResult {
@@ -399,7 +397,7 @@ struct MediaDetailView: View {
             if !isRanked {
                 // Primary: Rank It
                 Button {
-                    showComparisonFlow = true
+                    comparisonFlowItem = searchResult
                 } label: {
                     Text("Rank It")
                         .font(RankdTypography.labelLarge)

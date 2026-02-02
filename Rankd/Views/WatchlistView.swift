@@ -27,7 +27,6 @@ struct WatchlistView: View {
     @Query private var rankedItems: [RankedItem]
     
     @State private var itemToRank: WatchlistItem?
-    @State private var showComparisonFlow = false
     @State private var itemToDelete: WatchlistItem?
     @State private var showDeleteConfirmation = false
     @State private var searchResultToRank: TMDBSearchResult?
@@ -116,13 +115,11 @@ struct WatchlistView: View {
                     Text("Remove \"\(item.title)\" from your watchlist?")
                 }
             }
-            .fullScreenCover(isPresented: $showComparisonFlow) {
-                if let result = searchResultToRank {
-                    ComparisonFlowView(newItem: result)
-                }
+            .fullScreenCover(item: $searchResultToRank) { result in
+                ComparisonFlowView(newItem: result)
             }
-            .onChange(of: showComparisonFlow) { _, isShowing in
-                if !isShowing {
+            .onChange(of: searchResultToRank) { _, newValue in
+                if newValue == nil {
                     if let item = itemToRank,
                        rankedItems.contains(where: { $0.tmdbId == item.tmdbId }) {
                         modelContext.delete(item)
@@ -401,7 +398,6 @@ struct WatchlistView: View {
                                 mediaType: item.mediaType.rawValue,
                                 voteAverage: nil
                             )
-                            showComparisonFlow = true
                         },
                         onDelete: {
                             itemToDelete = item

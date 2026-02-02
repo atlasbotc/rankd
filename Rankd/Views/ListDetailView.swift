@@ -147,13 +147,20 @@ struct ListDetailView: View {
     
     private func deleteItems(at offsets: IndexSet) {
         let itemsToDelete = offsets.map { sortedItems[$0] }
+        let deletedIds = Set(itemsToDelete.map { $0.id })
         for item in itemsToDelete {
             modelContext.delete(item)
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            renumberPositions()
-        }
         list.dateModified = Date()
+        try? modelContext.save()
+        
+        // Renumber remaining items excluding deleted ones
+        let remaining = (list.items ?? [])
+            .filter { !deletedIds.contains($0.id) }
+            .sorted { $0.position < $1.position }
+        for (index, item) in remaining.enumerated() {
+            item.position = index + 1
+        }
         try? modelContext.save()
     }
     

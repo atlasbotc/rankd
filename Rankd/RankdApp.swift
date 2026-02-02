@@ -4,8 +4,10 @@ import SwiftData
 @main
 struct RankdApp: App {
     @State private var deepLinkTab: Int?
-    @State private var showWhatsNew = false
+    @State private var whatsNewVersion: WhatsNewItem?
     @AppStorage("lastSeenVersion") private var lastSeenVersion: String = ""
+    
+    @State private var containerError: String?
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -21,7 +23,15 @@ struct RankdApp: App {
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            // Fallback to in-memory container so the app doesn't crash
+            print("⚠️ Persistent ModelContainer failed: \(error). Falling back to in-memory store.")
+            let inMemoryConfig = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            do {
+                return try ModelContainer(for: schema, configurations: [inMemoryConfig])
+            } catch {
+                // Last resort: bare-minimum container
+                return try! ModelContainer(for: schema)
+            }
         }
     }()
 
@@ -39,17 +49,23 @@ struct RankdApp: App {
                 .onAppear {
                     let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
                     if lastSeenVersion != currentVersion {
-                        showWhatsNew = true
+                        whatsNewVersion = WhatsNewItem(version: currentVersion)
                     }
                 }
-                .sheet(isPresented: $showWhatsNew, onDismiss: {
+                .sheet(item: $whatsNewVersion, onDismiss: {
                     let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
                     lastSeenVersion = currentVersion
-                }) {
+                }) { _ in
                     WhatsNewView()
                 }
         }
         .modelContainer(sharedModelContainer)
+    }
+    
+    /// Identifiable wrapper for the WhatsNew sheet item binding.
+    struct WhatsNewItem: Identifiable {
+        let id = UUID()
+        let version: String
     }
     
     private func handleDeepLink(_ url: URL) {

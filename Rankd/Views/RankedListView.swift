@@ -10,7 +10,6 @@ struct RankedListView: View {
     @State private var selectedItem: RankedItem?
     // selectedItem drives the detail sheet via .sheet(item:)
     @State private var isReorderMode = false
-    @State private var showReRankFlow = false
     @State private var reRankSearchResult: TMDBSearchResult?
     @State private var showReRankPrompt = false
     @State private var showFavoritesOnly = false
@@ -177,10 +176,8 @@ struct RankedListView: View {
             .sheet(item: $selectedItem) { item in
                 ItemDetailSheet(item: item)
             }
-            .fullScreenCover(isPresented: $showReRankFlow) {
-                if let result = reRankSearchResult {
-                    ComparisonFlowView(newItem: result)
-                }
+            .fullScreenCover(item: $reRankSearchResult) { result in
+                ComparisonFlowView(newItem: result)
             }
             .onChange(of: filteredItems.count) { _, newCount in
                 checkReRankMilestone(count: newCount)
@@ -390,10 +387,12 @@ struct RankedListView: View {
         )
         
         let deletedRank = item.rank
+        let deletedId = item.id
         let mediaType = item.mediaType
         modelContext.delete(item)
+        try? modelContext.save()
         
-        let itemsToShift = allItems.filter { $0.mediaType == mediaType && $0.rank > deletedRank }
+        let itemsToShift = allItems.filter { $0.id != deletedId && $0.mediaType == mediaType && $0.rank > deletedRank }
         for shiftItem in itemsToShift {
             shiftItem.rank -= 1
         }
@@ -402,7 +401,6 @@ struct RankedListView: View {
         HapticManager.impact(.medium)
         
         reRankSearchResult = result
-        showReRankFlow = true
     }
     
     private func startReRankLeastCompared() {
@@ -414,12 +412,14 @@ struct RankedListView: View {
     
     private func deleteItem(_ item: RankedItem) {
         let deletedRank = item.rank
+        let deletedId = item.id
         let mediaType = item.mediaType
         modelContext.delete(item)
+        try? modelContext.save()
         
-        let remainingItems = allItems.filter { $0.mediaType == mediaType && $0.rank > deletedRank }
-        for item in remainingItems {
-            item.rank -= 1
+        let itemsToShift = allItems.filter { $0.id != deletedId && $0.mediaType == mediaType && $0.rank > deletedRank }
+        for shiftItem in itemsToShift {
+            shiftItem.rank -= 1
         }
         
         try? modelContext.save()
@@ -668,7 +668,6 @@ struct ItemDetailSheet: View {
     @Bindable var item: RankedItem
     @State private var editedReview: String = ""
     @State private var isEditing = false
-    @State private var showReRank = false
     @State private var reRankSearchResult: TMDBSearchResult?
     
     var body: some View {
@@ -885,13 +884,11 @@ struct ItemDetailSheet: View {
             .onAppear {
                 editedReview = item.review ?? ""
             }
-            .fullScreenCover(isPresented: $showReRank) {
-                if let result = reRankSearchResult {
-                    ComparisonFlowView(newItem: result)
-                }
+            .fullScreenCover(item: $reRankSearchResult) { result in
+                ComparisonFlowView(newItem: result)
             }
-            .onChange(of: showReRank) { _, isShowing in
-                if !isShowing {
+            .onChange(of: reRankSearchResult) { _, newValue in
+                if newValue == nil {
                     dismiss()
                 }
             }
@@ -912,10 +909,12 @@ struct ItemDetailSheet: View {
         )
         
         let deletedRank = item.rank
+        let deletedId = item.id
         let mediaType = item.mediaType
         modelContext.delete(item)
+        try? modelContext.save()
         
-        let itemsToShift = allItems.filter { $0.mediaType == mediaType && $0.rank > deletedRank }
+        let itemsToShift = allItems.filter { $0.id != deletedId && $0.mediaType == mediaType && $0.rank > deletedRank }
         for shiftItem in itemsToShift {
             shiftItem.rank -= 1
         }
@@ -924,7 +923,6 @@ struct ItemDetailSheet: View {
         HapticManager.impact(.medium)
         
         reRankSearchResult = result
-        showReRank = true
     }
 }
 

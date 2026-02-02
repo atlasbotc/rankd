@@ -14,32 +14,47 @@ actor GenreBackfillService {
     /// Backfills genre and runtime data for items that are missing it.
     /// Processes items one at a time with a delay between requests.
     /// Returns the number of items updated.
+    ///
+    /// Accepts `PersistentIdentifier`s to avoid passing SwiftData model objects
+    /// across actor isolation boundaries. Items are re-fetched on the MainActor.
     @discardableResult
-    func backfillMissingData(items: [RankedItem], modelContext: ModelContext) async -> Int {
+    func backfillMissingData(itemIDs: [PersistentIdentifier], modelContext: ModelContext) async -> Int {
         guard !isRunning else { return 0 }
         isRunning = true
         defer { isRunning = false }
         
-        let itemsNeedingBackfill = items.filter { $0.genreNames.isEmpty }
+        // Re-fetch items on MainActor and collect those needing backfill
+        let workItems: [(PersistentIdentifier, Int, MediaType)] = await MainActor.run {
+            itemIDs.compactMap { id in
+                guard let item = modelContext.model(for: id) as? RankedItem,
+                      item.genreNames.isEmpty else { return nil }
+                return (id, item.tmdbId, item.mediaType)
+            }
+        }
+        
         var updatedCount = 0
         
-        for item in itemsNeedingBackfill {
+        for (itemID, tmdbId, mediaType) in workItems {
             do {
-                if item.mediaType == .movie {
-                    if let details = try? await TMDBService.shared.getMovieDetails(id: item.tmdbId) {
+                if mediaType == .movie {
+                    if let details = try? await TMDBService.shared.getMovieDetails(id: tmdbId) {
                         await MainActor.run {
-                            item.genreIds = details.genres.map { $0.id }
-                            item.genreNames = details.genres.map { $0.name }
-                            item.runtimeMinutes = details.runtime ?? 0
+                            if let item = modelContext.model(for: itemID) as? RankedItem {
+                                item.genreIds = details.genres.map { $0.id }
+                                item.genreNames = details.genres.map { $0.name }
+                                item.runtimeMinutes = details.runtime ?? 0
+                            }
                         }
                         updatedCount += 1
                     }
                 } else {
-                    if let details = try? await TMDBService.shared.getTVDetails(id: item.tmdbId) {
+                    if let details = try? await TMDBService.shared.getTVDetails(id: tmdbId) {
                         await MainActor.run {
-                            item.genreIds = details.genres.map { $0.id }
-                            item.genreNames = details.genres.map { $0.name }
-                            item.runtimeMinutes = details.episodeRunTime?.first ?? 0
+                            if let item = modelContext.model(for: itemID) as? RankedItem {
+                                item.genreIds = details.genres.map { $0.id }
+                                item.genreNames = details.genres.map { $0.name }
+                                item.runtimeMinutes = details.episodeRunTime?.first ?? 0
+                            }
                         }
                         updatedCount += 1
                     }

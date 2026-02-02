@@ -62,7 +62,7 @@ struct StatsView: View {
             if !itemsMissingGenres.isEmpty {
                 isBackfilling = true
                 let updated = await GenreBackfillService.shared.backfillMissingData(
-                    items: rankedItems,
+                    itemIDs: rankedItems.map(\.persistentModelID),
                     modelContext: modelContext
                 )
                 backfillProgress = updated
