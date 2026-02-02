@@ -333,16 +333,7 @@ struct ProfileView: View {
     }
     
     private var tasteIcon: String {
-        switch tastePersonality {
-        case "Film Purist": return "film"
-        case "Binge Watcher": return "play.rectangle.on.rectangle"
-        case "Movie Buff": return "popcorn"
-        case "Series Devotee": return "tv"
-        case "The Optimist": return "hand.thumbsup"
-        case "Tough Critic": return "eye"
-        case "Getting Started": return "sparkles"
-        default: return "star"
-        }
+        tasteResult.archetype.icon
     }
     
     // MARK: - Quick Stats Row
@@ -539,46 +530,16 @@ struct ProfileView: View {
         .padding(.horizontal, RankdSpacing.md)
     }
     
+    private var tasteResult: TastePersonality.Result {
+        TastePersonality.analyze(items: Array(rankedItems))
+    }
+    
     private var tastePersonality: String {
-        let total = rankedItems.count
-        let movies = movieItems.count
-        let tv = tvItems.count
-        
-        if total < 5 { return "Getting Started" }
-        
-        if movies > 0 && tv == 0 { return "Film Purist" }
-        if tv > 0 && movies == 0 { return "Binge Watcher" }
-        if Double(movies) / Double(total) > 0.75 { return "Movie Buff" }
-        if Double(tv) / Double(total) > 0.75 { return "Series Devotee" }
-        
-        let goodCount = rankedItems.filter { $0.tier == .good }.count
-        let badCount = rankedItems.filter { $0.tier == .bad }.count
-        
-        if Double(goodCount) / Double(total) > 0.7 { return "The Optimist" }
-        if Double(badCount) / Double(total) > 0.4 { return "Tough Critic" }
-        
-        return "Well-Rounded Viewer"
+        tasteResult.archetype.rawValue
     }
     
     private var tasteDescription: String {
-        switch tastePersonality {
-        case "Getting Started":
-            return "Rank more titles to unlock your taste profile."
-        case "Film Purist":
-            return "You're all about the big screen. Cinema is your thing."
-        case "Binge Watcher":
-            return "Episodes over end credits. You love a good series."
-        case "Movie Buff":
-            return "Mostly movies with the occasional show. Classic taste."
-        case "Series Devotee":
-            return "You prefer the long game. Character development is key."
-        case "The Optimist":
-            return "You tend to love what you watch. Glass half full."
-        case "Tough Critic":
-            return "High standards. Not everything makes the cut."
-        default:
-            return "A healthy mix of movies and TV. You appreciate it all."
-        }
+        tasteResult.archetype.description
     }
     
     // MARK: - Navigation Cards

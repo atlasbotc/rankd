@@ -698,14 +698,12 @@ private struct MatchedEntryRow: View {
     var body: some View {
         HStack(spacing: RankdSpacing.sm) {
             if let url = entry.tmdbResult?.posterURL {
-                AsyncImage(url: url) { image in
-                    image.resizable().aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    RoundedRectangle(cornerRadius: RankdRadius.sm)
-                        .fill(RankdColors.surfaceSecondary)
-                }
-                .frame(width: 36, height: 54)
-                .clipShape(RoundedRectangle(cornerRadius: RankdRadius.sm))
+                CachedPosterImage(
+                    url: url,
+                    width: 36,
+                    height: 54,
+                    cornerRadius: RankdRadius.sm
+                )
             }
             
             VStack(alignment: .leading, spacing: RankdSpacing.xxs) {
