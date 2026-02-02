@@ -27,6 +27,11 @@ struct ProfileView: View {
     @State private var showExportShareSheet = false
     @State private var suggestedListToCreate: SuggestedList?
     
+    // Cached computed stats (P1: avoid recalculating on every render)
+    @State private var cachedAverageScore: String = "—"
+    @State private var cachedTopGenre: String = "—"
+    @State private var cachedMovieTVRatio: String = "—"
+    
     private var movieItems: [RankedItem] {
         rankedItems.filter { $0.mediaType == .movie }.sorted { $0.rank < $1.rank }
     }
@@ -60,28 +65,38 @@ struct ProfileView: View {
         return formatter.string(from: memberSinceDate)
     }
     
-    private var averageScore: String {
-        guard !rankedItems.isEmpty else { return "—" }
-        let total = rankedItems.reduce(0.0) { sum, item in
-            sum + RankedItem.calculateScore(for: item, allItems: Array(rankedItems))
+    private func recalculateStats() {
+        guard !rankedItems.isEmpty else {
+            cachedAverageScore = "—"
+            cachedTopGenre = "—"
+            cachedMovieTVRatio = "—"
+            return
         }
-        let avg = total / Double(rankedItems.count)
-        return String(format: "%.1f", avg)
-    }
-    
-    private var topGenre: String {
+        
+        // Average score using batch calculation
+        let scores = RankedItem.calculateAllScores(for: Array(rankedItems))
+        let total = scores.values.reduce(0.0, +)
+        let avg = total / Double(scores.count)
+        cachedAverageScore = String(format: "%.1f", avg)
+        
+        // Top genre
         let allGenres = rankedItems.flatMap { $0.genreNames }
-        guard !allGenres.isEmpty else { return "—" }
-        let counts = Dictionary(grouping: allGenres, by: { $0 }).mapValues { $0.count }
-        return counts.max(by: { $0.value < $1.value })?.key ?? "—"
-    }
-    
-    private var movieTVRatio: String {
+        if allGenres.isEmpty {
+            cachedTopGenre = "—"
+        } else {
+            let counts = Dictionary(grouping: allGenres, by: { $0 }).mapValues { $0.count }
+            cachedTopGenre = counts.max(by: { $0.value < $1.value })?.key ?? "—"
+        }
+        
+        // Movie/TV ratio
         let m = movieItems.count
         let t = tvItems.count
-        guard m + t > 0 else { return "—" }
-        let pct = Int(round(Double(m) / Double(m + t) * 100))
-        return "\(pct)/\(100 - pct)"
+        if m + t > 0 {
+            let pct = Int(round(Double(m) / Double(m + t) * 100))
+            cachedMovieTVRatio = "\(pct)/\(100 - pct)"
+        } else {
+            cachedMovieTVRatio = "—"
+        }
     }
     
     // MARK: - Streak Calculation
@@ -204,10 +219,14 @@ struct ProfileView: View {
             .navigationTitle("Profile")
             .task {
                 recordTodayIfNeeded()
+                recalculateStats()
                 if notificationsEnabled {
                     await notificationManager.refreshAuthorizationStatus()
                     await scheduleStreakReminderIfNeeded()
                 }
+            }
+            .onChange(of: rankedItems.count) { _, _ in
+                recalculateStats()
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -341,9 +360,9 @@ struct ProfileView: View {
     private var quickStatsRow: some View {
         HStack(spacing: RankdSpacing.sm) {
             QuickStatCard(icon: "number", value: "\(rankedItems.count)", label: "Ranked")
-            QuickStatCard(icon: "chart.bar", value: averageScore, label: "Avg Score")
-            QuickStatCard(icon: "tag", value: topGenre, label: "Top Genre")
-            QuickStatCard(icon: "film", value: movieTVRatio, label: "Film/TV")
+            QuickStatCard(icon: "chart.bar", value: cachedAverageScore, label: "Avg Score")
+            QuickStatCard(icon: "tag", value: cachedTopGenre, label: "Top Genre")
+            QuickStatCard(icon: "film", value: cachedMovieTVRatio, label: "Film/TV")
         }
         .padding(.horizontal, RankdSpacing.md)
     }
