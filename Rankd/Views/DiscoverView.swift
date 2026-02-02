@@ -817,6 +817,12 @@ struct GenreDetailView: View {
     @State private var heroItem: TMDBSearchResult?
     @State private var isLoading = true
     
+    // Lazy section loading — track which sections have loaded
+    @State private var loadedPopularMovies = false
+    @State private var loadedTopRatedMovies = false
+    @State private var loadedPopularTV = false
+    @State private var loadedTopRatedTV = false
+    
     // Pagination state
     @State private var popularMoviesPage = 1
     @State private var topRatedMoviesPage = 1
@@ -846,28 +852,40 @@ struct GenreDetailView: View {
                     )
                 }
                 
-                // MARK: Top Rated Movies Grid
+                // MARK: Top Rated Movies Grid (lazy)
                 if !topRatedMovies.isEmpty {
                     genreGridSection(
                         title: "Top Rated Movies",
                         items: topRatedMovies
                     )
+                } else if !loadedTopRatedMovies {
+                    Color.clear.frame(height: 1).onAppear {
+                        Task { await loadSectionIfNeeded("topRatedMovies") }
+                    }
                 }
                 
-                // MARK: Popular TV Shows
+                // MARK: Popular TV Shows (lazy)
                 if !popularTV.isEmpty {
                     DiscoverSection(
                         title: "Popular TV Shows",
                         items: popularTV
                     )
+                } else if !loadedPopularTV {
+                    Color.clear.frame(height: 1).onAppear {
+                        Task { await loadSectionIfNeeded("popularTV") }
+                    }
                 }
                 
-                // MARK: Top Rated TV Grid
+                // MARK: Top Rated TV Grid (lazy)
                 if !topRatedTV.isEmpty {
                     genreGridSection(
                         title: "Top Rated TV Shows",
                         items: topRatedTV
                     )
+                } else if !loadedTopRatedTV {
+                    Color.clear.frame(height: 1).onAppear {
+                        Task { await loadSectionIfNeeded("topRatedTV") }
+                    }
                 }
                 
                 // Infinite scroll trigger
@@ -1077,44 +1095,58 @@ struct GenreDetailView: View {
     
     private func loadInitialContent() async {
         do {
-            // Load 2 pages each for popular, 1 page for top rated initially
+            // Load only popular movies initially (2 pages) — other sections load on-demand
             async let popularMovies1 = TMDBService.shared.discoverMovies(genreId: genre.id, page: 1)
             async let popularMovies2 = TMDBService.shared.discoverMovies(genreId: genre.id, page: 2)
-            async let topRatedMoviesTask = TMDBService.shared.discoverTopRatedMovies(genreId: genre.id, page: 1)
-            async let popularTV1 = TMDBService.shared.discoverTV(genreId: genre.id, page: 1)
-            async let popularTV2 = TMDBService.shared.discoverTV(genreId: genre.id, page: 2)
-            async let topRatedTVTask = TMDBService.shared.discoverTopRatedTV(genreId: genre.id, page: 1)
             
-            let (pm1, pm2, trm, ptv1, ptv2, trtv) = try await (
-                popularMovies1, popularMovies2,
-                topRatedMoviesTask,
-                popularTV1, popularTV2,
-                topRatedTVTask
-            )
+            let (pm1, pm2) = try await (popularMovies1, popularMovies2)
             
             popularMovies = pm1 + pm2
-            topRatedMovies = trm
-            popularTV = ptv1 + ptv2
-            topRatedTV = trtv
-            
-            // Pick hero: highest-rated item with a backdrop from top rated movies or TV
-            let allTopRated = (trm + trtv).filter { $0.backdropPath != nil }
-            heroItem = allTopRated.max(by: { ($0.voteAverage ?? 0) < ($1.voteAverage ?? 0) })
-            
-            // If no backdrop found in top rated, try popular
-            if heroItem == nil {
-                let allPopular = (pm1 + ptv1).filter { $0.backdropPath != nil }
-                heroItem = allPopular.first
-            }
-            
+            loadedPopularMovies = true
             popularMoviesPage = 2
-            topRatedMoviesPage = 1
-            popularTVPage = 2
-            topRatedTVPage = 1
+            
+            // Pick hero from popular movies
+            heroItem = pm1.filter { $0.backdropPath != nil }.first
         } catch {
             // Network errors handled gracefully — UI shows last state
         }
         isLoading = false
+    }
+    
+    /// Load a section on-demand when it first becomes visible.
+    private func loadSectionIfNeeded(_ section: String) async {
+        switch section {
+        case "topRatedMovies":
+            guard !loadedTopRatedMovies else { return }
+            loadedTopRatedMovies = true
+            if let results = try? await TMDBService.shared.discoverTopRatedMovies(genreId: genre.id, page: 1) {
+                topRatedMovies = results
+                topRatedMoviesPage = 1
+                // Update hero if we got a better one
+                if heroItem == nil, let best = results.filter({ $0.backdropPath != nil }).max(by: { ($0.voteAverage ?? 0) < ($1.voteAverage ?? 0) }) {
+                    heroItem = best
+                }
+            }
+        case "popularTV":
+            guard !loadedPopularTV else { return }
+            loadedPopularTV = true
+            do {
+                async let ptv1 = TMDBService.shared.discoverTV(genreId: genre.id, page: 1)
+                async let ptv2 = TMDBService.shared.discoverTV(genreId: genre.id, page: 2)
+                let (p1, p2) = try await (ptv1, ptv2)
+                popularTV = p1 + p2
+                popularTVPage = 2
+            } catch { }
+        case "topRatedTV":
+            guard !loadedTopRatedTV else { return }
+            loadedTopRatedTV = true
+            if let results = try? await TMDBService.shared.discoverTopRatedTV(genreId: genre.id, page: 1) {
+                topRatedTV = results
+                topRatedTVPage = 1
+            }
+        default:
+            break
+        }
     }
     
     private func loadMoreContent() async {
