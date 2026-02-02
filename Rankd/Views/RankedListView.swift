@@ -390,13 +390,13 @@ struct RankedListView: View {
         let deletedId = item.id
         let mediaType = item.mediaType
         modelContext.delete(item)
-        try? modelContext.save()
+        modelContext.safeSave()
         
         let itemsToShift = allItems.filter { $0.id != deletedId && $0.mediaType == mediaType && $0.rank > deletedRank }
         for shiftItem in itemsToShift {
             shiftItem.rank -= 1
         }
-        try? modelContext.save()
+        modelContext.safeSave()
         
         HapticManager.impact(.medium)
         
@@ -415,14 +415,14 @@ struct RankedListView: View {
         let deletedId = item.id
         let mediaType = item.mediaType
         modelContext.delete(item)
-        try? modelContext.save()
+        modelContext.safeSave()
         
         let itemsToShift = allItems.filter { $0.id != deletedId && $0.mediaType == mediaType && $0.rank > deletedRank }
         for shiftItem in itemsToShift {
             shiftItem.rank -= 1
         }
         
-        try? modelContext.save()
+        modelContext.safeSave()
         updateWidgetData()
     }
     
@@ -435,7 +435,7 @@ struct RankedListView: View {
         }
         
         HapticManager.selection()
-        try? modelContext.save()
+        modelContext.safeSave()
         updateWidgetData()
     }
     
@@ -719,7 +719,7 @@ struct ItemDetailSheet: View {
                         withAnimation(RankdMotion.fast) {
                             item.isFavorite.toggle()
                         }
-                        try? modelContext.save()
+                        modelContext.safeSave()
                         HapticManager.impact(.light)
                     } label: {
                         HStack(spacing: RankdSpacing.xs) {
@@ -758,7 +758,7 @@ struct ItemDetailSheet: View {
                                     withAnimation(RankdMotion.fast) {
                                         item.tier = t
                                     }
-                                    try? modelContext.save()
+                                    modelContext.safeSave()
                                     HapticManager.impact(.medium)
                                 } label: {
                                     HStack(spacing: RankdSpacing.xs) {
@@ -824,7 +824,7 @@ struct ItemDetailSheet: View {
                             Button(isEditing ? "Done" : "Edit") {
                                 if isEditing {
                                     item.review = editedReview.isEmpty ? nil : editedReview
-                                    try? modelContext.save()
+                                    modelContext.safeSave()
                                 }
                                 isEditing.toggle()
                             }
@@ -912,13 +912,13 @@ struct ItemDetailSheet: View {
         let deletedId = item.id
         let mediaType = item.mediaType
         modelContext.delete(item)
-        try? modelContext.save()
+        modelContext.safeSave()
         
         let itemsToShift = allItems.filter { $0.id != deletedId && $0.mediaType == mediaType && $0.rank > deletedRank }
         for shiftItem in itemsToShift {
             shiftItem.rank -= 1
         }
-        try? modelContext.save()
+        modelContext.safeSave()
         
         HapticManager.impact(.medium)
         

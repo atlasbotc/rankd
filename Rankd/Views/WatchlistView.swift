@@ -123,7 +123,7 @@ struct WatchlistView: View {
                     if let item = itemToRank,
                        rankedItems.contains(where: { $0.tmdbId == item.tmdbId }) {
                         modelContext.delete(item)
-                        try? modelContext.save()
+                        modelContext.safeSave()
                     }
                     itemToRank = nil
                     searchResultToRank = nil
@@ -378,7 +378,7 @@ struct WatchlistView: View {
                         item: item,
                         onSetPriority: { priority in
                             item.priority = priority
-                            try? modelContext.save()
+                            modelContext.safeSave()
                         },
                         onRemind: {
                             itemToRemind = item
@@ -417,7 +417,7 @@ struct WatchlistView: View {
     
     private func deleteItem(_ item: WatchlistItem) {
         modelContext.delete(item)
-        try? modelContext.save()
+        modelContext.safeSave()
     }
 }
 

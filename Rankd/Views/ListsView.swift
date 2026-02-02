@@ -151,7 +151,7 @@ struct ListsView: View {
         for index in offsets {
             modelContext.delete(lists[index])
         }
-        try? modelContext.save()
+        modelContext.safeSave()
     }
 }
 

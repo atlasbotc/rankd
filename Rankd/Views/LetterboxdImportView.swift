@@ -594,7 +594,7 @@ struct LetterboxdImportView: View {
             }
             
             await MainActor.run {
-                try? modelContext.save()
+                modelContext.safeSave()
                 updateWidgetDataAfterImport()
                 step = .done
             }

@@ -562,7 +562,7 @@ struct ComparisonFlowView: View {
         let score = RankedItem.calculateScore(for: item, allItems: existingItems + [item])
         ActivityLogger.logRanked(item: item, score: score, context: modelContext)
         
-        try? modelContext.save()
+        modelContext.safeSave()
         
         HapticManager.notification(.success)
         
@@ -575,14 +575,14 @@ struct ComparisonFlowView: View {
                     item.genreIds = details.genres.map { $0.id }
                     item.genreNames = details.genres.map { $0.name }
                     item.runtimeMinutes = details.runtime ?? 0
-                    try? modelContext.save()
+                    modelContext.safeSave()
                 }
             } else {
                 if let details = try? await TMDBService.shared.getTVDetails(id: itemTmdbId) {
                     item.genreIds = details.genres.map { $0.id }
                     item.genreNames = details.genres.map { $0.name }
                     item.runtimeMinutes = details.episodeRunTime?.first ?? 0
-                    try? modelContext.save()
+                    modelContext.safeSave()
                 }
             }
         }

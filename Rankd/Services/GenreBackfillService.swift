@@ -71,7 +71,7 @@ actor GenreBackfillService {
         // Save all changes at once
         if updatedCount > 0 {
             await MainActor.run {
-                try? modelContext.save()
+                modelContext.safeSave()
             }
         }
         

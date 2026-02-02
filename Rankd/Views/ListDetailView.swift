@@ -152,7 +152,7 @@ struct ListDetailView: View {
             modelContext.delete(item)
         }
         list.dateModified = Date()
-        try? modelContext.save()
+        modelContext.safeSave()
         
         // Renumber remaining items excluding deleted ones
         let remaining = (list.items ?? [])
@@ -161,7 +161,7 @@ struct ListDetailView: View {
         for (index, item) in remaining.enumerated() {
             item.position = index + 1
         }
-        try? modelContext.save()
+        modelContext.safeSave()
     }
     
     private func moveItems(from source: IndexSet, to destination: Int) {
@@ -171,7 +171,7 @@ struct ListDetailView: View {
             item.position = index + 1
         }
         list.dateModified = Date()
-        try? modelContext.save()
+        modelContext.safeSave()
     }
     
     private func renumberPositions() {
@@ -179,7 +179,7 @@ struct ListDetailView: View {
         for (index, item) in items.enumerated() {
             item.position = index + 1
         }
-        try? modelContext.save()
+        modelContext.safeSave()
     }
 }
 

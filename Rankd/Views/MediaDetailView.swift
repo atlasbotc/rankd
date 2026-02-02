@@ -378,7 +378,7 @@ struct MediaDetailView: View {
                     withAnimation(RankdMotion.fast) {
                         ranked.isFavorite.toggle()
                     }
-                    try? modelContext.save()
+                    modelContext.safeSave()
                     HapticManager.impact(.light)
                 } label: {
                     Image(systemName: ranked.isFavorite ? "heart.fill" : "heart")
@@ -754,7 +754,7 @@ struct MediaDetailView: View {
     private func removeFromWatchlist() {
         if let item = watchlistItems.first(where: { $0.tmdbId == tmdbId }) {
             modelContext.delete(item)
-            try? modelContext.save()
+            modelContext.safeSave()
         }
     }
     
@@ -770,7 +770,7 @@ struct MediaDetailView: View {
         )
         modelContext.insert(item)
         ActivityLogger.logAddedToWatchlist(item: item, context: modelContext)
-        try? modelContext.save()
+        modelContext.safeSave()
         HapticManager.impact(.light)
     }
     

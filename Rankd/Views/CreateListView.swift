@@ -229,7 +229,7 @@ struct CreateListView: View {
             ActivityLogger.logCreatedList(list: newList, context: modelContext)
         }
         
-        try? modelContext.save()
+        modelContext.safeSave()
         dismiss()
     }
 }
