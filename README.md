@@ -1,4 +1,4 @@
-# Rankd
+# Marqui
 
 *Beli for movies & TV*
 
@@ -24,8 +24,8 @@ A native iOS app for ranking movies and TV shows with minimal cognitive effort.
 
 ## Project Structure
 ```
-Rankd/
-├── RankdApp.swift          # App entry point
+Marqui/
+├── MarquiApp.swift          # App entry point
 ├── ContentView.swift       # Main tab view
 ├── Config.swift            # TMDB API configuration
 ├── Models/
@@ -52,11 +52,11 @@ Rankd/
 1. Clone the repository
 2. Copy `Config.swift.example` to `Config.swift`
 3. Add your TMDB API key to `Config.swift`
-4. Open `Rankd.xcodeproj` in Xcode
+4. Open `Marqui.xcodeproj` in Xcode
 5. Build and run
 
 ```bash
-cp Rankd/Config.swift.example Rankd/Config.swift
+cp Marqui/Config.swift.example Marqui/Config.swift
 # Edit Config.swift and add your TMDB API key
 ```
 

@@ -15,7 +15,7 @@ Pods/
 Podfile.lock
 
 # Config (contains API keys)
-Rankd/Config.swift
+Marqui/Config.swift
 
 # macOS
 .DS_Store
