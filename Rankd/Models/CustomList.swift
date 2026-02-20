@@ -50,7 +50,7 @@ final class CustomListItem {
     var title: String = ""
     var posterPath: String?
     var releaseDate: String?
-    var mediaType: MediaType = .movie
+    var mediaType: MediaType = MediaType.movie
     var position: Int = 0
     var note: String?
     var list: CustomList?

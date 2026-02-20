@@ -35,7 +35,7 @@ final class WatchlistItem {
     var overview: String = ""
     var posterPath: String?
     var releaseDate: String?
-    var mediaType: MediaType = .movie
+    var mediaType: MediaType = MediaType.movie
     var dateAdded: Date = Date()
     var notes: String?
     var priorityRaw: Int = 1

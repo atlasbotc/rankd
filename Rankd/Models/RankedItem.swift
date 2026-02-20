@@ -20,8 +20,8 @@ final class RankedItem {
     var overview: String = ""
     var posterPath: String?
     var releaseDate: String?
-    var mediaType: MediaType = .movie
-    var tier: Tier = .medium
+    var mediaType: MediaType = MediaType.movie
+    var tier: Tier = Tier.medium
     var rank: Int = Int.max // Lower = better (1 = best)
     var dateAdded: Date = Date()
     var comparisonCount: Int = 0
