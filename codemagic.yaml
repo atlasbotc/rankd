@@ -10,7 +10,7 @@ workflows:
     scripts:
       - name: Setup Config
         script: |
-          cat > Rankd/Config.swift << EOF
+          cat > Marqui/Config.swift << EOF
           import Foundation
 
           enum Config {
@@ -22,8 +22,8 @@ workflows:
       - name: Build iOS
         script: |
           xcodebuild build \
-            -project Rankd.xcodeproj \
-            -scheme Rankd \
+            -project Marqui.xcodeproj \
+            -scheme Marqui \
             -sdk iphonesimulator \
             -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=latest'
     artifacts:

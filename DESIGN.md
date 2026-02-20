@@ -1,4 +1,4 @@
-# Rankd Design System
+# Marqui Design System
 
 Design reference and improvement plan based on Lander Studio and competitor analysis.
 
@@ -24,7 +24,7 @@ Design reference and improvement plan based on Lander Studio and competitor anal
 - Playful copywriting in CTAs
 
 ### 4. One Accent
-- Single strong accent color per context (Rankd: orange)
+- Single strong accent color per context (Marqui: orange)
 - Supporting colors are muted/desaturated
 - Accent only on primary actions and key data
 
@@ -41,7 +41,7 @@ Design reference and improvement plan based on Lander Studio and competitor anal
 
 ---
 
-## 🔄 Rankd Current State vs Target
+## 🔄 Marqui Current State vs Target
 
 ### What We Have Now
 - Functional but utilitarian

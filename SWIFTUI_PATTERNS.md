@@ -1,6 +1,6 @@
 # SwiftUI Patterns & Gotchas
 
-Living document of patterns, pitfalls, and best practices learned while building Rankd.
+Living document of patterns, pitfalls, and best practices learned while building Marqui.
 
 ---
 
