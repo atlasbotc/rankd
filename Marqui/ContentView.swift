@@ -46,7 +46,6 @@ struct ContentView: View {
                 }
                 .tag(4)
         }
-        .animation(MarquiMotion.normal, value: selectedTab)
         .tint(MarquiColors.brand)
         .onChange(of: deepLinkTab) { _, newTab in
             if let tab = newTab {
