@@ -137,7 +137,7 @@ struct JournalView: View {
         .navigationBarTitleDisplayMode(.large)
         .sheet(isPresented: $showDetailSheet) {
             if let item = selectedItem {
-                ItemDetailSheet(item: item)
+                RankedItemDetailView(item: item)
             }
         }
     }
