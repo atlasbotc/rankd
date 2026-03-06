@@ -2,44 +2,44 @@ import SwiftUI
 
 // MARK: - Color System
 // Role-based colors. No raw hex values outside this file.
-// Light-first design. Muted slate/steel blue brand color.
+// Dark theme — warm dark brown base with amber accent.
 
 enum MarquiColors {
-    // Backgrounds — light-first, warm off-white (no pure white)
-    static let background = Color(red: 0.96, green: 0.95, blue: 0.94)       // #F5F3F0 — warm off-white
-    static let surfacePrimary = Color(red: 0.99, green: 0.98, blue: 0.97)    // #FDFAF8 — cards, sheets
-    static let surfaceSecondary = Color(red: 0.93, green: 0.92, blue: 0.91)  // #EDEBE8 — elevated
-    static let surfaceTertiary = Color(red: 0.89, green: 0.88, blue: 0.87)   // #E3E1DE — hover/pressed
+    // Backgrounds — dark warm brown
+    static let background = Color(red: 0.051, green: 0.043, blue: 0.031)     // #0D0B08
+    static let surfacePrimary = Color(red: 0.078, green: 0.071, blue: 0.063)  // #141210
+    static let surfaceSecondary = Color(red: 0.110, green: 0.094, blue: 0.071) // #1C1812
+    static let surfaceTertiary = Color(red: 0.059, green: 0.051, blue: 0.039)  // #0F0D0A — row background
     
-    // Text — dark but not pure black
-    static let textPrimary = Color(red: 0.13, green: 0.13, blue: 0.15)      // #212125
-    static let textSecondary = Color(red: 0.13, green: 0.13, blue: 0.15).opacity(0.65)
-    static let textTertiary = Color(red: 0.13, green: 0.13, blue: 0.15).opacity(0.40)
-    static let textQuaternary = Color(red: 0.13, green: 0.13, blue: 0.15).opacity(0.20)
+    // Text — warm off-white
+    static let textPrimary = Color(red: 0.910, green: 0.886, blue: 0.839)     // #E8E2D6
+    static let textSecondary = Color(red: 0.478, green: 0.455, blue: 0.408)   // #7A7468
+    static let textTertiary = Color(red: 0.353, green: 0.325, blue: 0.278)    // #5A5347
+    static let textQuaternary = Color(red: 0.910, green: 0.886, blue: 0.839).opacity(0.20)
     
-    // Brand — warm copper, cinematic and distinctive
-    static let brand = Color(red: 0.77, green: 0.48, blue: 0.23)            // #C47B3B — warm copper
-    static let brandSubtle = Color(red: 0.77, green: 0.48, blue: 0.23).opacity(0.12)
-    static let brandSecondary = Color(red: 0.55, green: 0.38, blue: 0.31)   // #8C6150 — warm brown
-    static let brandGlow = Color(red: 0.95, green: 0.75, blue: 0.45)        // warm gold glow
+    // Brand — warm amber/gold
+    static let brand = Color(red: 0.831, green: 0.635, blue: 0.298)           // #D4A24C
+    static let brandSubtle = Color(red: 0.831, green: 0.635, blue: 0.298).opacity(0.12)
+    static let brandSecondary = Color(red: 0.549, green: 0.416, blue: 0.196)  // #8C6A32 — dim accent
+    static let brandGlow = Color(red: 0.831, green: 0.635, blue: 0.298).opacity(0.15)
     
-    // Warm gradient pair for hero sections / CTAs
-    static let gradientStart = Color(red: 0.77, green: 0.48, blue: 0.23)    // copper
-    static let gradientEnd = Color(red: 0.55, green: 0.38, blue: 0.31)      // warm brown
+    // Gradient pair for #1 row highlight
+    static let gradientStart = Color(red: 0.831, green: 0.635, blue: 0.298).opacity(0.08)
+    static let gradientEnd = Color(red: 0.831, green: 0.635, blue: 0.298).opacity(0.02)
     
-    // Surface warmth — slightly warmer card for featured content
-    static let surfaceWarm = Color(red: 0.98, green: 0.95, blue: 0.90)
+    // Surface warmth — slightly warmer for featured content
+    static let surfaceWarm = Color(red: 0.831, green: 0.635, blue: 0.298).opacity(0.08)
     
-    // Accent — alias for brand (backward compatibility)
+    // Accent — alias for brand
     static let accent = brand
     static let accentSubtle = brandSubtle
     
-    // Tiers — semantic, not decorative (muted for light backgrounds)
-    static let tierGood = Color(red: 0.30, green: 0.65, blue: 0.45)         // Muted green
-    static let tierMedium = Color(red: 0.75, green: 0.65, blue: 0.30)       // Muted gold
-    static let tierBad = Color(red: 0.75, green: 0.35, blue: 0.35)          // Muted red
+    // Tiers — semantic colors (muted for dark theme)
+    static let tierGood = Color(red: 0.30, green: 0.65, blue: 0.45)           // Muted green
+    static let tierMedium = Color(red: 0.75, green: 0.65, blue: 0.30)         // Muted gold
+    static let tierBad = Color(red: 0.75, green: 0.35, blue: 0.35)            // Muted red
     
-    // Feedback — restrained, not attention-grabbing
+    // Feedback
     static let success = Color(red: 0.30, green: 0.65, blue: 0.45)
     static let warning = Color(red: 0.75, green: 0.65, blue: 0.30)
     static let error = Color(red: 0.75, green: 0.35, blue: 0.35)
@@ -50,8 +50,8 @@ enum MarquiColors {
     static let medalBronze = Color(red: 0.80, green: 0.50, blue: 0.20)
     
     // Utility
-    static let divider = Color(red: 0.13, green: 0.13, blue: 0.15).opacity(0.08)
-    static let shimmer = Color(red: 0.13, green: 0.13, blue: 0.15).opacity(0.04)
+    static let divider = Color(red: 0.910, green: 0.886, blue: 0.839).opacity(0.06)
+    static let shimmer = Color(red: 0.910, green: 0.886, blue: 0.839).opacity(0.04)
     
     static func tierColor(_ tier: Tier) -> Color {
         switch tier {
@@ -69,20 +69,42 @@ enum MarquiColors {
         default: return .clear
         }
     }
+    
+    /// Returns the appropriate rank number color based on position
+    static func rankColor(for rank: Int) -> Color {
+        switch rank {
+        case 1: return accent
+        case 2, 3: return textSecondary
+        default: return textTertiary
+        }
+    }
 }
 
 // MARK: - Typography Scale
 // Strict scale. No in-between sizes.
 
 enum MarquiTypography {
-    // Display — hero, feature headers (rounded for warmth + personality)
+    // Display — hero, feature headers
     static let displayLarge = Font.system(size: 34, weight: .bold, design: .rounded)
     static let displayMedium = Font.system(size: 28, weight: .bold, design: .rounded)
+    
+    // Rank numbers — heavy monospaced for condensed editorial look
+    static let rankLarge = Font.system(size: 32, weight: .heavy, design: .monospaced)
+    static let rankMedium = Font.system(size: 24, weight: .heavy, design: .monospaced)
+    
+    // Score display — monospaced for editorial precision
+    static let scoreLarge = Font.system(size: 48, weight: .heavy, design: .monospaced)
+    static let scoreMedium = Font.system(size: 28, weight: .bold, design: .monospaced)
+    static let scoreSmall = Font.system(size: 22, weight: .bold, design: .monospaced)
     
     // Headings
     static let headingLarge = Font.system(size: 22, weight: .semibold, design: .rounded)
     static let headingMedium = Font.system(size: 18, weight: .semibold, design: .default)
     static let headingSmall = Font.system(size: 16, weight: .semibold, design: .default)
+    
+    // Film titles — serif italic (like Instrument Serif)
+    static let filmTitle = Font.system(size: 15, design: .serif).italic()
+    static let filmTitleLarge = Font.system(size: 28, design: .serif).italic()
     
     // Body
     static let bodyLarge = Font.system(size: 16, weight: .regular, design: .default)
@@ -94,11 +116,16 @@ enum MarquiTypography {
     static let labelMedium = Font.system(size: 12, weight: .medium, design: .default)
     static let labelSmall = Font.system(size: 11, weight: .medium, design: .default)
     
-    // Caption
+    // Caption — monospace for metadata
     static let caption = Font.system(size: 11, weight: .regular, design: .default)
+    static let captionMono = Font.system(size: 9, weight: .medium, design: .monospaced)
     
-    // Section label — tracked uppercase for section headers
+    // Section label — tracked uppercase
     static let sectionLabel = Font.system(size: 11, weight: .bold, design: .default)
+    
+    // Logo — monospaced condensed for editorial masthead feel
+    static let logo = Font.system(size: 32, weight: .black, design: .monospaced)
+    static let logoSubtitle = Font.system(size: 8, weight: .medium, design: .monospaced)
 }
 
 // MARK: - Spacing Scale
@@ -152,32 +179,29 @@ enum MarquiPoster {
     static let thumbWidth: CGFloat = 56
     static let thumbHeight: CGFloat = 84
     
-    // Mini (journal, compact rows)
-    static let miniWidth: CGFloat = 44
-    static let miniHeight: CGFloat = 66
+    // Mini (journal, compact rows) — 48px wide for new design
+    static let miniWidth: CGFloat = 48
+    static let miniHeight: CGFloat = 72
     
-    static let cornerRadius: CGFloat = MarquiRadius.md
+    static let cornerRadius: CGFloat = MarquiRadius.sm
 }
 
-// MARK: - Shadows (light theme — subtle, not heavy)
+// MARK: - Shadows (dark theme — subtle glow instead of drop shadow)
 
 enum MarquiShadow {
-    static let card = Color.black.opacity(0.08)
-    static let cardRadius: CGFloat = 12
-    static let cardY: CGFloat = 4
+    // Cards on dark get subtle glow, not drop shadow
+    static let card = Color.black.opacity(0.4)
+    static let cardRadius: CGFloat = 16
+    static let cardY: CGFloat = 8
     
-    static let elevated = Color.black.opacity(0.15)
-    static let elevatedRadius: CGFloat = 20
-    static let elevatedY: CGFloat = 8
+    static let elevated = Color.black.opacity(0.6)
+    static let elevatedRadius: CGFloat = 24
+    static let elevatedY: CGFloat = 12
 }
 
 // MARK: - View Modifiers
 
-// MARK: - Press Effect Button Style
-
 /// Subtle scale-down on press (0.97) with easeOut spring-back.
-/// Use on tappable cards throughout the app.
-/// Respects Reduce Motion — disables scale animation when enabled.
 struct MarquiPressStyle: ButtonStyle {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
@@ -190,8 +214,6 @@ struct MarquiPressStyle: ButtonStyle {
 
 // MARK: - Accessibility Helpers
 
-/// Limits Dynamic Type scaling so layouts don't break at very large sizes.
-/// Apply to root containers (e.g., tab views, full-screen views).
 struct MarquiDynamicTypeModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
@@ -200,7 +222,6 @@ struct MarquiDynamicTypeModifier: ViewModifier {
 }
 
 extension View {
-    /// Caps Dynamic Type to `.accessibility2` to prevent layout breakage.
     func marquiDynamicTypeLimit() -> some View {
         modifier(MarquiDynamicTypeModifier())
     }
