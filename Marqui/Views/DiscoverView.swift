@@ -73,6 +73,7 @@ struct DiscoverView: View {
             .toolbarBackground(MarquiColors.background, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .navigationTitle("Discover")
+            .navigationBarTitleDisplayMode(.inline)
             .refreshable {
                 await loadAllContent(forceRefresh: true)
                 HapticManager.impact(.light)

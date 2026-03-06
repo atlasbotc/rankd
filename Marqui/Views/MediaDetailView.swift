@@ -46,10 +46,8 @@ struct MediaDetailView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .ignoresSafeArea(edges: .top)
         .background(MarquiColors.background)
         .scrollIndicators(.hidden)
-        .clipped()
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
         .task {
