@@ -460,22 +460,21 @@ struct RankedItemDetailView: View {
 }
 
 #Preview {
-    let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: RankedItem.self, configurations: config)
-    
-    let item = RankedItem(
-        tmdbId: 693134,
-        title: "Dune: Part Two",
-        overview: "Follow the mythic journey of Paul Atreides...",
-        posterPath: "/1XDDXPXGiI8id7MrUxK36ke7gkX.jpg",
-        releaseDate: "2024-02-27",
-        mediaType: .movie,
-        tier: .good,
-        review: "The sandworm sequence alone earns this its rank. Nothing this year came close."
+    RankedItemDetailView(
+        item: {
+            let item = RankedItem(
+                tmdbId: 693134,
+                title: "Dune: Part Two",
+                overview: "Follow the mythic journey of Paul Atreides...",
+                posterPath: "/1XDDXPXGiI8id7MrUxK36ke7gkX.jpg",
+                releaseDate: "2024-02-27",
+                mediaType: .movie,
+                tier: .good,
+                review: "The sandworm sequence alone earns this its rank."
+            )
+            item.rank = 1
+            return item
+        }()
     )
-    item.rank = 1
-    container.mainContext.insert(item)
-    
-    return RankedItemDetailView(item: item)
-        .modelContainer(container)
+    .modelContainer(for: RankedItem.self, inMemory: true)
 }

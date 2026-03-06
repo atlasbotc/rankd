@@ -97,11 +97,8 @@ struct MediaDetailView: View {
                 }
                 .padding(.horizontal, MarquiSpacing.md)
                 
-                // Title
-                Text(detail.title)
-                    .font(MarquiTypography.displayMedium)
-                    .foregroundStyle(MarquiColors.textPrimary)
-                    .padding(.horizontal, MarquiSpacing.md)
+                // Asymmetric title lockup
+                movieTitleLockup(detail)
                     .offset(y: -24)
                 
                 // Metadata row (year, runtime, rating)
@@ -195,11 +192,8 @@ struct MediaDetailView: View {
                 }
                 .padding(.horizontal, MarquiSpacing.md)
                 
-                // Title
-                Text(detail.name)
-                    .font(MarquiTypography.displayMedium)
-                    .foregroundStyle(MarquiColors.textPrimary)
-                    .padding(.horizontal, MarquiSpacing.md)
+                // Asymmetric title lockup
+                tvTitleLockup(detail)
                     .offset(y: -24)
                 
                 // Metadata row
@@ -307,6 +301,58 @@ struct MediaDetailView: View {
         .clipped()
     }
     
+    private func movieTitleLockup(_ detail: TMDBMovieDetail) -> some View {
+        HStack(alignment: .bottom, spacing: MarquiSpacing.md) {
+            VStack(alignment: .leading, spacing: MarquiSpacing.xs) {
+                if let ranked = rankedItem {
+                    Text("№ \(String(format: "%02d", ranked.rank))")
+                        .font(MarquiTypography.captionMono)
+                        .tracking(2)
+                        .foregroundStyle(MarquiColors.accent)
+                }
+                Text(detail.title)
+                    .font(MarquiTypography.filmTitleLarge)
+                    .foregroundStyle(MarquiColors.textPrimary)
+            }
+            
+            Spacer()
+            
+            if let ranked = rankedItem {
+                let score = RankedItem.calculateScore(for: ranked, allItems: rankedItems)
+                Text(String(format: "%.1f", score))
+                    .font(MarquiTypography.scoreLarge)
+                    .foregroundStyle(MarquiColors.accent)
+            }
+        }
+        .padding(.horizontal, MarquiSpacing.md)
+    }
+    
+    private func tvTitleLockup(_ detail: TMDBTVDetail) -> some View {
+        HStack(alignment: .bottom, spacing: MarquiSpacing.md) {
+            VStack(alignment: .leading, spacing: MarquiSpacing.xs) {
+                if let ranked = rankedItem {
+                    Text("№ \(String(format: "%02d", ranked.rank))")
+                        .font(MarquiTypography.captionMono)
+                        .tracking(2)
+                        .foregroundStyle(MarquiColors.accent)
+                }
+                Text(detail.name)
+                    .font(MarquiTypography.filmTitleLarge)
+                    .foregroundStyle(MarquiColors.textPrimary)
+            }
+            
+            Spacer()
+            
+            if let ranked = rankedItem {
+                let score = RankedItem.calculateScore(for: ranked, allItems: rankedItems)
+                Text(String(format: "%.1f", score))
+                    .font(MarquiTypography.scoreLarge)
+                    .foregroundStyle(MarquiColors.accent)
+            }
+        }
+        .padding(.horizontal, MarquiSpacing.md)
+    }
+    
     private func metadataRow(year: String?, runtime: String?, rating: Double?) -> some View {
         HStack(spacing: MarquiSpacing.xs) {
             if let year = year {
@@ -394,53 +440,63 @@ struct MediaDetailView: View {
     }
     
     private var actionButtonsSection: some View {
-        VStack(spacing: MarquiSpacing.xs) {
+        VStack(spacing: 0) {
             if !isRanked {
-                // Primary: Rank It
-                Button {
-                    comparisonFlowItem = searchResult
-                } label: {
-                    Text("Rank It")
-                        .font(MarquiTypography.labelLarge)
-                        .foregroundStyle(MarquiColors.textPrimary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                        .background(MarquiColors.brand)
-                        .clipShape(RoundedRectangle(cornerRadius: MarquiRadius.md))
-                }
+                // Primary CTA: Rank It (amber filled)
+                mediaActionButton(
+                    title: "Rank It",
+                    isPrimary: true,
+                    action: { comparisonFlowItem = searchResult }
+                )
                 
                 // Secondary: Watchlist
-                Button {
-                    if isInWatchlist {
-                        removeFromWatchlist()
-                    } else {
-                        addToWatchlist()
+                mediaActionButton(
+                    title: isInWatchlist ? "In Watchlist" : "Add to Watchlist",
+                    isPrimary: false,
+                    action: {
+                        if isInWatchlist {
+                            removeFromWatchlist()
+                        } else {
+                            addToWatchlist()
+                        }
                     }
-                } label: {
-                    HStack(spacing: MarquiSpacing.xs) {
-                        Image(systemName: isInWatchlist ? "bookmark.fill" : "bookmark")
-                        Text(isInWatchlist ? "In Watchlist" : "Watchlist")
-                    }
-                    .font(MarquiTypography.labelLarge)
-                    .foregroundStyle(MarquiColors.textSecondary)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
-                    .background(MarquiColors.surfaceSecondary)
-                    .clipShape(RoundedRectangle(cornerRadius: MarquiRadius.md))
-                }
+                )
             }
             
             // Tertiary: Add to List
-            Button {
-                showAddToList = true
-            } label: {
-                Text("Add to List")
-                    .font(MarquiTypography.labelLarge)
-                    .foregroundStyle(MarquiColors.textTertiary)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 48)
+            mediaActionButton(
+                title: "Add to List",
+                isPrimary: false,
+                action: { showAddToList = true }
+            )
+        }
+    }
+    
+    private func mediaActionButton(title: String, isPrimary: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack {
+                Text(title.uppercased())
+                    .font(MarquiTypography.captionMono)
+                    .tracking(1.5)
+                
+                Spacer()
+                
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 12))
+                    .opacity(isPrimary ? 1.0 : 0.4)
+            }
+            .foregroundStyle(isPrimary ? MarquiColors.background : MarquiColors.textTertiary)
+            .padding(.vertical, MarquiSpacing.sm)
+            .padding(.horizontal, MarquiSpacing.md)
+            .background(isPrimary ? MarquiColors.accent : Color.clear)
+            .overlay {
+                if !isPrimary {
+                    Rectangle()
+                        .stroke(MarquiColors.divider, lineWidth: 1)
+                }
             }
         }
+        .buttonStyle(MarquiPressStyle())
     }
     
     private func trailerButton(url: URL) -> some View {
