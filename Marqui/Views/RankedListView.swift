@@ -447,7 +447,7 @@ struct RankedItemRowV3: View {
             .background(
                 isTopRank
                     ? LinearGradient(
-                        colors: [MarquiColors.gradientStart, MarquiColors.gradientEnd],
+                        colors: [MarquiColors.rowHighlightStart, MarquiColors.rowHighlightEnd],
                         startPoint: .leading,
                         endPoint: .trailing
                       )

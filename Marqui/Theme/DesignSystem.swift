@@ -23,9 +23,13 @@ enum MarquiColors {
     static let brandSecondary = Color(red: 0.549, green: 0.416, blue: 0.196)  // #8C6A32 — dim accent
     static let brandGlow = Color(red: 0.831, green: 0.635, blue: 0.298).opacity(0.15)
     
-    // Gradient pair for #1 row highlight
-    static let gradientStart = Color(red: 0.831, green: 0.635, blue: 0.298).opacity(0.08)
-    static let gradientEnd = Color(red: 0.831, green: 0.635, blue: 0.298).opacity(0.02)
+    // Gradient pair for buttons/CTAs (solid)
+    static let gradientStart = Color(red: 0.831, green: 0.635, blue: 0.298)       // #D4A24C
+    static let gradientEnd = Color(red: 0.549, green: 0.416, blue: 0.196)         // #8C6A32
+    
+    // Gradient pair for #1 row highlight (subtle)
+    static let rowHighlightStart = Color(red: 0.831, green: 0.635, blue: 0.298).opacity(0.08)
+    static let rowHighlightEnd = Color(red: 0.831, green: 0.635, blue: 0.298).opacity(0.02)
     
     // Surface warmth — slightly warmer for featured content
     static let surfaceWarm = Color(red: 0.831, green: 0.635, blue: 0.298).opacity(0.08)
