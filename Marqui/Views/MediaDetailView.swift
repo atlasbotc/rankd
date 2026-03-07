@@ -48,6 +48,7 @@ struct MediaDetailView: View {
         }
         .background(MarquiColors.background)
         .scrollIndicators(.hidden)
+        .contentMargins(.horizontal, 0, for: .scrollContent)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
         .task {
@@ -81,6 +82,8 @@ struct MediaDetailView: View {
             
             // Poster overlay + title area
             VStack(alignment: .leading, spacing: MarquiSpacing.md) {
+                // invisible spacer to force full-width layout in iOS 26 TabView+NavigationStack
+                Color.clear.frame(maxWidth: .infinity, maxHeight: 0)
                 // Poster overlay
                 HStack(alignment: .bottom, spacing: MarquiSpacing.md) {
                     CachedPosterImage(
@@ -176,6 +179,8 @@ struct MediaDetailView: View {
             
             // Poster overlay + title area
             VStack(alignment: .leading, spacing: MarquiSpacing.md) {
+                // invisible spacer to force full-width layout in iOS 26 TabView+NavigationStack
+                Color.clear.frame(maxWidth: .infinity, maxHeight: 0)
                 // Poster overlay
                 HStack(alignment: .bottom, spacing: MarquiSpacing.md) {
                     CachedPosterImage(
